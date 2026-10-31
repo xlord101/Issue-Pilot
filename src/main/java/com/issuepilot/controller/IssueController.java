@@ -66,7 +66,6 @@ public class IssueController {
             @RequestParam(defaultValue = "50") int limit,
             @RequestParam(defaultValue = "0") int skip
     ) {
-        ensureConnected();
         List<Map<String, Object>> list = issueRepository.queryIssues(
                 state, isAssigned, technology, minDifficulty, maxDifficulty, search, source, limit, skip
         );
@@ -92,7 +91,6 @@ public class IssueController {
 
     @GetMapping("/{issueId}")
     public Map<String, Object> getIssueById(@PathVariable String issueId) {
-        ensureConnected();
         Map<String, Object> issue = issueRepository.getIssueById(issueId);
         if (issue == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Issue '" + issueId + "' not found.");
@@ -102,7 +100,6 @@ public class IssueController {
 
     @DeleteMapping("/{issueId}")
     public Map<String, Object> deleteIssueById(@PathVariable String issueId) {
-        ensureConnected();
         boolean deleted = issueRepository.deleteIssue(issueId);
         if (!deleted) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Issue '" + issueId + "' not found.");

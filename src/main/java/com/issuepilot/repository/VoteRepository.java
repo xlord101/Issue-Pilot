@@ -1,18 +1,21 @@
 package com.issuepilot.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.issuepilot.config.MongoConfig;
 import com.issuepilot.model.IssueVote;
 import com.mongodb.client.model.IndexOptions;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Repository
 public class VoteRepository {
@@ -22,15 +25,35 @@ public class VoteRepository {
 
     private final MongoTemplate mongoTemplate;
     private final ObjectMapper objectMapper;
+    private final MongoConfig mongoConfig;
+    private final Map<String, IssueVote> inMemoryVotes = new ConcurrentHashMap<>();
 
     public VoteRepository(MongoTemplate mongoTemplate, ObjectMapper objectMapper) {
+        this(mongoTemplate, objectMapper, null);
+    }
+
+    @Autowired
+    public VoteRepository(MongoTemplate mongoTemplate, ObjectMapper objectMapper, @Autowired(required = false) MongoConfig mongoConfig) {
         this.mongoTemplate = mongoTemplate;
         this.objectMapper = objectMapper;
+        this.mongoConfig = mongoConfig;
+    }
+
+    private boolean isMongoActive() {
+        if (mongoTemplate == null) {
+            return false;
+        }
+        if (mongoConfig == null) {
+            return true;
+        }
+        return mongoConfig.isConnected();
     }
 
     @PostConstruct
     public void ensureIndexes() {
-        if (mongoTemplate == null) return;
+        if (!isMongoActive()) {
+            return;
+        }
         try {
             var collection = mongoTemplate.getCollection(COLLECTION_NAME);
             // 1. Enforce unique compound index on (user_id, source, platform_issue_id)
@@ -59,9 +82,6 @@ public class VoteRepository {
     }
 
     public IssueVote recordVote(IssueVote vote) {
-        if (mongoTemplate == null) {
-            throw new IllegalStateException("MongoDB Atlas is unavailable.");
-        }
         if (vote == null) {
             throw new IllegalArgumentException("Vote record cannot be null.");
         }
@@ -79,90 +99,135 @@ public class VoteRepository {
         }
 
         String nowIso = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
-        var collection = mongoTemplate.getCollection(COLLECTION_NAME);
+        String key = vote.getUserId() + ":" + vote.getSource() + ":" + vote.getPlatformIssueId();
 
-        Document filter = new Document("user_id", vote.getUserId())
-                .append("source", vote.getSource())
-                .append("platform_issue_id", vote.getPlatformIssueId());
-
-        Document setFields = new Document("vote", vote.getVote())
-                .append("updated_at", nowIso);
-        if (vote.getRecommendationRunId() != null) {
-            setFields.append("recommendation_run_id", vote.getRecommendationRunId());
+        if (vote.getCreatedAt() == null || vote.getCreatedAt().isBlank()) {
+            vote.setCreatedAt(nowIso);
         }
-        if (vote.getFeatureSnapshot() != null && !vote.getFeatureSnapshot().isEmpty()) {
-            setFields.append("feature_snapshot", vote.getFeatureSnapshot());
-        }
-
-        Document setOnInsert = new Document("user_id", vote.getUserId())
-                .append("source", vote.getSource())
-                .append("platform_issue_id", vote.getPlatformIssueId())
-                .append("created_at", nowIso);
-
-        Document updateDoc = new Document("$set", setFields)
-                .append("$setOnInsert", setOnInsert);
-
-        collection.updateOne(filter, updateDoc, new com.mongodb.client.model.UpdateOptions().upsert(true));
-
-        Document saved = collection.find(filter).first();
-        if (saved != null) {
-            return objectMapper.convertValue(cleanDoc(saved), IssueVote.class);
-        }
-
-        vote.setCreatedAt(nowIso);
         vote.setUpdatedAt(nowIso);
+
+        if (isMongoActive()) {
+            try {
+                var collection = mongoTemplate.getCollection(COLLECTION_NAME);
+
+                Document filter = new Document("user_id", vote.getUserId())
+                        .append("source", vote.getSource())
+                        .append("platform_issue_id", vote.getPlatformIssueId());
+
+                Document setFields = new Document("vote", vote.getVote())
+                        .append("updated_at", nowIso);
+                if (vote.getRecommendationRunId() != null) {
+                    setFields.append("recommendation_run_id", vote.getRecommendationRunId());
+                }
+                if (vote.getFeatureSnapshot() != null && !vote.getFeatureSnapshot().isEmpty()) {
+                    setFields.append("feature_snapshot", vote.getFeatureSnapshot());
+                }
+
+                Document setOnInsert = new Document("user_id", vote.getUserId())
+                        .append("source", vote.getSource())
+                        .append("platform_issue_id", vote.getPlatformIssueId())
+                        .append("created_at", vote.getCreatedAt());
+
+                Document updateDoc = new Document("$set", setFields)
+                        .append("$setOnInsert", setOnInsert);
+
+                collection.updateOne(filter, updateDoc, new com.mongodb.client.model.UpdateOptions().upsert(true));
+
+                Document saved = collection.find(filter).first();
+                if (saved != null) {
+                    IssueVote v = objectMapper.convertValue(cleanDoc(saved), IssueVote.class);
+                    inMemoryVotes.put(key, v);
+                    return v;
+                }
+            } catch (Exception e) {
+                logger.warn("MongoDB vote recording failed ({}), falling back to in-memory store.", e.getMessage());
+            }
+        }
+
+        inMemoryVotes.put(key, vote);
         return vote;
     }
 
     public boolean removeVote(String userId, String source, String platformIssueId) {
-        if (mongoTemplate == null) {
-            throw new IllegalStateException("MongoDB Atlas is unavailable.");
-        }
         if (userId == null || userId.isBlank() || source == null || source.isBlank() || platformIssueId == null || platformIssueId.isBlank()) {
             return false;
         }
 
-        Document filter = new Document("user_id", userId)
-                .append("source", source)
-                .append("platform_issue_id", platformIssueId);
+        String key = userId + ":" + source + ":" + platformIssueId;
+        boolean inMemDeleted = inMemoryVotes.remove(key) != null;
 
-        var result = mongoTemplate.getCollection(COLLECTION_NAME).deleteOne(filter);
-        return result.getDeletedCount() > 0;
+        if (isMongoActive()) {
+            try {
+                Document filter = new Document("user_id", userId)
+                        .append("source", source)
+                        .append("platform_issue_id", platformIssueId);
+
+                var result = mongoTemplate.getCollection(COLLECTION_NAME).deleteOne(filter);
+                return result.getDeletedCount() > 0 || inMemDeleted;
+            } catch (Exception e) {
+                logger.warn("MongoDB vote removal failed ({}).", e.getMessage());
+            }
+        }
+
+        return inMemDeleted;
     }
 
     public Optional<IssueVote> getVote(String userId, String source, String platformIssueId) {
-        if (mongoTemplate == null || userId == null || source == null || platformIssueId == null) {
+        if (userId == null || source == null || platformIssueId == null) {
             return Optional.empty();
         }
 
-        Document filter = new Document("user_id", userId)
-                .append("source", source)
-                .append("platform_issue_id", platformIssueId);
+        String key = userId + ":" + source + ":" + platformIssueId;
 
-        Document doc = mongoTemplate.getCollection(COLLECTION_NAME).find(filter).first();
-        if (doc == null) return Optional.empty();
+        if (isMongoActive()) {
+            try {
+                Document filter = new Document("user_id", userId)
+                        .append("source", source)
+                        .append("platform_issue_id", platformIssueId);
 
-        return Optional.ofNullable(objectMapper.convertValue(cleanDoc(doc), IssueVote.class));
+                Document doc = mongoTemplate.getCollection(COLLECTION_NAME).find(filter).first();
+                if (doc != null) {
+                    return Optional.ofNullable(objectMapper.convertValue(cleanDoc(doc), IssueVote.class));
+                }
+            } catch (Exception ignored) {}
+        }
+
+        return Optional.ofNullable(inMemoryVotes.get(key));
     }
 
     public List<IssueVote> getUserVotes(String userId) {
-        if (mongoTemplate == null || userId == null || userId.isBlank()) {
+        if (userId == null || userId.isBlank()) {
             return Collections.emptyList();
         }
 
-        List<IssueVote> list = new ArrayList<>();
-        var cursor = mongoTemplate.getCollection(COLLECTION_NAME)
-                .find(new Document("user_id", userId))
-                .sort(new Document("updated_at", -1));
-
-        for (Document doc : cursor) {
+        if (isMongoActive()) {
             try {
-                IssueVote v = objectMapper.convertValue(cleanDoc(doc), IssueVote.class);
-                if (v != null) list.add(v);
-            } catch (Exception e) {
-                logger.warn("Could not deserialize IssueVote document: {}", e.getMessage());
+                List<IssueVote> list = new ArrayList<>();
+                var cursor = mongoTemplate.getCollection(COLLECTION_NAME)
+                        .find(new Document("user_id", userId))
+                        .sort(new Document("updated_at", -1));
+
+                for (Document doc : cursor) {
+                    try {
+                        IssueVote v = objectMapper.convertValue(cleanDoc(doc), IssueVote.class);
+                        if (v != null) list.add(v);
+                    } catch (Exception e) {
+                        logger.warn("Could not deserialize IssueVote document: {}", e.getMessage());
+                    }
+                }
+                if (!list.isEmpty()) {
+                    return list;
+                }
+            } catch (Exception ignored) {}
+        }
+
+        List<IssueVote> list = new ArrayList<>();
+        for (IssueVote v : inMemoryVotes.values()) {
+            if (userId.equals(v.getUserId())) {
+                list.add(v);
             }
         }
+        list.sort((a, b) -> Objects.compare(b.getUpdatedAt(), a.getUpdatedAt(), Comparator.nullsLast(String::compareTo)));
         return list;
     }
 
@@ -172,14 +237,31 @@ public class VoteRepository {
         counts.put("dislikes", 0);
         counts.put("total", 0);
 
-        if (mongoTemplate == null || userId == null || userId.isBlank()) {
+        if (userId == null || userId.isBlank()) {
             return counts;
         }
 
-        var col = mongoTemplate.getCollection(COLLECTION_NAME);
-        int likes = (int) col.countDocuments(new Document("user_id", userId).append("vote", 1));
-        int dislikes = (int) col.countDocuments(new Document("user_id", userId).append("vote", -1));
+        if (isMongoActive()) {
+            try {
+                var col = mongoTemplate.getCollection(COLLECTION_NAME);
+                int likes = (int) col.countDocuments(new Document("user_id", userId).append("vote", 1));
+                int dislikes = (int) col.countDocuments(new Document("user_id", userId).append("vote", -1));
 
+                counts.put("likes", likes);
+                counts.put("dislikes", dislikes);
+                counts.put("total", likes + dislikes);
+                return counts;
+            } catch (Exception ignored) {}
+        }
+
+        int likes = 0;
+        int dislikes = 0;
+        for (IssueVote v : inMemoryVotes.values()) {
+            if (userId.equals(v.getUserId())) {
+                if (v.getVote() == 1) likes++;
+                else if (v.getVote() == -1) dislikes++;
+            }
+        }
         counts.put("likes", likes);
         counts.put("dislikes", dislikes);
         counts.put("total", likes + dislikes);

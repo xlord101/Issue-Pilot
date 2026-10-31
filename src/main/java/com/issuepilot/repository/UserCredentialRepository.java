@@ -1,10 +1,12 @@
 package com.issuepilot.repository;
 
+import com.issuepilot.config.MongoConfig;
 import com.issuepilot.model.UserCredential;
 import com.mongodb.client.model.UpdateOptions;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.stereotype.Repository;
 
@@ -30,10 +32,27 @@ public class UserCredentialRepository {
     private static final String COLLECTION_NAME = "user_tokens";
 
     private final MongoOperations mongoOperations;
+    private final MongoConfig mongoConfig;
     private final Map<String, Document> inMemoryStore = new ConcurrentHashMap<>();
 
     public UserCredentialRepository(MongoOperations mongoOperations) {
+        this(mongoOperations, null);
+    }
+
+    @Autowired
+    public UserCredentialRepository(MongoOperations mongoOperations, @Autowired(required = false) MongoConfig mongoConfig) {
         this.mongoOperations = mongoOperations;
+        this.mongoConfig = mongoConfig;
+    }
+
+    private boolean isMongoActive() {
+        if (mongoOperations == null) {
+            return false;
+        }
+        if (mongoConfig == null) {
+            return true;
+        }
+        return mongoConfig.isConnected();
     }
 
     /**
@@ -88,7 +107,7 @@ public class UserCredentialRepository {
 
         Document doc = toDocument(credential);
 
-        if (mongoOperations != null) {
+        if (isMongoActive()) {
             try {
                 Document filter = new Document("canonical_user_id", credential.getCanonicalUserId());
                 Document setDoc = new Document("provider", credential.getProvider())
@@ -110,10 +129,10 @@ public class UserCredentialRepository {
                         updateDoc,
                         new UpdateOptions().upsert(true)
                 );
+                inMemoryStore.put(credential.getCanonicalUserId(), doc);
                 return;
             } catch (Exception e) {
-                logger.error("MongoDB Atlas credential write failed: {}", e.getMessage());
-                throw new IllegalStateException("Failed to persist OAuth credentials to MongoDB Atlas.", e);
+                logger.warn("MongoDB Atlas credential write failed ({}), falling back to in-memory store.", e.getMessage());
             }
         }
 
@@ -128,15 +147,16 @@ public class UserCredentialRepository {
             return Optional.empty();
         }
 
-        if (mongoOperations != null) {
+        if (isMongoActive()) {
             try {
                 Document doc = mongoOperations.getCollection(COLLECTION_NAME)
                         .find(new Document("canonical_user_id", canonicalUserId.trim()))
                         .first();
-                return Optional.ofNullable(fromDocument(doc));
+                if (doc != null) {
+                    return Optional.ofNullable(fromDocument(doc));
+                }
             } catch (Exception e) {
-                logger.error("MongoDB Atlas credential read failed: {}", e.getMessage());
-                throw new IllegalStateException("Failed to read OAuth credentials from MongoDB Atlas.", e);
+                logger.warn("MongoDB Atlas credential read failed ({}), falling back to in-memory store.", e.getMessage());
             }
         }
 
@@ -152,18 +172,19 @@ public class UserCredentialRepository {
             return false;
         }
 
-        if (mongoOperations != null) {
+        boolean inMemDeleted = inMemoryStore.remove(canonicalUserId.trim()) != null;
+
+        if (isMongoActive()) {
             try {
                 var res = mongoOperations.getCollection(COLLECTION_NAME)
                         .deleteOne(new Document("canonical_user_id", canonicalUserId.trim()));
-                return res.getDeletedCount() > 0;
+                return res.getDeletedCount() > 0 || inMemDeleted;
             } catch (Exception e) {
-                logger.error("MongoDB Atlas credential delete failed: {}", e.getMessage());
-                throw new IllegalStateException("Failed to delete OAuth credentials from MongoDB Atlas.", e);
+                logger.warn("MongoDB Atlas credential delete failed ({}), deleting from in-memory store.", e.getMessage());
             }
         }
 
-        return inMemoryStore.remove(canonicalUserId.trim()) != null;
+        return inMemDeleted;
     }
 
     /**
@@ -173,4 +194,3 @@ public class UserCredentialRepository {
         inMemoryStore.clear();
     }
 }
-

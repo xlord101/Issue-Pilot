@@ -29,12 +29,6 @@ public class UserController {
         this.userIdentityResolver = userIdentityResolver;
     }
 
-    private void ensureConnected() {
-        if (!mongoConfig.isConnected()) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "MongoDB Atlas connection is unavailable.");
-        }
-    }
-
     private String resolveActingUserId(Authentication auth, String suppliedUserId) {
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
             String id = userIdentityResolver.resolveUserId(auth);
@@ -50,7 +44,6 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> createUserProfile(@RequestBody ContributorProfile profile, Authentication authentication) {
-        ensureConnected();
         if (profile == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profile body is required.");
         }
@@ -75,7 +68,6 @@ public class UserController {
 
     @GetMapping("/{userId}")
     public Map<String, Object> getUserProfile(@PathVariable String userId, Authentication authentication) {
-        ensureConnected();
         String actingUserId = resolveActingUserId(authentication, userId);
         if (actingUserId != null && !actingUserId.equals(userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: Cannot view another user's profile.");
@@ -90,7 +82,6 @@ public class UserController {
 
     @PutMapping("/{userId}")
     public Map<String, Object> updateUserProfile(@PathVariable String userId, @RequestBody Map<String, Object> updates, Authentication authentication) {
-        ensureConnected();
         String actingUserId = resolveActingUserId(authentication, userId);
         if (actingUserId != null && !actingUserId.equals(userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: Cannot update another user's profile.");
@@ -105,7 +96,6 @@ public class UserController {
 
     @PostMapping("/upsert")
     public Map<String, Object> upsertUserProfile(@RequestBody ContributorProfile profile, Authentication authentication) {
-        ensureConnected();
         if (profile == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profile body is required.");
         }
@@ -131,14 +121,12 @@ public class UserController {
             @RequestParam(defaultValue = "0") int skip,
             Authentication authentication
     ) {
-        // Enforce user privacy: arbitrary listing of user profiles is restricted
         if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
             boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
             if (!isAdmin) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: Listing all user profiles is restricted.");
             }
         }
-        ensureConnected();
         List<Map<String, Object>> users = userRepository.listUsers(limit, skip);
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("users", users);
@@ -148,7 +136,6 @@ public class UserController {
 
     @DeleteMapping("/{userId}")
     public Map<String, Object> deleteUserProfile(@PathVariable String userId, Authentication authentication) {
-        ensureConnected();
         String actingUserId = resolveActingUserId(authentication, userId);
         if (actingUserId != null && !actingUserId.equals(userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: Cannot delete another user's profile.");
@@ -158,13 +145,13 @@ public class UserController {
         if (!deleted) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User '" + userId + "' not found.");
         }
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("status", "success");
-        response.put("message", "User '" + userId + "' deleted.");
-        return response;
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("status", "success");
+        res.put("message", "User '" + userId + "' deleted.");
+        return res;
     }
 
-    // Convenience overloads for direct Java service / test invocations
+    // Convenience overloads for direct Java invocations
     public ResponseEntity<Map<String, Object>> createUserProfile(ContributorProfile profile) {
         return createUserProfile(profile, null);
     }
@@ -179,10 +166,6 @@ public class UserController {
 
     public Map<String, Object> upsertUserProfile(ContributorProfile profile) {
         return upsertUserProfile(profile, null);
-    }
-
-    public Map<String, Object> listUserProfiles(int limit, int skip) {
-        return listUserProfiles(limit, skip, null);
     }
 
     public Map<String, Object> deleteUserProfile(String userId) {

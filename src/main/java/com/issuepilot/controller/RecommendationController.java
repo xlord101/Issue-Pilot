@@ -133,9 +133,7 @@ public class RecommendationController {
         if (req.profile != null) {
             profile = req.profile;
         } else if (req.user_id != null && !req.user_id.isBlank()) {
-            if (mongoConfig.isConnected()) {
-                profile = userRepository.getUser(req.user_id);
-            }
+            profile = userRepository.getUser(req.user_id);
             if (profile == null) {
                 if (isLive) {
                     throw new ResponseStatusException(
@@ -143,7 +141,9 @@ public class RecommendationController {
                             "User profile '" + req.user_id + "' not found in MongoDB Atlas. Create the profile first or specify demo_mode=true."
                     );
                 }
-                profile = simulatorController.getSampleProfiles().get(0);
+                Map<String, Object> sample = simulatorController.getSampleProfiles().get(0);
+                profile = new LinkedHashMap<>(sample);
+                profile.put("user_id", req.user_id);
             }
         } else {
             if (isLive) {
@@ -278,14 +278,16 @@ public class RecommendationController {
                 ? req.run_id
                 : "run_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 6);
 
-        String userId = (profile != null && profile.containsKey("user_id") && profile.get("user_id") != null)
-                ? profile.get("user_id").toString()
-                : "anonymous_user";
+        String effectiveUserId = (req.user_id != null && !req.user_id.isBlank())
+                ? req.user_id
+                : ((profile != null && profile.containsKey("user_id") && profile.get("user_id") != null)
+                        ? profile.get("user_id").toString()
+                        : "anonymous_user");
 
         if (mongoConfig.isConnected() && !req.demo_mode) {
             try {
                 recommendationRepository.saveRecommendations(
-                        userId,
+                        effectiveUserId,
                         deliveredRecs,
                         modelVersion,
                         runId,
@@ -300,7 +302,7 @@ public class RecommendationController {
         response.put("run_id", runId);
         response.put("data_source", dataSource);
         response.put("algorithm_version", modelVersion);
-        response.put("user_id", userId);
+        response.put("user_id", effectiveUserId);
         response.put("total_candidates_considered", candidates.size());
         response.put("total_ranked", rankedCandidates.size());
         response.put("shortlist_size", metrics.getOrDefault("shortlist_size", effectiveBudget));
