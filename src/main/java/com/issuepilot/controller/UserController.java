@@ -1,9 +1,9 @@
 package com.issuepilot.controller;
 
-import com.issuepilot.config.MongoConfig;
 import com.issuepilot.model.ContributorProfile;
 import com.issuepilot.repository.UserRepository;
 import com.issuepilot.security.UserIdentityResolver;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -20,13 +20,16 @@ import java.util.Map;
 public class UserController {
 
     private final UserRepository userRepository;
-    private final MongoConfig mongoConfig;
     private final UserIdentityResolver userIdentityResolver;
 
-    public UserController(UserRepository userRepository, MongoConfig mongoConfig, UserIdentityResolver userIdentityResolver) {
+    @Autowired
+    public UserController(UserRepository userRepository, UserIdentityResolver userIdentityResolver) {
         this.userRepository = userRepository;
-        this.mongoConfig = mongoConfig;
         this.userIdentityResolver = userIdentityResolver;
+    }
+
+    public UserController(UserRepository userRepository, Object mongoConfig, UserIdentityResolver userIdentityResolver) {
+        this(userRepository, userIdentityResolver);
     }
 
     private String resolveActingUserId(Authentication auth, String suppliedUserId) {
