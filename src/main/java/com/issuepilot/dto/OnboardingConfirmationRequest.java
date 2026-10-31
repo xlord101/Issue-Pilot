@@ -26,6 +26,18 @@ public class OnboardingConfirmationRequest {
 
     private Double capability;
 
+    @JsonProperty("capability_confidence")
+    private Double capabilityConfidence;
+
+    @JsonProperty("open_source_experience")
+    private String openSourceExperience;
+
+    @JsonProperty("codebase_navigation_comfort")
+    private String codebaseNavigationComfort;
+
+    @JsonProperty("target_challenge_goal")
+    private String targetChallengeGoal;
+
     public OnboardingConfirmationRequest() {}
 
     public String getUserId() {
@@ -67,5 +79,36 @@ public class OnboardingConfirmationRequest {
     public void setCapability(Double capability) {
         this.capability = capability;
     }
-}
 
+    public Double getCapabilityConfidence() {
+        return capabilityConfidence;
+    }
+
+    public void setCapabilityConfidence(Double capabilityConfidence) {
+        this.capabilityConfidence = capabilityConfidence;
+    }
+
+    public String getOpenSourceExperience() {
+        return openSourceExperience;
+    }
+
+    public void setOpenSourceExperience(String openSourceExperience) {
+        this.openSourceExperience = openSourceExperience;
+    }
+
+    public String getCodebaseNavigationComfort() {
+        return codebaseNavigationComfort;
+    }
+
+    public void setCodebaseNavigationComfort(String codebaseNavigationComfort) {
+        this.codebaseNavigationComfort = codebaseNavigationComfort;
+    }
+
+    public String getTargetChallengeGoal() {
+        return targetChallengeGoal;
+    }
+
+    public void setTargetChallengeGoal(String targetChallengeGoal) {
+        this.targetChallengeGoal = targetChallengeGoal;
+    }
+}

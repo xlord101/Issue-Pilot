@@ -34,6 +34,9 @@ public class ContributorProfile {
 
     private double capability = 70.0;
 
+    @JsonProperty("capability_confidence")
+    private double capabilityConfidence = 0.85;
+
     @JsonProperty("accepted_count")
     private int acceptedCount = 0;
 
@@ -120,6 +123,14 @@ public class ContributorProfile {
 
     public void setCapability(double capability) {
         this.capability = capability;
+    }
+
+    public double getCapabilityConfidence() {
+        return capabilityConfidence;
+    }
+
+    public void setCapabilityConfidence(double capabilityConfidence) {
+        this.capabilityConfidence = capabilityConfidence;
     }
 
     public int getAcceptedCount() {

@@ -143,13 +143,18 @@ public class OnboardingService {
             profile.setPreferences(currentPrefs);
         }
 
-        // Optional capability override
-        if (request.getCapability() != null) {
-            double cap = request.getCapability();
-            if (Double.isNaN(cap) || Double.isInfinite(cap) || cap < 0.0 || cap > 100.0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Capability must be a finite number between 0.0 and 100.0.");
+        // Behavioral calibration and capability derivation
+        CalibratedCapabilityResult calibResult = deriveCalibratedCapability(request, profile);
+        profile.setCapability(calibResult.capability());
+        profile.setCapabilityConfidence(calibResult.confidence());
+
+        if (!calibResult.details().isEmpty()) {
+            Map<String, Object> prefs = profile.getPreferences();
+            if (prefs == null) {
+                prefs = new LinkedHashMap<>();
             }
-            profile.setCapability(cap);
+            prefs.put("calibration", calibResult.details());
+            profile.setPreferences(prefs);
         }
 
         // Mark onboarding completed and update timestamp
@@ -158,7 +163,8 @@ public class OnboardingService {
         profile.setUpdatedAt(nowIso);
 
         userRepository.upsertUser(profile);
-        logger.info("User '{}' successfully completed onboarding with {} confirmed skills.", canonicalUserId, profile.getSkills().size());
+        logger.info("User '{}' successfully completed onboarding with {} confirmed skills. Derived capability: {} (confidence: {})",
+                canonicalUserId, profile.getSkills().size(), profile.getCapability(), profile.getCapabilityConfidence());
 
         return toStatusResponse(profile);
     }
@@ -279,6 +285,7 @@ public class OnboardingService {
         res.setDismissedSkills(profile.getDismissedSkills() != null ? profile.getDismissedSkills() : Collections.emptySet());
         res.setPreferences(profile.getPreferences() != null ? profile.getPreferences() : Collections.emptyMap());
         res.setCapability(profile.getCapability());
+        res.setCapabilityConfidence(profile.getCapabilityConfidence());
         res.setUpdatedAt(profile.getUpdatedAt());
         return res;
     }
@@ -347,6 +354,120 @@ public class OnboardingService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Preference list for '" + key + "' exceeds maximum size of 50 items.");
             }
         }
+    }
+
+    public record CalibratedCapabilityResult(
+            double capability,
+            double confidence,
+            String derivationMethod,
+            Map<String, Object> details
+    ) {}
+
+    public CalibratedCapabilityResult deriveCalibratedCapability(
+            OnboardingConfirmationRequest request,
+            ContributorProfile profile
+    ) {
+        if (request == null) {
+            return new CalibratedCapabilityResult(
+                    profile != null ? profile.getCapability() : 70.0,
+                    profile != null ? profile.getCapabilityConfidence() : 0.85,
+                    "default_fallback",
+                    Collections.emptyMap()
+            );
+        }
+
+        // Case 1: Direct numeric capability override
+        if (request.getCapability() != null) {
+            double cap = request.getCapability();
+            if (Double.isNaN(cap) || Double.isInfinite(cap) || cap < 0.0 || cap > 100.0) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Capability must be a finite number between 0.0 and 100.0.");
+            }
+            double conf = 0.90;
+            if (request.getCapabilityConfidence() != null) {
+                double reqConf = request.getCapabilityConfidence();
+                if (!Double.isNaN(reqConf) && !Double.isInfinite(reqConf) && reqConf >= 0.0 && reqConf <= 1.0) {
+                    conf = reqConf;
+                }
+            }
+            Map<String, Object> details = new LinkedHashMap<>();
+            details.put("method", "explicit_override");
+            details.put("explicit_capability", cap);
+            details.put("confidence", conf);
+            return new CalibratedCapabilityResult(cap, conf, "explicit_override", details);
+        }
+
+        // Case 2: Behavioral 3-Question Calibration
+        String expRaw = request.getOpenSourceExperience();
+        String navRaw = request.getCodebaseNavigationComfort();
+        String goalRaw = request.getTargetChallengeGoal();
+
+        boolean hasBehavioral = (expRaw != null && !expRaw.isBlank())
+                || (navRaw != null && !navRaw.isBlank())
+                || (goalRaw != null && !goalRaw.isBlank());
+
+        if (hasBehavioral) {
+            // 1. Base Anchor from Open-Source Experience
+            double baseAnchor = 50.0;
+            double confidence = 0.85;
+            String normalizedExp = (expRaw != null) ? expRaw.trim().toLowerCase(Locale.ROOT) : "unspecified";
+
+            if (normalizedExp.contains("none") || normalizedExp.contains("beginner") || normalizedExp.contains("never") || normalizedExp.contains("zero")) {
+                baseAnchor = 30.0;
+                confidence = 0.85;
+            } else if (normalizedExp.contains("some") || normalizedExp.contains("intermediate") || normalizedExp.contains("pr") || normalizedExp.contains("occasional") || normalizedExp.contains("1-3")) {
+                baseAnchor = 55.0;
+                confidence = 0.90;
+            } else if (normalizedExp.contains("maintainer") || normalizedExp.contains("advanced") || normalizedExp.contains("active") || normalizedExp.contains("expert") || normalizedExp.contains("regular")) {
+                baseAnchor = 80.0;
+                confidence = 0.95;
+            }
+
+            // 2. Navigation Comfort Modifier
+            double navModifier = 0.0;
+            String normalizedNav = (navRaw != null) ? navRaw.trim().toLowerCase(Locale.ROOT) : "unspecified";
+            if (normalizedNav.contains("isolated") || normalizedNav.contains("single") || normalizedNav.contains("small")) {
+                navModifier = -5.0;
+            } else if (normalizedNav.contains("full") || normalizedNav.contains("modular") || normalizedNav.contains("multi") || normalizedNav.contains("large") || normalizedNav.contains("complex")) {
+                navModifier = 10.0;
+            }
+
+            // 3. Goal Range Clamping
+            double minClamp = 0.0;
+            double maxClamp = 100.0;
+            String normalizedGoal = (goalRaw != null) ? goalRaw.trim().toLowerCase(Locale.ROOT) : "unspecified";
+            if (normalizedGoal.contains("good_first") || normalizedGoal.contains("starter") || normalizedGoal.contains("doc") || normalizedGoal.contains("typo")) {
+                minClamp = 25.0;
+                maxClamp = 45.0;
+            } else if (normalizedGoal.contains("bug") || normalizedGoal.contains("reproducible") || normalizedGoal.contains("normal")) {
+                minClamp = 40.0;
+                maxClamp = 65.0;
+            } else if (normalizedGoal.contains("feature") || normalizedGoal.contains("architect") || normalizedGoal.contains("refactor") || normalizedGoal.contains("advanced")) {
+                minClamp = 65.0;
+                maxClamp = 90.0;
+            }
+
+            double rawScore = baseAnchor + navModifier;
+            double calibratedCap = Math.max(minClamp, Math.min(maxClamp, rawScore));
+
+            Map<String, Object> details = new LinkedHashMap<>();
+            details.put("method", "behavioral_calibration");
+            details.put("open_source_experience", normalizedExp);
+            details.put("codebase_navigation_comfort", normalizedNav);
+            details.put("target_challenge_goal", normalizedGoal);
+            details.put("base_anchor", baseAnchor);
+            details.put("navigation_modifier", navModifier);
+            details.put("raw_score", rawScore);
+            details.put("clamped_range", List.of(minClamp, maxClamp));
+            details.put("calibrated_capability", calibratedCap);
+            details.put("confidence", confidence);
+
+            return new CalibratedCapabilityResult(calibratedCap, confidence, "behavioral_calibration", details);
+        }
+
+        // Case 3: Retain existing or default
+        double cap = (profile != null) ? profile.getCapability() : 70.0;
+        double conf = (profile != null) ? profile.getCapabilityConfidence() : 0.85;
+        return new CalibratedCapabilityResult(cap, conf, "preserved_existing", Collections.emptyMap());
     }
 }
 

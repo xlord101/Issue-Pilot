@@ -473,4 +473,73 @@ public class OnboardingAndSkillConfirmationTest {
         assertTrue(legacyProfile.getDismissedSkills().isEmpty());
         assertTrue(legacyProfile.getSkills().containsKey("Java"));
     }
+
+    @Test
+    @DisplayName("Behavioral calibration derives capability and confidence for pure beginner with starter issue goals")
+    public void testBehavioralCalibrationBeginner() throws Exception {
+        String canonicalUserId = "github:60001";
+        String jwt = tokenService.issueToken(canonicalUserId, "testuser60001", List.of("ROLE_USER"), Map.of());
+
+        OnboardingConfirmationRequest req = new OnboardingConfirmationRequest();
+        req.setOpenSourceExperience("none");
+        req.setCodebaseNavigationComfort("isolated_files");
+        req.setTargetChallengeGoal("good_first_issues");
+
+        SkillConfirmationDto skill = new SkillConfirmationDto();
+        skill.setTechnology("Python");
+        skill.setLevel("beginner");
+        req.setConfirmedSkills(List.of(skill));
+
+        mockMvc.perform(post("/api/profile/onboarding/confirm")
+                        .header("Authorization", "Bearer " + jwt)
+                        .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                        .content(asJson(req)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.onboarding_completed").value(true))
+                .andExpect(jsonPath("$.capability").value(25.0))
+                .andExpect(jsonPath("$.capability_confidence").value(0.85));
+
+        Map<String, Object> saved = userRepository.getUser(canonicalUserId);
+        assertNotNull(saved);
+        assertEquals(25.0, ((Number) saved.get("capability")).doubleValue(), 0.001);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> prefs = (Map<String, Object>) saved.get("preferences");
+        assertNotNull(prefs);
+        assertTrue(prefs.containsKey("calibration"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> calib = (Map<String, Object>) prefs.get("calibration");
+        assertEquals("behavioral_calibration", calib.get("method"));
+        assertEquals(25.0, ((Number) calib.get("calibrated_capability")).doubleValue(), 0.001);
+    }
+
+    @Test
+    @DisplayName("Behavioral calibration derives capability and confidence for active maintainer with architecture goals")
+    public void testBehavioralCalibrationMaintainer() throws Exception {
+        String canonicalUserId = "github:60002";
+        String jwt = tokenService.issueToken(canonicalUserId, "testuser60002", List.of("ROLE_USER"), Map.of());
+
+        OnboardingConfirmationRequest req = new OnboardingConfirmationRequest();
+        req.setOpenSourceExperience("active_maintainer");
+        req.setCodebaseNavigationComfort("full_stack_modular");
+        req.setTargetChallengeGoal("features_architecture");
+
+        SkillConfirmationDto skill = new SkillConfirmationDto();
+        skill.setTechnology("Rust");
+        skill.setLevel("advanced");
+        req.setConfirmedSkills(List.of(skill));
+
+        mockMvc.perform(post("/api/profile/onboarding/confirm")
+                        .header("Authorization", "Bearer " + jwt)
+                        .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                        .content(asJson(req)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.onboarding_completed").value(true))
+                .andExpect(jsonPath("$.capability").value(90.0))
+                .andExpect(jsonPath("$.capability_confidence").value(0.95));
+
+        Map<String, Object> saved = userRepository.getUser(canonicalUserId);
+        assertNotNull(saved);
+        assertEquals(90.0, ((Number) saved.get("capability")).doubleValue(), 0.001);
+    }
 }

@@ -35,6 +35,9 @@ public class OnboardingStatusResponse {
 
     private double capability;
 
+    @JsonProperty("capability_confidence")
+    private double capabilityConfidence = 0.85;
+
     @JsonProperty("updated_at")
     private String updatedAt;
 
@@ -104,6 +107,14 @@ public class OnboardingStatusResponse {
         this.capability = capability;
     }
 
+    public double getCapabilityConfidence() {
+        return capabilityConfidence;
+    }
+
+    public void setCapabilityConfidence(double capabilityConfidence) {
+        this.capabilityConfidence = capabilityConfidence;
+    }
+
     public String getUpdatedAt() {
         return updatedAt;
     }
@@ -112,4 +123,3 @@ public class OnboardingStatusResponse {
         this.updatedAt = updatedAt;
     }
 }
-
