@@ -1,0 +1,175 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Sparkles, ExternalLink, ShieldCheck, FileText, CheckCircle2 } from "lucide-react";
+import { DemoDataBadge, LabelList, SourceBadge, VerificationBadge } from "@/components/ip/badges";
+import { FeedbackActions } from "@/components/ip/feedback-actions";
+import { ScoreBreakdown, ScoreTotal } from "@/components/ip/score";
+import { EmptyState, QueryState } from "@/components/ip/states";
+import { api, SIGNAL_META } from "@/lib/api";
+import { pageMeta } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+
+export const Route = createFileRoute("/app/recommendations/$id")({
+  head: () =>
+    pageMeta(
+      "Recommendation Diagnostics & Evidence",
+      "Full 6-factor C++ score decomposition, signal confidences, and repository evidence."
+    ),
+  component: DetailPage,
+});
+
+function DetailPage() {
+  const { id } = Route.useParams();
+  const q = useQuery({ queryKey: ["recommendations", "detail", id], queryFn: () => api.recommendations.get(id) });
+
+  return (
+    <div className="space-y-6">
+      <Link
+        to="/app/feed"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-white transition-colors"
+      >
+        <ArrowLeft className="size-3.5" />
+        Back to recommendations feed
+      </Link>
+
+      <QueryState query={q} loadingRows={2}>
+        {(rec) => (
+          <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+            <div className="min-w-0 space-y-6">
+              {/* Header Box */}
+              <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-xl p-6 specular-top shadow-xl">
+                <div className="flex flex-wrap items-center gap-2.5 text-xs text-muted-foreground">
+                  <SourceBadge source={rec.issue.source} />
+                  <span className="font-mono text-slate-300 font-semibold">{rec.issue.repo_key}</span>
+                  <span className="font-mono text-slate-500">#{rec.issue.native_id}</span>
+                  <div className="ml-auto">
+                    <VerificationBadge issue={rec.issue} />
+                  </div>
+                </div>
+
+                <h1 className="mt-3 text-xl sm:text-2xl font-bold tracking-tight text-slate-100 leading-snug">
+                  {rec.issue.title}
+                </h1>
+
+                <div className="mt-4">
+                  <LabelList labels={rec.issue.labels} source={rec.issue.source} />
+                </div>
+
+                <div className="mt-6 border-t border-white/10 pt-4">
+                  <FeedbackActions rec={rec} />
+                </div>
+              </div>
+
+              {/* Explainable Fit */}
+              <section className="rounded-xl border border-primary/20 bg-primary/5 p-5 specular-top">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-primary flex items-center gap-1.5">
+                  <Sparkles className="size-3.5" />
+                  Deterministic Ranking Justification
+                </h2>
+                <p className="mt-2 text-sm text-slate-300 leading-relaxed">
+                  {rec.why ?? "High alignment with your verified skill profile, recent activity in this language, and fast maintainer response time."}
+                </p>
+              </section>
+
+              {/* Issue Description */}
+              <section className="rounded-xl border border-white/10 bg-slate-900/40 p-6 specular-top space-y-3">
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-200 flex items-center gap-2">
+                  <FileText className="size-4 text-cyan-400" />
+                  Issue Description
+                </h2>
+                {rec.issue.body ? (
+                  <p className="whitespace-pre-wrap text-sm text-slate-300 leading-relaxed font-sans">
+                    {rec.issue.body}
+                  </p>
+                ) : (
+                  <p className="text-sm italic text-muted-foreground">
+                    No description ingested. View the complete issue on the source repository.
+                  </p>
+                )}
+
+                {rec.issue.technologies && rec.issue.technologies.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-1.5 pt-3 border-t border-white/5">
+                    {rec.issue.technologies.map((t) => (
+                      <span
+                        key={t}
+                        className="rounded-md border border-white/10 bg-slate-950/60 px-2 py-0.5 font-mono text-xs text-slate-300"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              {/* Supporting Evidence */}
+              <section className="space-y-3">
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-200">
+                  Signal Evidence Trail
+                </h2>
+                {rec.issue.evidence === null ? (
+                  <EmptyState title="No raw evidence trace" hint="The backend returned aggregate metrics." />
+                ) : rec.issue.evidence.length === 0 ? (
+                  <EmptyState title="No individual evidence items" hint="This ranking is based on aggregate repository statistics." />
+                ) : (
+                  <div className="space-y-2.5">
+                    {rec.issue.evidence.map((ev, i) => (
+                      <div
+                        key={i}
+                        className="rounded-xl border border-white/10 bg-slate-900/30 p-4 text-xs space-y-1"
+                      >
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-primary font-semibold">
+                          {ev.signal ? SIGNAL_META[ev.signal]?.label : "General Factor"}
+                        </div>
+                        <p className="text-slate-300">{ev.description}</p>
+                        {ev.url && (
+                          <a
+                            href={ev.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline font-mono"
+                          >
+                            Inspect Source <ExternalLink className="size-2.5" />
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+            </div>
+
+            {/* Sticky Score Sidebar */}
+            <aside className="h-fit rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-xl p-5 lg:sticky lg:top-24 specular-top shadow-xl space-y-5">
+              <div className="flex items-start justify-between border-b border-white/10 pb-4">
+                <div>
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-200">
+                    6-Factor Breakdown
+                  </h2>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Authoritative C++ core output
+                  </p>
+                </div>
+                <ScoreTotal value={rec.total_score} />
+              </div>
+
+              <ScoreBreakdown breakdown={rec.breakdown} detailed />
+
+              <div className="rounded-lg border border-white/5 bg-slate-950/60 p-3 text-[11px] font-mono text-slate-400 leading-relaxed">
+                <span className="text-emerald-400">Score</span> = 0.35S + 0.25D + 0.15R + 0.10H + 0.10F + 0.05N. Each component is normalized $0–100$.
+              </div>
+
+              <Button
+                asChild
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium active:scale-[0.98]"
+              >
+                <a href={rec.issue.url} target="_blank" rel="noreferrer">
+                  Open on {rec.issue.source} <ExternalLink className="size-3.5 ml-1.5" />
+                </a>
+              </Button>
+            </aside>
+          </div>
+        )}
+      </QueryState>
+    </div>
+  );
+}

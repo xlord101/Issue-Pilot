@@ -39,6 +39,15 @@ CTestTestfile.cmake
 .DS_Store
 Thumbs.db
 
+# --- Frontend Build Artifacts ---
+frontend/node_modules/
+frontend/.output/
+frontend/.agents/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.nitro/
+frontend/.wrangler/
+
 /my.txt
 Issue_Pilot_Production_Algorithm_Specification_V2_3.md
 issue_pilot_v23_reference_tests.py

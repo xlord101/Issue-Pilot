@@ -56,3 +56,4 @@ Do NOT generate or maintain generic placeholder pages (e.g. fake pricing tiers, 
 - **C++ Ranking Core**: Deterministic 6-factor model located in `ranking_engine/`. Binary path: `ranking_engine/build/issue_pilot_ranking_engine.exe`.
 - **Fault-Tolerant Resilience**: All repositories have in-memory fallbacks when MongoDB Atlas is offline.
 - **Zero Test Regressions**: All 204 backend tests in `mvn test` must continue to pass 100% on any changes.
+
