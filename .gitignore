@@ -38,6 +38,9 @@ CTestTestfile.cmake
 *~
 .DS_Store
 Thumbs.db
+*.mp4
+*.mov
+*.webm
 
 # --- Frontend Build Artifacts ---
 frontend/node_modules/

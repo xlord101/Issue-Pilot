@@ -102,3 +102,33 @@ export function GitHubMark({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function GitLabMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className={cn("size-4 fill-current", className)}>
+      <path d="m23.6 9.89-1.22-3.76a.82.82 0 0 0-1.56 0L19.6 9.89H4.4L3.18 6.13a.82.82 0 0 0-1.56 0L.4 9.89a.83.83 0 0 0 .3 1l11.3 8.21 11.3-8.21a.83.83 0 0 0 .3-1ZM12 16.51 3.86 10.6h16.28L12 16.51Z" />
+    </svg>
+  );
+}
+
+export function CodebergMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className={cn("size-4 fill-current", className)}>
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+    </svg>
+  );
+}
+
+export function BugzillaMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className={cn("size-4 fill-none stroke-current stroke-2", className)}>
+      <rect width="8" height="12" x="8" y="8" rx="4" />
+      <path d="m19 8-3 3" />
+      <path d="m5 8 3 3" />
+      <path d="m20 14-4 0" />
+      <path d="m4 14 4 0" />
+      <path d="m19 20-3-3" />
+      <path d="m5 20 3-3" />
+    </svg>
+  );
+}
