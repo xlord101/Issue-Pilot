@@ -12,7 +12,11 @@ export interface IssuePilotApi {
   auth: {
     getSession(): Promise<T.Session | null>;
     startSignIn(): Promise<void>;
-    completeCallback(search: { status?: string | undefined; error?: string | undefined }): Promise<T.Session>;
+    completeCallback(search: {
+      status?: string | undefined;
+      error?: string | undefined;
+      exchange_code?: string | undefined;
+    }): Promise<T.Session>;
     signOut(): Promise<void>;
   };
   onboarding: {

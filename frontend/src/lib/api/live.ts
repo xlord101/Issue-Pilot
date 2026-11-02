@@ -53,9 +53,20 @@ export const liveApi: IssuePilotApi = {
       if (search.error) {
         throw new ApiError(search.error, 401);
       }
-      // If code was returned
+      if (search.exchange_code) {
+        const res = await request<any>("auth.exchange", e.auth.exchange, {
+          method: "POST",
+          body: { exchange_code: search.exchange_code },
+        });
+        const token = res?.token || res?.access_token;
+        if (token) {
+          setStoredAuthToken(token);
+        }
+      }
       const s = await liveApi.auth.getSession();
-      if (!s) return mockApi.auth.getSession().then((res) => res!);
+      if (!s) {
+        throw new ApiError("Failed to retrieve authenticated session from server", 401);
+      }
       return s;
     },
     async signOut() {

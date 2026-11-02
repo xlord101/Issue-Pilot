@@ -9,7 +9,12 @@ import { NotConnectedState } from "@/components/ip/states";
 import { api, NotConnectedError } from "@/lib/api";
 import { pageMeta } from "@/lib/format";
 
-const search = z.object({ status: z.coerce.string().optional(), error: z.coerce.string().optional() });
+const search = z.object({
+  status: z.coerce.string().optional(),
+  error: z.coerce.string().optional(),
+  exchange_code: z.coerce.string().optional(),
+  new_user: z.coerce.string().optional(),
+});
 
 export const Route = createFileRoute("/auth/callback")({
   validateSearch: (s) => search.parse(s),
@@ -22,8 +27,13 @@ function Callback() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const q = useQuery({
-    queryKey: ["auth-callback", s.status, s.error],
-    queryFn: () => api.auth.completeCallback({ status: s.status, error: s.error }),
+    queryKey: ["auth-callback", s.status, s.error, s.exchange_code],
+    queryFn: () =>
+      api.auth.completeCallback({
+        status: s.status,
+        error: s.error,
+        exchange_code: s.exchange_code,
+      }),
     retry: false,
     staleTime: Infinity,
   });
