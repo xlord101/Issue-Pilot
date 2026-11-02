@@ -4,8 +4,13 @@
  */
 const rawMock = import.meta.env["VITE_USE_MOCK_API"] as string | undefined;
 
-/** Mock mode is ON unless VITE_USE_MOCK_API is explicitly "false". */
-export const USE_MOCK_API: boolean = rawMock === undefined || rawMock === "" ? true : rawMock !== "false";
+/**
+ * If explicitly set to "true", runs in offline fixture mode.
+ * Otherwise, attempts live backend communication at API_BASE_URL with seamless fallback.
+ */
+export const USE_MOCK_API: boolean = rawMock === "true";
 
-/** FastAPI base URL, e.g. https://api.issuepilot.dev (no trailing slash). */
-export const API_BASE_URL: string = ((import.meta.env["VITE_API_BASE_URL"] as string | undefined) ?? "").replace(/\/+$/, "");
+/** Spring Boot base URL (defaults to local port 8000, no trailing slash). */
+export const API_BASE_URL: string = (
+  (import.meta.env["VITE_API_BASE_URL"] as string | undefined) || "http://localhost:8000"
+).replace(/\/+$/, "");
