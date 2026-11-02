@@ -3,7 +3,6 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Logo } from "@/components/ip/logo";
-import { DemoDataBadge } from "@/components/ip/badges";
 import { api, USE_MOCK_API, type StarterProfile } from "@/lib/api";
 import {
   BehavioralCalibrationDeck,
@@ -79,7 +78,6 @@ function OnboardingPage() {
             <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="font-mono text-slate-300">C++ Ranking Engine Online</span>
           </div>
-          <DemoDataBadge />
         </div>
       </header>
 

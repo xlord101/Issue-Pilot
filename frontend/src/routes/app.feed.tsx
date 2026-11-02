@@ -55,7 +55,6 @@ function Feed() {
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-100">
                 Personalized Recommendations Feed
               </h1>
-              <DemoDataBadge />
             </div>
             <p className="text-xs sm:text-sm text-slate-400 max-w-2xl leading-relaxed">
               Issues are ranked through the native C++ 6-factor core ($S, D, R, H, F, N$) and verified live for open, unassigned status.
