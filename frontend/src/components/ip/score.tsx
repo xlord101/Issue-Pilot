@@ -5,10 +5,10 @@ import { ConfidenceIndicator } from "./badges";
 export function ScoreTotal({ value }: { value: number | null }) {
   return (
     <div className="text-right">
-      <div className="font-mono text-3xl font-bold tracking-tight text-slate-100 tabular-nums">
+      <div className="font-mono text-3xl font-bold tracking-tight text-slate-900 tabular-nums">
         {value ?? "—"}
       </div>
-      <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+      <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500">
         / 100 PTS
       </div>
     </div>
@@ -22,7 +22,7 @@ function ordered(b: SignalScore[] | null) {
 
 export function ScoreBreakdown({ breakdown, detailed }: { breakdown: SignalScore[] | null; detailed?: boolean }) {
   const rows = ordered(breakdown);
-  if (rows.length === 0) return <p className="text-xs text-muted-foreground">No score breakdown available.</p>;
+  if (rows.length === 0) return <p className="text-xs text-slate-500">No score breakdown available.</p>;
 
   return (
     <ul className="space-y-2.5">
@@ -34,34 +34,34 @@ export function ScoreBreakdown({ breakdown, detailed }: { breakdown: SignalScore
         return (
           <li key={s.signal} className="text-xs">
             <div className="flex items-center justify-between gap-2">
-              <span className="font-medium text-slate-200">
+              <span className="font-medium text-slate-800">
                 {meta?.label ?? s.signal}
                 {!detailed && meta && (
-                  <span className="ml-1 text-[10px] font-mono text-muted-foreground">
+                  <span className="ml-1 text-[10px] font-mono text-slate-500">
                     ({weight}%)
                   </span>
                 )}
               </span>
               <span className="flex items-center gap-2">
                 <ConfidenceIndicator value={s.confidence} compact={!detailed} />
-                <span className="font-mono text-[11px] text-slate-300 tabular-nums">
+                <span className="font-mono text-[11px] text-slate-700 font-semibold tabular-nums">
                   {s.score ?? "—"}/{s.max}
                 </span>
               </span>
             </div>
 
-            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-800/80">
+            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 border border-slate-200/60">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-primary/80 to-primary transition-all duration-300"
+                className="h-full rounded-full bg-blue-600 transition-all duration-300"
                 style={{ width: `${pct}%` }}
               />
             </div>
 
             {detailed && (
-              <p className="mt-1 text-[11px] text-muted-foreground">
+              <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
                 {s.summary || meta?.description}
                 {s.score !== null && meta && (
-                  <span className="ml-1 font-mono text-primary font-medium">
+                  <span className="ml-1 font-mono text-blue-700 font-semibold">
                     (+{(s.score * meta.weight).toFixed(1)} pts)
                   </span>
                 )}

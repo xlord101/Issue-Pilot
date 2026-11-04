@@ -118,15 +118,13 @@ export function BehavioralCalibrationDeck({
     React: 70,
   });
 
-  // Calculate derived capability rating (0-100) and confidence (0-1)
   const { derivedCapability, confidenceScore } = useMemo(() => {
     const expObj = EXPERIENCE_OPTIONS.find((e) => e.id === experience)!;
     const navObj = NAVIGATION_OPTIONS.find((n) => n.id === navigation)!;
     const goalObj = GOAL_OPTIONS.find((g) => g.id === challengeGoal)!;
 
-    let base = expObj.baseCapability + navObj.delta + goalObj.delta;
+    const base = expObj.baseCapability + navObj.delta + goalObj.delta;
 
-    // Stack bonus
     const techCount = Object.keys(selectedTechs).length;
     const avgTechScore =
       techCount > 0
@@ -136,7 +134,6 @@ export function BehavioralCalibrationDeck({
     const blended = Math.round(base * 0.65 + avgTechScore * 0.35);
     const clamped = Math.max(25, Math.min(98, blended));
 
-    // Confidence: increases with number of stack items calibrated
     const confidence = Math.min(0.95, 0.65 + techCount * 0.06);
 
     return { derivedCapability: clamped, confidenceScore: Math.round(confidence * 100) / 100 };
@@ -148,7 +145,7 @@ export function BehavioralCalibrationDeck({
       if (copy[tech] !== undefined) {
         delete copy[tech];
       } else {
-        copy[tech] = 75; // default proficiency
+        copy[tech] = 75;
       }
       return copy;
     });
@@ -175,41 +172,41 @@ export function BehavioralCalibrationDeck({
   return (
     <div className="space-y-6">
       {/* Top Dial / Calibrated Live Metrics Header */}
-      <div className="rounded-xl border border-white/10 bg-slate-900/60 p-5 backdrop-blur-xl specular-top shadow-xl">
+      <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-primary/40 bg-primary/10 text-primary font-mono text-xl font-bold">
+          <div className="flex items-center gap-3.5">
+            <div className="flex size-14 shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 text-blue-700 font-mono text-2xl font-bold shadow-xs">
               {derivedCapability}
             </div>
             <div>
-              <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1.5">
-                <Zap className="size-3 text-amber-400" />
+              <div className="text-xs uppercase tracking-wider text-slate-500 font-semibold flex items-center gap-1.5">
+                <Zap className="size-3.5 text-amber-500" />
                 Calibrated Contributor Capability
               </div>
-              <div className="text-sm font-medium text-slate-200 mt-0.5">
+              <div className="text-sm font-medium text-slate-800 mt-0.5">
                 Target Score Range:{" "}
-                <span className="font-mono text-primary font-bold">
+                <span className="font-mono text-blue-700 font-bold">
                   {Math.max(20, derivedCapability - 15)} – {Math.min(100, derivedCapability + 15)} pts
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 text-xs font-mono text-slate-300">
+          <div className="flex items-center gap-4 text-xs font-mono text-slate-700">
             <div className="flex flex-col items-end">
-              <span className="text-muted-foreground uppercase text-[10px]">Model Confidence</span>
-              <span className="text-emerald-400 font-semibold">{Math.round(confidenceScore * 100)}%</span>
+              <span className="text-slate-500 uppercase text-[10px]">Model Confidence</span>
+              <span className="text-emerald-700 font-bold">{Math.round(confidenceScore * 100)}%</span>
             </div>
-            <div className="h-8 w-px bg-white/10" />
+            <div className="h-8 w-px bg-slate-200" />
             <div className="flex flex-col items-end">
-              <span className="text-muted-foreground uppercase text-[10px]">Active Stack</span>
-              <span className="text-cyan-400 font-semibold">{Object.keys(selectedTechs).length} technologies</span>
+              <span className="text-slate-500 uppercase text-[10px]">Active Stack</span>
+              <span className="text-blue-700 font-bold">{Object.keys(selectedTechs).length} technologies</span>
             </div>
           </div>
         </div>
 
         {/* Step Progress Dots */}
-        <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4 text-xs">
+        <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4 text-xs">
           <div className="flex items-center gap-2">
             {[1, 2, 3].map((s) => (
               <button
@@ -218,10 +215,10 @@ export function BehavioralCalibrationDeck({
                 className={cn(
                   "flex items-center gap-1.5 rounded-full px-3 py-1 font-mono transition-all active:scale-[0.98]",
                   step === s
-                    ? "border border-primary bg-primary/20 text-primary font-semibold"
+                    ? "border border-blue-600 bg-blue-50 text-blue-700 font-semibold shadow-xs"
                     : s < step
-                    ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                    : "border border-white/5 bg-slate-950/40 text-slate-400 hover:text-slate-200"
+                    ? "border border-emerald-300 bg-emerald-50 text-emerald-700 font-medium"
+                    : "border border-slate-200 bg-slate-50 text-slate-500 hover:text-slate-800"
                 )}
               >
                 <span>0{s}</span>
@@ -231,7 +228,7 @@ export function BehavioralCalibrationDeck({
               </button>
             ))}
           </div>
-          <span className="font-mono text-muted-foreground">Step {step} of 3</span>
+          <span className="font-mono text-slate-500">Step {step} of 3</span>
         </div>
       </div>
 
@@ -239,18 +236,18 @@ export function BehavioralCalibrationDeck({
       {step === 1 && (
         <div className="space-y-6">
           {/* Question 1: Experience Anchor */}
-          <div className="rounded-xl border border-white/10 bg-slate-900/40 p-5 specular-top">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-primary font-semibold">
+          <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-blue-600 font-bold">
               Anchor 1 / 3
             </span>
-            <h3 className="mt-1 text-base font-semibold text-slate-100">
+            <h3 className="mt-1 text-base font-bold text-slate-900">
               What is your current open-source contribution rhythm?
             </h3>
-            <p className="mt-0.5 text-xs text-slate-400">
+            <p className="mt-0.5 text-xs text-slate-500">
               Calibrates how steeply the C++ core discounts complex multi-file pull requests.
             </p>
 
-            <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
               {EXPERIENCE_OPTIONS.map((opt) => (
                 <button
                   key={opt.id}
@@ -259,33 +256,33 @@ export function BehavioralCalibrationDeck({
                   className={cn(
                     "rounded-xl border p-4 text-left transition-all active:scale-[0.98]",
                     experience === opt.id
-                      ? "border-primary bg-primary/10 text-slate-100 shadow-md shadow-primary/5"
-                      : "border-white/5 bg-slate-950/40 text-slate-400 hover:border-white/10 hover:text-slate-200"
+                      ? "border-2 border-blue-600 bg-blue-50/50 shadow-xs"
+                      : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60"
                   )}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-slate-100">{opt.title}</span>
-                    {experience === opt.id && <Check className="size-4 text-primary" />}
+                    <span className="text-sm font-semibold text-slate-900">{opt.title}</span>
+                    {experience === opt.id && <Check className="size-4 text-blue-600" />}
                   </div>
-                  <p className="mt-2 text-xs text-slate-400 leading-relaxed">{opt.desc}</p>
+                  <p className="mt-2 text-xs text-slate-600 leading-relaxed">{opt.desc}</p>
                 </button>
               ))}
             </div>
           </div>
 
           {/* Question 2: Codebase Navigation Comfort */}
-          <div className="rounded-xl border border-white/10 bg-slate-900/40 p-5 specular-top">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-primary font-semibold">
+          <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-blue-600 font-bold">
               Anchor 2 / 3
             </span>
-            <h3 className="mt-1 text-base font-semibold text-slate-100">
+            <h3 className="mt-1 text-base font-bold text-slate-900">
               How do you prefer navigating unfamiliar repositories?
             </h3>
-            <p className="mt-0.5 text-xs text-slate-400">
+            <p className="mt-0.5 text-xs text-slate-500">
               Tunes difficulty tolerance and weight ($D$) in the 6-factor model.
             </p>
 
-            <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
               {NAVIGATION_OPTIONS.map((opt) => (
                 <button
                   key={opt.id}
@@ -294,33 +291,33 @@ export function BehavioralCalibrationDeck({
                   className={cn(
                     "rounded-xl border p-4 text-left transition-all active:scale-[0.98]",
                     navigation === opt.id
-                      ? "border-primary bg-primary/10 text-slate-100 shadow-md shadow-primary/5"
-                      : "border-white/5 bg-slate-950/40 text-slate-400 hover:border-white/10 hover:text-slate-200"
+                      ? "border-2 border-blue-600 bg-blue-50/50 shadow-xs"
+                      : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60"
                   )}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-slate-100">{opt.title}</span>
-                    {navigation === opt.id && <Check className="size-4 text-primary" />}
+                    <span className="text-sm font-semibold text-slate-900">{opt.title}</span>
+                    {navigation === opt.id && <Check className="size-4 text-blue-600" />}
                   </div>
-                  <p className="mt-2 text-xs text-slate-400 leading-relaxed">{opt.desc}</p>
+                  <p className="mt-2 text-xs text-slate-600 leading-relaxed">{opt.desc}</p>
                 </button>
               ))}
             </div>
           </div>
 
           {/* Question 3: Challenge Goal */}
-          <div className="rounded-xl border border-white/10 bg-slate-900/40 p-5 specular-top">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-primary font-semibold">
+          <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-blue-600 font-bold">
               Anchor 3 / 3
             </span>
-            <h3 className="mt-1 text-base font-semibold text-slate-100">
+            <h3 className="mt-1 text-base font-bold text-slate-900">
               What outcome are you pursuing in your next contribution sprint?
             </h3>
-            <p className="mt-0.5 text-xs text-slate-400">
+            <p className="mt-0.5 text-xs text-slate-500">
               Balances maintainer responsiveness ($R$) against issue architectural depth.
             </p>
 
-            <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
               {GOAL_OPTIONS.map((opt) => (
                 <button
                   key={opt.id}
@@ -329,15 +326,15 @@ export function BehavioralCalibrationDeck({
                   className={cn(
                     "rounded-xl border p-4 text-left transition-all active:scale-[0.98]",
                     challengeGoal === opt.id
-                      ? "border-primary bg-primary/10 text-slate-100 shadow-md shadow-primary/5"
-                      : "border-white/5 bg-slate-950/40 text-slate-400 hover:border-white/10 hover:text-slate-200"
+                      ? "border-2 border-blue-600 bg-blue-50/50 shadow-xs"
+                      : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60"
                   )}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-slate-100">{opt.title}</span>
-                    {challengeGoal === opt.id && <Check className="size-4 text-primary" />}
+                    <span className="text-sm font-semibold text-slate-900">{opt.title}</span>
+                    {challengeGoal === opt.id && <Check className="size-4 text-blue-600" />}
                   </div>
-                  <p className="mt-2 text-xs text-slate-400 leading-relaxed">{opt.desc}</p>
+                  <p className="mt-2 text-xs text-slate-600 leading-relaxed">{opt.desc}</p>
                 </button>
               ))}
             </div>
@@ -346,7 +343,7 @@ export function BehavioralCalibrationDeck({
           <div className="flex justify-end pt-2">
             <Button
               onClick={() => setStep(2)}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium px-6 active:scale-[0.98]"
+              className="bg-blue-600 text-white hover:bg-blue-700 font-medium px-6 active:scale-[0.98] shadow-sm"
             >
               Continue to Tech Stack
               <ChevronRight className="size-4 ml-1.5" />
@@ -358,11 +355,11 @@ export function BehavioralCalibrationDeck({
       {/* Step 2: Tech Stack & Proficiency Tuning */}
       {step === 2 && (
         <div className="space-y-6">
-          <div className="rounded-xl border border-white/10 bg-slate-900/40 p-5 specular-top">
-            <h3 className="text-base font-semibold text-slate-100">
+          <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm">
+            <h3 className="text-base font-bold text-slate-900">
               Select Languages &amp; Core Frameworks
             </h3>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-slate-500">
               The C++ ranking engine evaluates direct technology matches and cross-ecosystem affinity.
             </p>
 
@@ -377,8 +374,8 @@ export function BehavioralCalibrationDeck({
                     className={cn(
                       "rounded-lg border px-3 py-1.5 text-xs font-mono transition-all active:scale-[0.98]",
                       selected
-                        ? "border-primary bg-primary/15 text-primary font-semibold shadow-sm"
-                        : "border-white/10 bg-slate-950/40 text-slate-400 hover:text-slate-200"
+                        ? "border-blue-600 bg-blue-50 text-blue-700 font-semibold shadow-xs"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                     )}
                   >
                     {selected ? `✓ ${t}` : `+ ${t}`}
@@ -390,16 +387,16 @@ export function BehavioralCalibrationDeck({
 
           {/* Proficiency Sliders for Selected Techs */}
           {Object.keys(selectedTechs).length > 0 && (
-            <div className="rounded-xl border border-white/10 bg-slate-900/40 p-5 specular-top space-y-4">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-200">
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm space-y-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Proficiency Level Calibration
               </h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 {Object.entries(selectedTechs).map(([tech, score]) => (
-                  <div key={tech} className="rounded-lg border border-white/5 bg-slate-950/50 p-3.5 space-y-2">
+                  <div key={tech} className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 space-y-2.5">
                     <div className="flex items-center justify-between text-xs font-mono">
-                      <span className="font-semibold text-slate-200">{tech}</span>
-                      <span className="text-primary font-bold">{score}%</span>
+                      <span className="font-semibold text-slate-900">{tech}</span>
+                      <span className="text-blue-700 font-bold">{score}%</span>
                     </div>
                     <Slider
                       value={[score]}
@@ -419,7 +416,7 @@ export function BehavioralCalibrationDeck({
             <Button
               variant="outline"
               onClick={() => setStep(1)}
-              className="border-white/10 text-slate-300"
+              className="border-slate-200 bg-white hover:bg-slate-50 text-slate-700 active:scale-[0.98]"
             >
               <ChevronLeft className="size-4 mr-1.5" />
               Back
@@ -427,7 +424,7 @@ export function BehavioralCalibrationDeck({
             <Button
               onClick={() => setStep(3)}
               disabled={Object.keys(selectedTechs).length === 0}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium px-6 active:scale-[0.98]"
+              className="bg-blue-600 text-white hover:bg-blue-700 font-medium px-6 active:scale-[0.98] shadow-sm"
             >
               Review Calibration Summary
               <ChevronRight className="size-4 ml-1.5" />
@@ -439,49 +436,49 @@ export function BehavioralCalibrationDeck({
       {/* Step 3: Confirmation & Launch */}
       {step === 3 && (
         <div className="space-y-6">
-          <div className="rounded-xl border border-white/10 bg-slate-900/40 p-6 specular-top space-y-5">
-            <div className="flex items-center gap-2 text-emerald-400 text-sm font-semibold">
-              <ShieldCheck className="size-5" />
+          <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm space-y-5">
+            <div className="flex items-center gap-2 text-emerald-700 text-sm font-semibold">
+              <ShieldCheck className="size-5 text-emerald-600" />
               Calibration Complete &amp; Ready to Commit
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3 pt-2">
-              <div className="rounded-lg border border-white/5 bg-slate-950/50 p-4">
-                <span className="text-[10px] uppercase font-mono tracking-wider text-muted-foreground">
+            <div className="grid gap-3 sm:grid-cols-3 pt-2">
+              <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+                <span className="text-[10px] uppercase font-mono tracking-wider text-slate-500">
                   Open Source Experience
                 </span>
-                <div className="mt-1 text-sm font-semibold text-slate-200 capitalize">
+                <div className="mt-1 text-sm font-semibold text-slate-900 capitalize">
                   {experience.replace("_", " ")}
                 </div>
               </div>
-              <div className="rounded-lg border border-white/5 bg-slate-950/50 p-4">
-                <span className="text-[10px] uppercase font-mono tracking-wider text-muted-foreground">
+              <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+                <span className="text-[10px] uppercase font-mono tracking-wider text-slate-500">
                   Navigation Comfort
                 </span>
-                <div className="mt-1 text-sm font-semibold text-slate-200 capitalize">
+                <div className="mt-1 text-sm font-semibold text-slate-900 capitalize">
                   {navigation}
                 </div>
               </div>
-              <div className="rounded-lg border border-white/5 bg-slate-950/50 p-4">
-                <span className="text-[10px] uppercase font-mono tracking-wider text-muted-foreground">
+              <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+                <span className="text-[10px] uppercase font-mono tracking-wider text-slate-500">
                   Sprint Goal
                 </span>
-                <div className="mt-1 text-sm font-semibold text-slate-200 capitalize">
+                <div className="mt-1 text-sm font-semibold text-slate-900 capitalize">
                   {challengeGoal.replace("_", " ")}
                 </div>
               </div>
             </div>
 
             <div>
-              <span className="text-xs font-medium text-slate-400">Calibrated Tech Stack:</span>
+              <span className="text-xs font-medium text-slate-600">Calibrated Tech Stack:</span>
               <div className="mt-2 flex flex-wrap gap-2">
                 {Object.entries(selectedTechs).map(([t, s]) => (
                   <span
                     key={t}
-                    className="rounded-md border border-white/10 bg-slate-950/60 px-2.5 py-1 font-mono text-xs text-slate-200 flex items-center gap-1.5"
+                    className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 font-mono text-xs text-slate-800 flex items-center gap-1.5"
                   >
                     <span>{t}</span>
-                    <span className="text-primary font-semibold">{s}%</span>
+                    <span className="text-blue-700 font-bold">{s}%</span>
                   </span>
                 ))}
               </div>
@@ -492,7 +489,7 @@ export function BehavioralCalibrationDeck({
             <Button
               variant="outline"
               onClick={() => setStep(2)}
-              className="border-white/10 text-slate-300"
+              className="border-slate-200 bg-white hover:bg-slate-50 text-slate-700 active:scale-[0.98]"
             >
               <ChevronLeft className="size-4 mr-1.5" />
               Modify Stack
@@ -500,7 +497,7 @@ export function BehavioralCalibrationDeck({
             <Button
               onClick={handleFinish}
               disabled={pending}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium px-8 text-sm shadow-lg shadow-primary/20 active:scale-[0.98]"
+              className="bg-blue-600 text-white hover:bg-blue-700 font-medium px-8 text-sm shadow-sm active:scale-[0.98]"
             >
               {pending ? "Saving Calibration…" : "Confirm Calibration & Launch Feed"}
               <Sparkles className="size-4 ml-2" />
@@ -525,8 +522,8 @@ export function StarterSummary({ p }: { p: StarterProfile }) {
     <dl className="grid gap-x-4 gap-y-2 text-sm sm:grid-cols-[180px_1fr]">
       {rows.map(([k, v]) => (
         <div key={k} className="contents">
-          <dt className="text-muted-foreground">{k}</dt>
-          <dd className="first-letter:uppercase text-slate-200">{v}</dd>
+          <dt className="text-slate-500">{k}</dt>
+          <dd className="first-letter:uppercase text-slate-800 font-medium">{v}</dd>
         </div>
       ))}
     </dl>

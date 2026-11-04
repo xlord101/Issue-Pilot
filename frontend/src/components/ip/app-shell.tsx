@@ -48,7 +48,7 @@ const CORE_NAV_ITEMS: NavItem[] = [
 function Nav({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav aria-label="Main Navigation" className="space-y-1">
-      <div className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/80">
+      <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
         Core Surfaces
       </div>
       <ul className="space-y-1">
@@ -58,16 +58,16 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
               to={item.to}
               onClick={onNavigate}
               activeOptions={{ exact: item.exact ?? false }}
-              className="group flex flex-col gap-0.5 rounded-lg border border-transparent px-3 py-2.5 text-sidebar-foreground transition-all duration-150 hover:border-white/5 hover:bg-sidebar-accent/60 active:scale-[0.98]"
+              className="group flex flex-col gap-0.5 rounded-lg border border-transparent px-3 py-2.5 text-slate-600 transition-all duration-140 hover:border-slate-200 hover:bg-slate-100/70 active:scale-[0.98]"
               activeProps={{
-                className: "!border-primary/30 !bg-primary/10 !text-foreground font-medium shadow-sm shadow-primary/5",
+                className: "!border-blue-200 !bg-blue-50/80 !text-blue-700 font-semibold shadow-xs",
               }}
             >
               <div className="flex items-center gap-2.5">
-                <item.icon className="size-4 shrink-0 opacity-70 group-hover:opacity-100 transition-opacity" aria-hidden />
-                <span className="text-sm font-medium">{item.label}</span>
+                <item.icon className="size-4 shrink-0 text-slate-500 group-hover:text-slate-900 group-data-[status=active]:text-blue-700 transition-colors" aria-hidden />
+                <span className="text-sm font-medium tracking-tight text-slate-900">{item.label}</span>
               </div>
-              <span className="pl-6.5 text-[11px] text-muted-foreground line-clamp-1">
+              <span className="pl-6.5 text-[11px] text-slate-500 line-clamp-1">
                 {item.description}
               </span>
             </Link>
@@ -96,8 +96,8 @@ export function AppShell({ session, children }: { session: Session; children: Re
   }
 
   const sidebar = (
-    <div className="flex h-full flex-col bg-slate-950/70 backdrop-blur-2xl border-r border-white/10">
-      <div className="flex h-16 items-center border-b border-white/10 px-5">
+    <div className="flex h-full flex-col bg-white border-r border-slate-200/90 shadow-xs">
+      <div className="flex h-16 items-center border-b border-slate-200/80 px-5">
         <Logo />
       </div>
 
@@ -105,28 +105,28 @@ export function AppShell({ session, children }: { session: Session; children: Re
         <Nav onNavigate={() => setOpen(false)} />
       </div>
 
-      <div className="border-t border-white/10 p-4 bg-slate-900/30">
-        <div className="rounded-lg border border-white/5 bg-slate-900/50 p-3 space-y-2">
+      <div className="border-t border-slate-200/80 p-4 bg-slate-50/70">
+        <div className="rounded-lg border border-slate-200/90 bg-white p-3 space-y-2 shadow-xs">
           <div className="flex items-center justify-between text-xs font-mono">
-            <span className="text-muted-foreground flex items-center gap-1.5">
-              <Cpu className="size-3 text-emerald-400" />
+            <span className="text-slate-500 flex items-center gap-1.5">
+              <Cpu className="size-3 text-emerald-600" />
               Engine
             </span>
-            <span className="text-emerald-400 font-semibold flex items-center gap-1">
-              <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-emerald-700 font-semibold flex items-center gap-1">
+              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
               C++ Core &bull; &lt;2ms
             </span>
           </div>
           <div className="flex items-center justify-between text-xs font-mono">
-            <span className="text-muted-foreground flex items-center gap-1.5">
-              <Database className="size-3 text-cyan-400" />
+            <span className="text-slate-500 flex items-center gap-1.5">
+              <Database className="size-3 text-blue-600" />
               Candidates
             </span>
-            <span className="text-slate-300">Atlas Pool</span>
+            <span className="text-slate-700 font-medium">Atlas Pool</span>
           </div>
         </div>
 
-        <p className="mt-3 text-[11px] text-muted-foreground leading-relaxed">
+        <p className="mt-3 text-[11px] text-slate-500 leading-relaxed">
           Grounded 6-factor issue recommendation. Actions commit on source platforms.
         </p>
       </div>
@@ -134,24 +134,24 @@ export function AppShell({ session, children }: { session: Session; children: Re
   );
 
   return (
-    <div className="min-h-screen bg-[#080C14] text-slate-100 antialiased selection:bg-primary/20 selection:text-primary">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 antialiased selection:bg-blue-600 selection:text-white font-sans">
       <aside className="fixed inset-y-0 left-0 hidden w-64 lg:block z-30">
         {sidebar}
       </aside>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="left" className="w-72 bg-slate-950 p-0 border-r border-white/10">
+        <SheetContent side="left" className="w-72 bg-white p-0 border-r border-slate-200">
           <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
           {sidebar}
         </SheetContent>
       </Sheet>
 
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-white/10 bg-slate-950/60 backdrop-blur-xl px-4 sm:px-6 specular-top">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-200/90 bg-white/80 backdrop-blur-md px-4 sm:px-6">
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden text-slate-300 hover:text-white"
+            className="lg:hidden text-slate-600 hover:text-slate-900"
             aria-label="Open navigation"
             onClick={() => setOpen(true)}
           >
@@ -162,17 +162,17 @@ export function AppShell({ session, children }: { session: Session; children: Re
             <Logo />
           </div>
 
-          <div className="hidden md:flex items-center gap-2">
-            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/60 px-3 py-1 text-xs">
-              <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="font-mono text-slate-300">C++ 6-Factor Engine Active</span>
+          <div className="hidden md:flex items-center gap-2.5">
+            <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100/80 px-3 py-1 text-xs">
+              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="font-mono text-slate-700 font-medium">C++ 6-Factor Engine Active</span>
             </div>
-            <div className="flex items-center gap-1.5 rounded-full border border-white/10 bg-slate-900/60 px-3 py-1 text-xs text-slate-300">
-              <span className="font-medium text-amber-400">Capability:</span>
-              <span className="font-mono font-semibold text-slate-100">76/100</span>
+            <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100/80 px-3 py-1 text-xs text-slate-700">
+              <span className="font-medium text-slate-500">Capability:</span>
+              <span className="font-mono font-bold text-blue-700">76/100</span>
               <Link
                 to="/onboarding"
-                className="ml-1 text-[11px] text-primary hover:underline flex items-center gap-0.5"
+                className="ml-1 text-[11px] text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-0.5"
                 title="Recalibrate behavioral model"
               >
                 <RefreshCw className="size-2.5" />
@@ -186,15 +186,15 @@ export function AppShell({ session, children }: { session: Session; children: Re
               className={cn(
                 "hidden rounded-full border px-2.5 py-0.5 font-mono text-[11px] font-medium tracking-wide sm:inline",
                 USE_MOCK_API
-                  ? "border-amber-500/30 bg-amber-500/10 text-amber-400"
-                  : "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                  ? "border-amber-300 bg-amber-50 text-amber-700"
+                  : "border-emerald-300 bg-emerald-50 text-emerald-700"
               )}
             >
               {USE_MOCK_API ? "Standby Mode" : "Live Backend"}
             </span>
 
-            <div className="hidden sm:flex items-center gap-2 text-sm text-slate-300 font-mono">
-              <span className="size-2 rounded-full bg-slate-500" />
+            <div className="hidden sm:flex items-center gap-2 text-xs text-slate-700 font-mono bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">
+              <span className="size-2 rounded-full bg-emerald-500" />
               <span>{session.user.login}</span>
             </div>
 
@@ -202,7 +202,7 @@ export function AppShell({ session, children }: { session: Session; children: Re
               variant="outline"
               size="sm"
               onClick={signOut}
-              className="border-white/10 bg-slate-900/50 hover:bg-slate-800 text-slate-300 hover:text-white text-xs h-8"
+              className="border-slate-200 bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-xs h-8 active:scale-[0.98]"
             >
               <LogOut className="size-3.5 mr-1" />
               Sign out

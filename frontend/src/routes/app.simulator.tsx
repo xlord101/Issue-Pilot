@@ -100,14 +100,14 @@ const PERSONAS: Persona[] = [
     id: "contributor-beginner-coldstart",
     name: "Jamie Chen",
     capability: 45,
-    title: "First-Time OSS Contributor",
+    title: "First-Time Contributor",
     skills: ["Python", "Documentation", "Git", "Markdown"],
   },
   {
     id: "contributor-systems-cpp",
     name: "Marcus Vance",
     capability: 88,
-    title: "Systems & Compiler Engineer",
+    title: "Systems Engineer",
     skills: ["C++", "CMake", "Rust", "Linux Kernel", "Low-Level IO"],
   },
 ];
@@ -118,7 +118,7 @@ interface SimulationCandidate {
   number: number;
   title: string;
   technologies: string[];
-  rawScores: Record<string, number>; // 0 to 100 for S, D, R, H, F, N
+  rawScores: Record<string, number>;
   url: string;
 }
 
@@ -245,19 +245,16 @@ export function SimulatorPage() {
     return Object.values(weights).reduce((a, b) => a + b, 0);
   }, [weights]);
 
-  // Adjust raw scores according to persona capability & skills
   const activePersona = PERSONAS.find((p) => p.id === selectedPersona) || PERSONAS[0];
 
   const rankedCandidates = useMemo(() => {
     const list = SAMPLE_CANDIDATES.map((c) => {
-      // Calculate skill multiplier based on persona match
       let skillMultiplier = 0.5;
       const matched = c.technologies.filter((t) => activePersona.skills.includes(t));
       if (matched.length > 0) {
         skillMultiplier = 0.8 + (matched.length / c.technologies.length) * 0.2;
       }
 
-      // Calculate persona difficulty distance
       const baseDiff = c.rawScores.difficulty_match;
       const personaDiffBonus = 100 - Math.abs(activePersona.capability - (100 - baseDiff));
 
@@ -270,7 +267,6 @@ export function SimulatorPage() {
         freshness: c.rawScores.freshness,
       };
 
-      // Weighted combination
       const normFactor = totalWeight > 0 ? totalWeight : 1;
       const finalScore = (
         (scores.skill_match * weights.skill_match +
@@ -293,7 +289,6 @@ export function SimulatorPage() {
     return list;
   }, [weights, totalWeight, activePersona]);
 
-  // Track rank shifts
   useEffect(() => {
     const newRanks: Record<string, number> = {};
     rankedCandidates.forEach((c, idx) => {
@@ -303,7 +298,6 @@ export function SimulatorPage() {
   }, [rankedCandidates]);
 
   const updateWeight = (key: string, val: number) => {
-    // Record current ranks before changing
     const snapshot: Record<string, number> = {};
     rankedCandidates.forEach((c, idx) => {
       snapshot[c.id] = idx + 1;
@@ -349,22 +343,22 @@ export function SimulatorPage() {
       <div>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="flex size-7 items-center justify-center rounded-lg border border-primary/40 bg-primary/10 text-primary">
+            <div className="flex items-center gap-2.5">
+              <span className="flex size-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600">
                 <SlidersHorizontal className="size-4" />
               </span>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-100 sm:text-3xl">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                 What-If Algorithm Simulator
               </h1>
             </div>
-            <p className="mt-1.5 text-sm text-slate-400 max-w-2xl">
+            <p className="mt-1.5 text-sm text-slate-600 max-w-2xl leading-relaxed">
               Calibrate the six deterministic ranking weights in real-time. Candidate scores are recomputed through the C++ core engine with zero synthetic latency.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-900/40 p-1.5 backdrop-blur-xl">
-            <div className="flex items-center gap-1.5 px-3 py-1 text-xs font-mono text-emerald-400">
-              <Cpu className="size-3.5" />
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-xs">
+            <div className="flex items-center gap-1.5 px-3 py-1 text-xs font-mono text-emerald-700 font-semibold">
+              <Cpu className="size-3.5 text-emerald-600" />
               <span>C++ Engine &bull; 1.4ms</span>
             </div>
           </div>
@@ -372,7 +366,7 @@ export function SimulatorPage() {
 
         {/* Quick Presets */}
         <div className="mt-6 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-slate-400 mr-1">Presets:</span>
+          <span className="text-xs font-semibold text-slate-500 mr-1 uppercase tracking-wider">Presets:</span>
           {PRESETS.map((p) => {
             const isMatch = Object.keys(p.weights).every((k) => weights[k] === p.weights[k as keyof typeof p.weights]);
             return (
@@ -382,8 +376,8 @@ export function SimulatorPage() {
                 className={cn(
                   "rounded-full border px-3 py-1 text-xs font-medium transition-all active:scale-[0.98]",
                   isMatch
-                    ? "border-primary bg-primary/20 text-primary shadow-sm shadow-primary/10"
-                    : "border-white/10 bg-slate-900/50 text-slate-300 hover:border-white/20 hover:text-white"
+                    ? "border-blue-600 bg-blue-50 text-blue-700 font-semibold shadow-xs"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                 )}
                 title={p.desc}
               >
@@ -396,7 +390,7 @@ export function SimulatorPage() {
             size="sm"
             variant="ghost"
             onClick={() => applyPreset(PRESETS[0].weights)}
-            className="ml-auto h-7 text-xs text-slate-400 hover:text-white"
+            className="ml-auto h-7 text-xs text-slate-500 hover:text-slate-900"
           >
             <RotateCcw className="size-3 mr-1" />
             Reset Defaults
@@ -408,13 +402,13 @@ export function SimulatorPage() {
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Left Column: Hardware Fader Sliders */}
         <div className="lg:col-span-5 space-y-5">
-          <div className="rounded-xl border border-white/10 bg-slate-900/50 backdrop-blur-xl p-5 specular-top shadow-xl">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-200">
+                <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
                   Hardware Fader Board
                 </h2>
-                <p className="text-xs text-slate-400">Relative influence on final score</p>
+                <p className="text-xs text-slate-500">Relative influence on final score</p>
               </div>
 
               <div className="flex items-center gap-2">
@@ -422,8 +416,8 @@ export function SimulatorPage() {
                   className={cn(
                     "rounded-md border px-2 py-0.5 font-mono text-xs font-bold",
                     totalWeight === 100
-                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                      : "border-amber-500/30 bg-amber-500/10 text-amber-400"
+                      ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                      : "border-amber-300 bg-amber-50 text-amber-700"
                   )}
                 >
                   Sum: {totalWeight}%
@@ -431,7 +425,7 @@ export function SimulatorPage() {
                 {totalWeight !== 100 && (
                   <button
                     onClick={normalizeWeights}
-                    className="text-[11px] text-primary hover:underline font-mono"
+                    className="text-[11px] text-blue-600 hover:underline font-mono font-medium"
                     title="Auto-normalize to sum to 100%"
                   >
                     Normalize
@@ -441,10 +435,10 @@ export function SimulatorPage() {
             </div>
 
             {/* Persona Selector inside Fader Board */}
-            <div className="mt-4 rounded-lg border border-white/5 bg-slate-950/50 p-3 space-y-2">
-              <label className="text-xs font-medium text-slate-300 flex items-center justify-between">
+            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/80 p-3.5 space-y-2">
+              <label className="text-xs font-semibold text-slate-700 flex items-center justify-between">
                 <span>Active Contributor Persona</span>
-                <span className="font-mono text-primary text-[11px]">
+                <span className="font-mono text-blue-700 text-[11px] font-bold">
                   Capability: {activePersona.capability}/100
                 </span>
               </label>
@@ -454,14 +448,14 @@ export function SimulatorPage() {
                     key={p.id}
                     onClick={() => setSelectedPersona(p.id)}
                     className={cn(
-                      "rounded-md border p-2 text-left transition-all active:scale-[0.98]",
+                      "rounded-lg border p-2 text-left transition-all active:scale-[0.98]",
                       selectedPersona === p.id
-                        ? "border-primary/50 bg-primary/10 text-white shadow-sm"
-                        : "border-white/5 bg-slate-900/40 text-slate-400 hover:text-slate-200"
+                        ? "border-2 border-blue-600 bg-blue-50/60 shadow-xs"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                     )}
                   >
-                    <div className="text-xs font-semibold truncate">{p.name}</div>
-                    <div className="text-[10px] text-muted-foreground truncate">{p.title}</div>
+                    <div className="text-xs font-semibold text-slate-900 truncate">{p.name}</div>
+                    <div className="text-[10px] text-slate-500 truncate">{p.title}</div>
                   </button>
                 ))}
               </div>
@@ -475,12 +469,12 @@ export function SimulatorPage() {
                   <div key={f.key} className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
-                        <span className="flex size-5 items-center justify-center rounded font-mono text-[10px] font-bold bg-white/10 text-slate-200">
+                        <span className="flex size-5 items-center justify-center rounded font-mono text-[10px] font-bold bg-slate-100 border border-slate-200 text-slate-800">
                           {f.symbol}
                         </span>
-                        <span className="font-medium text-slate-200">{f.label}</span>
+                        <span className="font-semibold text-slate-900">{f.label}</span>
                       </div>
-                      <span className="font-mono text-sm font-semibold text-primary tabular-nums">
+                      <span className="font-mono text-sm font-bold text-blue-700 tabular-nums">
                         {val}%
                       </span>
                     </div>
@@ -507,11 +501,11 @@ export function SimulatorPage() {
         {/* Right Column: Live Ranked Output Stream */}
         <div className="lg:col-span-7 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-              <Zap className="size-4 text-amber-400" />
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 flex items-center gap-2">
+              <Zap className="size-4 text-amber-500" />
               Dynamic Candidate Ranking ({rankedCandidates.length} evaluated)
             </h2>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-slate-500 font-medium">
               Sorted by recomputed match score
             </span>
           </div>
@@ -520,31 +514,31 @@ export function SimulatorPage() {
             {rankedCandidates.map((candidate, index) => {
               const currentRank = index + 1;
               const prevRank = prevRanks[candidate.id] ?? currentRank;
-              const rankDelta = prevRank - currentRank; // positive means moved up!
+              const rankDelta = prevRank - currentRank;
 
               return (
                 <div
                   key={candidate.id}
-                  className="rounded-xl border border-white/10 bg-slate-900/40 backdrop-blur-xl p-4 transition-all duration-300 hover:border-white/20 hover:bg-slate-900/60 specular-top"
+                  className="rounded-xl border border-slate-200/90 bg-white p-4.5 shadow-xs transition-all duration-200 hover:border-slate-300 hover:shadow-sm"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
                       {/* Rank Badge with movement indicator */}
-                      <div className="flex flex-col items-center justify-center rounded-lg border border-white/10 bg-slate-950/60 px-2.5 py-1.5 min-w-12 text-center">
-                        <span className="font-mono text-base font-bold text-slate-100">
+                      <div className="flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 min-w-12 text-center">
+                        <span className="font-mono text-base font-bold text-slate-900">
                           #{currentRank}
                         </span>
                         {rankDelta > 0 ? (
-                          <span className="flex items-center text-[10px] font-mono font-medium text-emerald-400">
+                          <span className="flex items-center text-[10px] font-mono font-bold text-emerald-700">
                             <ArrowUpRight className="size-3" />+{rankDelta}
                           </span>
                         ) : rankDelta < 0 ? (
-                          <span className="flex items-center text-[10px] font-mono font-medium text-rose-400">
+                          <span className="flex items-center text-[10px] font-mono font-bold text-rose-700">
                             <ArrowDownRight className="size-3" />
                             {rankDelta}
                           </span>
                         ) : (
-                          <span className="flex items-center text-[10px] font-mono text-slate-500">
+                          <span className="flex items-center text-[10px] font-mono text-slate-400">
                             <Minus className="size-2.5" />
                           </span>
                         )}
@@ -552,11 +546,11 @@ export function SimulatorPage() {
 
                       {/* Issue Details */}
                       <div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span className="font-mono text-slate-300 font-semibold">{candidate.repo}</span>
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                          <span className="font-mono text-slate-900 font-bold">{candidate.repo}</span>
                           <span className="font-mono text-slate-500">#{candidate.number}</span>
                         </div>
-                        <h3 className="mt-1 text-sm font-semibold text-slate-100 leading-snug line-clamp-1">
+                        <h3 className="mt-1 text-sm font-bold text-slate-900 leading-snug line-clamp-1">
                           {candidate.title}
                         </h3>
                         <div className="mt-2 flex flex-wrap gap-1.5">
@@ -566,8 +560,8 @@ export function SimulatorPage() {
                               className={cn(
                                 "rounded px-1.5 py-0.5 font-mono text-[10px]",
                                 activePersona.skills.includes(t)
-                                  ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-medium"
-                                  : "border border-white/5 bg-slate-950/50 text-slate-400"
+                                  ? "border border-emerald-300 bg-emerald-50 text-emerald-800 font-semibold"
+                                  : "border border-slate-200 bg-slate-50 text-slate-600 font-medium"
                               )}
                             >
                               {t}
@@ -579,17 +573,17 @@ export function SimulatorPage() {
 
                     {/* Final Recomputed Score */}
                     <div className="text-right shrink-0">
-                      <div className="font-mono text-2xl font-bold text-primary tabular-nums">
+                      <div className="font-mono text-2xl font-bold text-blue-700 tabular-nums">
                         {candidate.finalScore}
                       </div>
-                      <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                      <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500">
                         Re-Ranked Score
                       </div>
                       <a
                         href={candidate.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="mt-1 inline-flex items-center gap-1 text-[11px] text-slate-400 hover:text-white"
+                        className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-blue-600"
                       >
                         Source <ExternalLink className="size-2.5" />
                       </a>
@@ -597,30 +591,30 @@ export function SimulatorPage() {
                   </div>
 
                   {/* Component Factor Contribution Bar */}
-                  <div className="mt-3 grid grid-cols-6 gap-1 pt-3 border-t border-white/5 text-[10px] font-mono text-slate-400 text-center">
+                  <div className="mt-3 grid grid-cols-6 gap-1 pt-3 border-t border-slate-100 text-[10px] font-mono text-slate-600 text-center">
                     <div>
-                      <div className="text-slate-500">S ({weights.skill_match}%)</div>
-                      <div className="text-slate-200 font-medium">{candidate.computedScores.skill_match}</div>
+                      <div className="text-slate-400 font-medium">S ({weights.skill_match}%)</div>
+                      <div className="text-slate-900 font-bold">{candidate.computedScores.skill_match}</div>
                     </div>
                     <div>
-                      <div className="text-slate-500">D ({weights.difficulty_match}%)</div>
-                      <div className="text-slate-200 font-medium">{candidate.computedScores.difficulty_match}</div>
+                      <div className="text-slate-400 font-medium">D ({weights.difficulty_match}%)</div>
+                      <div className="text-slate-900 font-bold">{candidate.computedScores.difficulty_match}</div>
                     </div>
                     <div>
-                      <div className="text-slate-500">R ({weights.responsiveness}%)</div>
-                      <div className="text-slate-200 font-medium">{candidate.computedScores.responsiveness}</div>
+                      <div className="text-slate-400 font-medium">R ({weights.responsiveness}%)</div>
+                      <div className="text-slate-900 font-bold">{candidate.computedScores.responsiveness}</div>
                     </div>
                     <div>
-                      <div className="text-slate-500">H ({weights.repo_health}%)</div>
-                      <div className="text-slate-200 font-medium">{candidate.computedScores.repo_health}</div>
+                      <div className="text-slate-400 font-medium">H ({weights.repo_health}%)</div>
+                      <div className="text-slate-900 font-bold">{candidate.computedScores.repo_health}</div>
                     </div>
                     <div>
-                      <div className="text-slate-500">F ({weights.feedback}%)</div>
-                      <div className="text-slate-200 font-medium">{candidate.computedScores.feedback}</div>
+                      <div className="text-slate-400 font-medium">F ({weights.feedback}%)</div>
+                      <div className="text-slate-900 font-bold">{candidate.computedScores.feedback}</div>
                     </div>
                     <div>
-                      <div className="text-slate-500">N ({weights.freshness}%)</div>
-                      <div className="text-slate-200 font-medium">{candidate.computedScores.freshness}</div>
+                      <div className="text-slate-400 font-medium">N ({weights.freshness}%)</div>
+                      <div className="text-slate-900 font-bold">{candidate.computedScores.freshness}</div>
                     </div>
                   </div>
                 </div>
@@ -632,4 +626,3 @@ export function SimulatorPage() {
     </div>
   );
 }
-

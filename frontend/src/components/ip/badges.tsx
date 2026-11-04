@@ -4,14 +4,31 @@ import type { NormalizedIssue, Source } from "@/lib/api";
 import { USE_MOCK_API } from "@/lib/api";
 import { relativeTime, absoluteTime } from "@/lib/format";
 
-const SOURCE_LABEL: Record<Source, string> = { github: "GitHub", gitlab: "GitLab", gitea: "Codeberg/Gitea", bugzilla: "Bugzilla" };
-const SOURCE_MARK: Record<Source, string> = { github: "GH", gitlab: "GL", gitea: "CB", bugzilla: "BZ" };
+const SOURCE_LABEL: Record<Source, string> = {
+  github: "GitHub",
+  gitlab: "GitLab",
+  gitea: "Codeberg/Gitea",
+  bugzilla: "Bugzilla",
+};
+
+const SOURCE_MARK: Record<Source, string> = {
+  github: "GH",
+  gitlab: "GL",
+  gitea: "CB",
+  bugzilla: "BZ",
+};
+
 export const sourceLabel = (s: Source) => SOURCE_LABEL[s] ?? s;
 
 export function SourceBadge({ source, className }: { source: Source; className?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-1.5 rounded-sm border bg-surface-2 px-1.5 py-0.5 text-xs text-muted-foreground", className)}>
-      <span className="font-mono text-[10px] font-medium text-foreground">{SOURCE_MARK[source] ?? "??"}</span>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-100/90 px-2 py-0.5 text-xs text-slate-700 font-medium",
+        className
+      )}
+    >
+      <span className="font-mono text-[10px] font-bold text-slate-900">{SOURCE_MARK[source] ?? "??"}</span>
       {sourceLabel(source)}
     </span>
   );
@@ -19,16 +36,22 @@ export function SourceBadge({ source, className }: { source: Source; className?:
 
 export type Tone = "neutral" | "success" | "warning" | "danger" | "accent";
 const TONE: Record<Tone, string> = {
-  neutral: "border-border text-muted-foreground",
-  success: "border-success/40 text-success",
-  warning: "border-warning/40 text-warning",
-  danger: "border-destructive/50 text-destructive",
-  accent: "border-primary/40 text-primary",
+  neutral: "border-slate-200 bg-slate-50 text-slate-700",
+  success: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  warning: "border-amber-200 bg-amber-50 text-amber-700",
+  danger: "border-rose-200 bg-rose-50 text-rose-700",
+  accent: "border-blue-200 bg-blue-50 text-blue-700",
 };
 
 export function StatusBadge({ tone = "neutral", children, className }: { tone?: Tone; children: ReactNode; className?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-1.5 rounded-sm border px-1.5 py-0.5 text-xs font-medium", TONE[tone], className)}>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium",
+        TONE[tone],
+        className
+      )}
+    >
       <span aria-hidden className="size-1.5 rounded-full bg-current" />
       {children}
     </span>
@@ -39,14 +62,23 @@ export function StatusBadge({ tone = "neutral", children, className }: { tone?: 
 export function VerificationBadge({ issue }: { issue: Pick<NormalizedIssue, "is_open" | "is_unassigned" | "verified_at"> }) {
   let tone: Tone = "neutral";
   let label = "Unverified";
-  if (issue.is_open === false) { tone = "danger"; label = "Closed"; }
-  else if (issue.is_open === true && issue.is_unassigned === true) { tone = "success"; label = "Open · unclaimed"; }
-  else if (issue.is_open === true && issue.is_unassigned === false) { tone = "warning"; label = "Claimed"; }
-  else if (issue.is_open === true) { tone = "neutral"; label = "Open · claim unknown"; }
+  if (issue.is_open === false) {
+    tone = "danger";
+    label = "Closed";
+  } else if (issue.is_open === true && issue.is_unassigned === true) {
+    tone = "success";
+    label = "Open · unclaimed";
+  } else if (issue.is_open === true && issue.is_unassigned === false) {
+    tone = "warning";
+    label = "Claimed";
+  } else if (issue.is_open === true) {
+    tone = "neutral";
+    label = "Open · claim unknown";
+  }
   return (
     <span className="inline-flex items-center gap-2">
       <StatusBadge tone={tone}>{label}</StatusBadge>
-      <span className="text-xs text-muted-foreground" title={absoluteTime(issue.verified_at)}>
+      <span className="text-xs text-slate-500 font-mono" title={absoluteTime(issue.verified_at)}>
         verified {relativeTime(issue.verified_at)}
       </span>
     </span>
@@ -55,14 +87,16 @@ export function VerificationBadge({ issue }: { issue: Pick<NormalizedIssue, "is_
 
 /** labels:null = source has no label concept. labels:[] = none set. Kept distinct. */
 export function LabelList({ labels, source }: { labels: string[] | null; source: Source }) {
-  if (labels === null) return <span className="text-xs italic text-muted-foreground">{sourceLabel(source)} has no labels</span>;
-  if (labels.length === 0) return <span className="text-xs text-muted-foreground">No labels</span>;
+  if (labels === null) return <span className="text-xs italic text-slate-500">{sourceLabel(source)} has no labels</span>;
+  if (labels.length === 0) return <span className="text-xs text-slate-500">No labels</span>;
   return (
-    <ul className="flex flex-wrap gap-1" aria-label="Labels">
+    <ul className="flex flex-wrap gap-1.5" aria-label="Labels">
       {labels.map((l) => (
-        <li key={l} className="rounded-full border px-2 py-0.5 text-xs text-foreground/85">{l}</li>
+        <li key={l} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-xs text-slate-700">
+          {l}
+        </li>
       ))}
-      <li className="self-center text-[11px] text-muted-foreground">Supporting signal — not the sole suitability decision.</li>
+      <li className="self-center text-[11px] text-slate-400">Supporting signal — not sole decision</li>
     </ul>
   );
 }
@@ -70,7 +104,12 @@ export function LabelList({ labels, source }: { labels: string[] | null; source:
 export function DemoDataBadge({ className }: { className?: string }) {
   if (!USE_MOCK_API) return null;
   return (
-    <span className={cn("inline-flex items-center rounded-sm border border-warning/40 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-warning", className)}>
+    <span
+      className={cn(
+        "inline-flex items-center rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-amber-700 font-medium",
+        className
+      )}
+    >
       Demo data
     </span>
   );
@@ -78,7 +117,7 @@ export function DemoDataBadge({ className }: { className?: string }) {
 
 export function ConfidenceIndicator({ value, compact }: { value: number | null; compact?: boolean }) {
   if (value === null || value === undefined) {
-    return <span className="text-xs text-muted-foreground">Confidence unknown</span>;
+    return <span className="text-xs text-slate-400">Confidence unknown</span>;
   }
   const v = Math.max(0, Math.min(1, value));
   const level = v >= 0.75 ? 3 : v >= 0.5 ? 2 : 1;
@@ -87,10 +126,10 @@ export function ConfidenceIndicator({ value, compact }: { value: number | null; 
     <span className="inline-flex items-center gap-1.5" aria-label={`Confidence ${word}, ${Math.round(v * 100)} percent`}>
       <span className="flex gap-0.5" aria-hidden>
         {[1, 2, 3].map((i) => (
-          <span key={i} className={cn("h-2.5 w-1 rounded-[1px]", i <= level ? "bg-primary" : "bg-border")} />
+          <span key={i} className={cn("h-2.5 w-1 rounded-[1px]", i <= level ? "bg-blue-600" : "bg-slate-200")} />
         ))}
       </span>
-      {!compact && <span className="text-xs text-muted-foreground">{word} · {Math.round(v * 100)}%</span>}
+      {!compact && <span className="text-xs text-slate-500 font-mono">{word} · {Math.round(v * 100)}%</span>}
     </span>
   );
 }

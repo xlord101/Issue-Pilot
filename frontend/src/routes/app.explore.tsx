@@ -207,22 +207,22 @@ export function ExplorePage() {
       <div>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="flex size-7 items-center justify-center rounded-lg border border-primary/40 bg-primary/10 text-primary">
+            <div className="flex items-center gap-2.5">
+              <span className="flex size-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600">
                 <Compass className="size-4" />
               </span>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-100 sm:text-3xl">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                 Multi-Platform Issue Explorer
               </h1>
             </div>
-            <p className="mt-1.5 text-sm text-slate-400 max-w-2xl">
+            <p className="mt-1.5 text-sm text-slate-600 max-w-2xl leading-relaxed">
               Inspect vetted issues across GitHub, GitLab, Codeberg, and Bugzilla. Every record is continuously verified for live unassigned status.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-900/40 p-1.5 backdrop-blur-xl">
-            <div className="flex items-center gap-1.5 px-3 py-1 text-xs font-mono text-cyan-400">
-              <Layers className="size-3.5" />
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-xs">
+            <div className="flex items-center gap-1.5 px-3 py-1 text-xs font-mono text-slate-700 font-semibold">
+              <Layers className="size-3.5 text-blue-600" />
               <span>Pool: 4 Supported Platforms &bull; {MONITORED_POOL.length} Verified</span>
             </div>
           </div>
@@ -237,7 +237,7 @@ export function ExplorePage() {
                 placeholder="Search by keyword, repository name, or technology..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 h-10 border-white/10 bg-slate-900/50 text-slate-100 placeholder:text-slate-500 rounded-lg focus-visible:ring-primary/40"
+                className="pl-10 h-10 border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 rounded-lg focus-visible:ring-blue-600/40 shadow-xs"
               />
             </div>
 
@@ -249,8 +249,8 @@ export function ExplorePage() {
                   className={cn(
                     "rounded-lg border px-3 py-2 text-xs font-medium whitespace-nowrap transition-all active:scale-[0.98]",
                     platform === p.id
-                      ? "border-primary bg-primary/20 text-primary font-semibold shadow-sm"
-                      : "border-white/10 bg-slate-900/40 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                      ? "border-blue-600 bg-blue-50 text-blue-700 font-semibold shadow-xs"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                   )}
                 >
                   {p.label}
@@ -262,7 +262,7 @@ export function ExplorePage() {
           {/* Technology & Difficulty Chips */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs text-muted-foreground mr-1">Stack:</span>
+              <span className="text-xs font-medium text-slate-500 mr-1">Stack:</span>
               {TECH_TAGS.map((t) => (
                 <button
                   key={t}
@@ -270,8 +270,8 @@ export function ExplorePage() {
                   className={cn(
                     "rounded-md border px-2.5 py-1 text-xs font-mono transition-all active:scale-[0.98]",
                     tech === t
-                      ? "border-white/30 bg-slate-800 text-white font-semibold"
-                      : "border-white/5 bg-slate-950/40 text-slate-400 hover:text-slate-200"
+                      ? "border-slate-800 bg-slate-900 text-white font-semibold shadow-xs"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
                   )}
                 >
                   {t}
@@ -280,16 +280,16 @@ export function ExplorePage() {
             </div>
 
             <div className="flex items-center gap-1.5 text-xs">
-              <span className="text-muted-foreground">Difficulty:</span>
+              <span className="font-medium text-slate-500">Difficulty:</span>
               {["all", "beginner", "intermediate", "advanced"].map((d) => (
                 <button
                   key={d}
                   onClick={() => setDifficulty(d)}
                   className={cn(
-                    "rounded px-2 py-0.5 capitalize transition-all",
+                    "rounded px-2.5 py-1 capitalize transition-all active:scale-[0.98]",
                     difficulty === d
-                      ? "bg-slate-800 text-primary font-medium"
-                      : "text-slate-400 hover:text-slate-200"
+                      ? "bg-blue-50 text-blue-700 font-semibold border border-blue-200"
+                      : "text-slate-600 hover:text-slate-900"
                   )}
                 >
                   {d}
@@ -302,20 +302,20 @@ export function ExplorePage() {
 
       {/* Issues Stream */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex items-center justify-between text-xs text-slate-500">
           <span>
-            Showing <span className="font-semibold text-slate-200">{filteredIssues.length}</span> issues
+            Showing <span className="font-bold text-slate-900">{filteredIssues.length}</span> verified issues
           </span>
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="size-3 text-emerald-400" />
+          <span className="flex items-center gap-1.5 text-slate-700 font-medium">
+            <CheckCircle2 className="size-3.5 text-emerald-600" />
             Live verified unclaimed
           </span>
         </div>
 
         {filteredIssues.length === 0 ? (
-          <div className="rounded-xl border border-white/10 bg-slate-900/30 p-12 text-center">
-            <p className="text-sm text-slate-300 font-medium">No monitored issues match these filters</p>
-            <p className="mt-1 text-xs text-muted-foreground">Try clearing your search query or selecting All Platforms.</p>
+          <div className="rounded-xl border border-dashed border-slate-200 bg-white p-12 text-center shadow-xs">
+            <p className="text-sm text-slate-900 font-bold">No monitored issues match these filters</p>
+            <p className="mt-1 text-xs text-slate-500">Try clearing your search query or selecting All Platforms.</p>
             <Button
               variant="outline"
               size="sm"
@@ -325,7 +325,7 @@ export function ExplorePage() {
                 setDifficulty("all");
                 setSearch("");
               }}
-              className="mt-4 border-white/10"
+              className="mt-4 border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
             >
               Reset Filters
             </Button>
@@ -335,30 +335,30 @@ export function ExplorePage() {
             {filteredIssues.map((issue) => (
               <div
                 key={issue.id}
-                className="group rounded-xl border border-white/10 bg-slate-900/40 backdrop-blur-xl p-5 transition-all duration-200 hover:border-white/20 hover:bg-slate-900/60 specular-top shadow-lg"
+                className="group rounded-xl border border-slate-200/90 bg-white p-5 transition-all duration-180 hover:border-slate-300 hover:shadow-md shadow-xs"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   <div className="space-y-2">
                     <div className="flex flex-wrap items-center gap-2 text-xs">
                       <SourceBadge source={issue.source} />
-                      <span className="font-mono text-slate-300 font-medium">{issue.repo}</span>
+                      <span className="font-mono text-slate-900 font-bold">{issue.repo}</span>
                       <span className="font-mono text-slate-500">#{issue.native_id}</span>
-                      <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-400">
+                      <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
                         Open &bull; Unassigned
                       </span>
-                      <span className="text-[11px] text-muted-foreground">
+                      <span className="text-[11px] text-slate-500 font-mono">
                         Verified {issue.verifiedAt}
                       </span>
                     </div>
 
-                    <h2 className="text-base font-semibold text-slate-100 group-hover:text-primary transition-colors leading-snug">
+                    <h2 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-snug">
                       <a href={issue.url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5">
                         {issue.title}
                         <ExternalLink className="size-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </a>
                     </h2>
 
-                    <p className="text-sm text-slate-400 line-clamp-2 leading-relaxed">
+                    <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">
                       {issue.body}
                     </p>
 
@@ -366,7 +366,7 @@ export function ExplorePage() {
                       {issue.technologies.map((t) => (
                         <span
                           key={t}
-                          className="rounded-md border border-white/10 bg-slate-950/60 px-2 py-0.5 font-mono text-xs text-slate-300"
+                          className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-xs text-slate-700 font-medium"
                         >
                           {t}
                         </span>
@@ -375,7 +375,7 @@ export function ExplorePage() {
                       {issue.labels.map((l) => (
                         <span
                           key={l}
-                          className="rounded-full border border-white/5 bg-slate-800/40 px-2 py-0.5 text-[11px] text-slate-400"
+                          className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 font-medium"
                         >
                           {l}
                         </span>
@@ -383,15 +383,15 @@ export function ExplorePage() {
                     </div>
                   </div>
 
-                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/5">
+                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2.5 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                     <span
                       className={cn(
-                        "rounded-md border px-2.5 py-1 font-mono text-xs font-semibold capitalize",
+                        "rounded-md border px-2.5 py-1 font-mono text-xs font-bold capitalize",
                         issue.difficulty === "beginner"
-                          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                          ? "border-emerald-300 bg-emerald-50 text-emerald-800"
                           : issue.difficulty === "intermediate"
-                          ? "border-amber-500/30 bg-amber-500/10 text-amber-400"
-                          : "border-purple-500/30 bg-purple-500/10 text-purple-400"
+                          ? "border-blue-300 bg-blue-50 text-blue-800"
+                          : "border-slate-300 bg-slate-100 text-slate-800"
                       )}
                     >
                       {issue.difficulty}
@@ -401,7 +401,7 @@ export function ExplorePage() {
                       asChild
                       size="sm"
                       variant="outline"
-                      className="border-white/10 bg-slate-950/60 hover:bg-slate-800 text-slate-300 hover:text-white text-xs h-8"
+                      className="border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs h-8 active:scale-[0.98]"
                     >
                       <a href={issue.url} target="_blank" rel="noreferrer">
                         View on {sourceLabel(issue.source)}
@@ -418,4 +418,3 @@ export function ExplorePage() {
     </div>
   );
 }
-

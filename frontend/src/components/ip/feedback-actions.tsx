@@ -60,10 +60,10 @@ export function FeedbackActions({ rec }: { rec: Recommendation }) {
           onClick={() => handleVote("like")}
           title="Recommend more issues like this"
           className={cn(
-            "h-8 px-2.5 rounded-md border text-xs transition-all active:scale-[0.96]",
+            "h-8 px-2.5 rounded-md border text-xs transition-all active:scale-[0.98]",
             vote === "like"
-              ? "border-emerald-500/50 bg-emerald-500/15 text-emerald-400 font-medium"
-              : "border-white/10 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+              ? "border-emerald-300 bg-emerald-50 text-emerald-700 font-semibold shadow-xs"
+              : "border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50"
           )}
         >
           <ThumbsUp className="size-3.5 mr-1" />
@@ -75,10 +75,10 @@ export function FeedbackActions({ rec }: { rec: Recommendation }) {
           onClick={() => handleVote("dislike")}
           title="Recommend fewer issues like this"
           className={cn(
-            "h-8 px-2.5 rounded-md border text-xs transition-all active:scale-[0.96]",
+            "h-8 px-2.5 rounded-md border text-xs transition-all active:scale-[0.98]",
             vote === "dislike"
-              ? "border-rose-500/50 bg-rose-500/15 text-rose-400 font-medium"
-              : "border-white/10 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+              ? "border-rose-300 bg-rose-50 text-rose-700 font-semibold shadow-xs"
+              : "border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50"
           )}
         >
           <ThumbsDown className="size-3.5 mr-1" />
@@ -91,7 +91,7 @@ export function FeedbackActions({ rec }: { rec: Recommendation }) {
           asChild
           size="sm"
           variant="outline"
-          className="h-8 border-white/10 bg-slate-900/60 text-slate-200 hover:bg-slate-800 hover:text-white active:scale-[0.98]"
+          className="h-8 border-slate-200 bg-white text-slate-700 hover:bg-slate-50 active:scale-[0.98]"
         >
           <a href={rec.issue.url} target="_blank" rel="noopener noreferrer">
             Native Platform <ExternalLink className="size-3 ml-1 opacity-70" />
@@ -106,7 +106,7 @@ export function FeedbackActions({ rec }: { rec: Recommendation }) {
               variant="outline"
               disabled={m.isPending}
               onClick={() => m.mutate("completed")}
-              className="h-8 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 active:scale-[0.98]"
+              className="h-8 border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 active:scale-[0.98]"
             >
               <CheckCheck className="size-3.5 mr-1" />
               Complete
@@ -122,7 +122,7 @@ export function FeedbackActions({ rec }: { rec: Recommendation }) {
               size="sm"
               disabled={m.isPending}
               onClick={() => m.mutate("accepted")}
-              className="h-8 bg-primary text-primary-foreground hover:bg-primary/90 font-medium shadow-sm shadow-primary/20 active:scale-[0.98]"
+              className="h-8 bg-blue-600 text-white hover:bg-blue-700 font-medium shadow-xs active:scale-[0.98]"
             >
               <Check className="size-3.5 mr-1" />
               Accept
@@ -132,7 +132,7 @@ export function FeedbackActions({ rec }: { rec: Recommendation }) {
               variant="ghost"
               disabled={m.isPending}
               onClick={() => m.mutate("rejected")}
-              className="h-8 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 active:scale-[0.98]"
+              className="h-8 text-slate-500 hover:text-rose-600 hover:bg-rose-50 active:scale-[0.98]"
             >
               <X className="size-3.5 mr-1" />
               Dismiss

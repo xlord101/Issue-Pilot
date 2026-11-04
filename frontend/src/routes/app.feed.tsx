@@ -45,18 +45,18 @@ function Feed() {
   return (
     <div className="space-y-8">
       {/* Hero Feed Banner */}
-      <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-xl p-6 sm:p-7 specular-top shadow-xl">
+      <div className="rounded-2xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="flex size-7 items-center justify-center rounded-lg border border-primary/40 bg-primary/10 text-primary">
+            <div className="flex items-center gap-2.5">
+              <span className="flex size-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600">
                 <LayoutList className="size-4" />
               </span>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-100">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
                 Personalized Recommendations Feed
               </h1>
             </div>
-            <p className="text-xs sm:text-sm text-slate-400 max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">
               Issues are ranked through the native C++ 6-factor core ($S, D, R, H, F, N$) and verified live for open, unassigned status.
             </p>
           </div>
@@ -66,10 +66,10 @@ function Feed() {
               asChild
               variant="outline"
               size="sm"
-              className="border-white/10 bg-slate-950/60 hover:bg-slate-800 text-slate-200 text-xs h-9 active:scale-[0.98]"
+              className="border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs h-9 active:scale-[0.98]"
             >
               <Link to="/app/simulator">
-                <SlidersHorizontal className="size-3.5 mr-1.5 text-primary" />
+                <SlidersHorizontal className="size-3.5 mr-1.5 text-blue-600" />
                 Tune Weights in Simulator
               </Link>
             </Button>
@@ -77,17 +77,17 @@ function Feed() {
         </div>
 
         {/* Telemetry Bar */}
-        <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-white/5 pt-4 text-xs font-mono text-slate-400">
-          <span className="flex items-center gap-1.5 text-emerald-400">
-            <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+        <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-slate-100 pt-4 text-xs font-mono text-slate-600">
+          <span className="flex items-center gap-1.5 text-emerald-700 font-semibold">
+            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
             C++ Ranking Core Active
           </span>
-          <span className="text-slate-600">&bull;</span>
-          <span>Capability Benchmark: 76/100</span>
-          <span className="text-slate-600">&bull;</span>
-          <span className="flex items-center gap-1">
-            <CheckCircle2 className="size-3 text-cyan-400" />
-            Zero-Assignment Verification
+          <span className="text-slate-300">&bull;</span>
+          <span>Capability Benchmark: <strong className="text-slate-800">76/100</strong></span>
+          <span className="text-slate-300">&bull;</span>
+          <span className="flex items-center gap-1 text-slate-700">
+            <CheckCircle2 className="size-3.5 text-blue-600" />
+            Zero-Assignment Live Verification
           </span>
         </div>
       </div>
@@ -114,7 +114,7 @@ function Feed() {
               variant="outline"
               size="sm"
               onClick={() => setFilters(DEFAULT_FILTERS)}
-              className="border-white/10"
+              className="border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
             >
               Reset filters
             </Button>
@@ -122,9 +122,9 @@ function Feed() {
         />
       ) : (
         <div className="space-y-4">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center justify-between text-xs text-slate-500">
             <span>
-              Showing <span className="font-semibold text-slate-200">{items.length}</span>
+              Showing <span className="font-bold text-slate-900">{items.length}</span>
               {total != null ? ` of ${total} ranked candidates` : " candidates"}
             </span>
             <span className="font-mono text-[11px]">Ranked by total match score</span>
@@ -142,12 +142,12 @@ function Feed() {
                 variant="outline"
                 onClick={() => q.fetchNextPage()}
                 disabled={q.isFetchingNextPage}
-                className="border-white/10 bg-slate-900/40 text-slate-200 hover:text-white px-6 active:scale-[0.98]"
+                className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50 px-6 active:scale-[0.98]"
               >
                 {q.isFetchingNextPage ? "Querying Engine…" : "Load More Candidates"}
               </Button>
             ) : (
-              <span className="text-xs font-mono text-muted-foreground">
+              <span className="text-xs font-mono text-slate-400">
                 End of candidate pool
               </span>
             )}

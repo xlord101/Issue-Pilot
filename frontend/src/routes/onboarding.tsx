@@ -28,7 +28,6 @@ function OnboardingPage() {
 
   const saveMutation = useMutation({
     mutationFn: async (data: CalibrationData) => {
-      // Map to StarterProfile for API compatibility
       const starter: StarterProfile = {
         languages: Object.keys(data.stack),
         technologies: Object.keys(data.stack),
@@ -46,14 +45,13 @@ function OnboardingPage() {
       try {
         await api.onboarding.submitStarterProfile(starter);
       } catch (e) {
-        // Fallback gracefully in standalone mode
         console.warn("Backend onboarding API fallback:", e);
       }
       return data;
     },
     onSuccess: (data) => {
       setCalibrated(data);
-      toast.success("Calibration complete!", {
+      toast.success("Calibration complete", {
         description: `Calibrated capability dial set to ${data.derivedCapability}/100 with ${Math.round(
           data.confidenceScore * 100
         )}% model confidence.`,
@@ -69,14 +67,14 @@ function OnboardingPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#080C14] text-slate-100 flex flex-col antialiased selection:bg-primary/20 selection:text-primary">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col antialiased selection:bg-blue-600 selection:text-white font-sans">
       {/* Top Header */}
-      <header className="flex h-16 items-center justify-between border-b border-white/10 bg-slate-950/60 px-5 sm:px-8 backdrop-blur-xl specular-top">
+      <header className="flex h-16 items-center justify-between border-b border-slate-200/90 bg-white/80 px-5 sm:px-8 backdrop-blur-md">
         <Logo />
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/60 px-3 py-1 text-xs">
-            <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-mono text-slate-300">C++ Ranking Engine Online</span>
+          <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100/90 px-3 py-1 text-xs">
+            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-mono text-slate-700 font-medium">C++ Ranking Core Online</span>
           </div>
         </div>
       </header>
@@ -84,18 +82,18 @@ function OnboardingPage() {
       {/* Main Body */}
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:py-14">
         {calibrated ? (
-          <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-8 sm:p-10 backdrop-blur-2xl text-center specular-top shadow-2xl space-y-6">
-            <div className="mx-auto flex size-16 items-center justify-center rounded-2xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-400">
+          <div className="rounded-2xl border border-slate-200/90 bg-white p-8 sm:p-10 shadow-lg shadow-slate-900/5 text-center space-y-6">
+            <div className="mx-auto flex size-16 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-600">
               <ShieldCheck className="size-8" />
             </div>
 
             <div className="space-y-2">
-              <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                 Profile Calibrated Successfully
               </h1>
-              <p className="text-sm text-slate-400 max-w-md mx-auto">
+              <p className="text-sm text-slate-600 max-w-md mx-auto">
                 Your contributor capability is tuned at{" "}
-                <span className="font-mono font-bold text-primary">
+                <span className="font-mono font-bold text-blue-600">
                   {calibrated.derivedCapability}/100
                 </span>
                 . The 6-factor C++ ranking engine is now prepared to deliver precision recommendations.
@@ -103,13 +101,13 @@ function OnboardingPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 max-w-md mx-auto pt-2 text-left font-mono text-xs">
-              <div className="rounded-lg border border-white/5 bg-slate-950/60 p-3">
+              <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
                 <div className="text-slate-500">Capability Dial</div>
-                <div className="text-lg font-bold text-slate-100">{calibrated.derivedCapability} / 100</div>
+                <div className="text-xl font-bold text-slate-900 mt-0.5">{calibrated.derivedCapability} / 100</div>
               </div>
-              <div className="rounded-lg border border-white/5 bg-slate-950/60 p-3">
+              <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
                 <div className="text-slate-500">Confidence Metric</div>
-                <div className="text-lg font-bold text-emerald-400">
+                <div className="text-xl font-bold text-emerald-600 mt-0.5">
                   {Math.round(calibrated.confidenceScore * 100)}%
                 </div>
               </div>
@@ -119,7 +117,7 @@ function OnboardingPage() {
               <Button
                 size="lg"
                 onClick={() => navigate({ to: "/app/feed" })}
-                className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 font-medium px-8 active:scale-[0.98]"
+                className="w-full sm:w-auto bg-blue-600 text-white hover:bg-blue-700 font-medium px-8 active:scale-[0.98] shadow-sm"
               >
                 Launch Recommendations Feed
                 <ArrowRight className="size-4 ml-2" />
@@ -128,7 +126,7 @@ function OnboardingPage() {
                 variant="outline"
                 size="lg"
                 asChild
-                className="w-full sm:w-auto border-white/10 text-slate-300"
+                className="w-full sm:w-auto border-slate-200 bg-white hover:bg-slate-50 text-slate-700 active:scale-[0.98]"
               >
                 <Link to="/app/simulator">Open What-If Simulator</Link>
               </Button>
@@ -137,16 +135,16 @@ function OnboardingPage() {
         ) : (
           <div className="space-y-6">
             <div>
-              <div className="flex items-center gap-2">
-                <span className="flex size-7 items-center justify-center rounded-lg border border-primary/40 bg-primary/10 text-primary">
+              <div className="flex items-center gap-2.5">
+                <span className="flex size-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600">
                   <Sparkles className="size-4" />
                 </span>
-                <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                   Smart Onboarding &amp; Calibration
                 </h1>
               </div>
-              <p className="mt-2 text-sm text-slate-400">
-                Calibrate your open-source profile in 3 questions. Unlike arbitrary keyword taggers, Issue Pilot calculates your capability dial and maps non-linear technology affinity vectors.
+              <p className="mt-2 text-sm text-slate-600 leading-relaxed">
+                Calibrate your open-source profile in 3 questions. Issue Pilot calculates your capability dial and maps non-linear technology affinity vectors directly for the C++ engine.
               </p>
             </div>
 

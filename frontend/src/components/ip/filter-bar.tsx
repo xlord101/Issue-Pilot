@@ -16,7 +16,12 @@ export interface FeedFilters {
 
 export const DEFAULT_FILTERS: FeedFilters = { source: "all", tech: "", score: [0, 100], sort: "score_desc" };
 
-export function FilterBar({ value, onChange, onRefresh, refreshing }: {
+export function FilterBar({
+  value,
+  onChange,
+  onRefresh,
+  refreshing,
+}: {
   value: FeedFilters;
   onChange: (f: FeedFilters) => void;
   onRefresh: () => void;
@@ -24,41 +29,61 @@ export function FilterBar({ value, onChange, onRefresh, refreshing }: {
 }) {
   const set = <K extends keyof FeedFilters>(k: K, v: FeedFilters[K]) => onChange({ ...value, [k]: v });
   return (
-    <div className="mb-5 grid gap-4 rounded-md border bg-card p-4 sm:grid-cols-2 lg:grid-cols-[160px_1fr_220px_170px_auto] lg:items-end">
+    <div className="mb-5 grid gap-4 rounded-xl border border-slate-200/90 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-[160px_1fr_220px_170px_auto] lg:items-end">
       <div className="space-y-1.5">
-        <Label htmlFor="f-source" className="text-xs text-muted-foreground">Source</Label>
+        <Label htmlFor="f-source" className="text-xs font-medium text-slate-600">Source Platform</Label>
         <Select value={value.source} onValueChange={(v) => set("source", v as FeedFilters["source"])}>
-          <SelectTrigger id="f-source" className="h-9"><SelectValue /></SelectTrigger>
+          <SelectTrigger id="f-source" className="h-9 border-slate-200 bg-white text-slate-800"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All sources</SelectItem>
+            <SelectItem value="all">All platforms</SelectItem>
             {SOURCES.map((s) => <SelectItem key={s} value={s}>{sourceLabel(s)}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="f-tech" className="text-xs text-muted-foreground">Technology</Label>
-        <Input id="f-tech" className="h-9" placeholder="e.g. Python, Go, TypeScript" value={value.tech} onChange={(e) => set("tech", e.target.value)} />
+        <Label htmlFor="f-tech" className="text-xs font-medium text-slate-600">Technology Focus</Label>
+        <Input
+          id="f-tech"
+          className="h-9 border-slate-200 bg-white text-slate-800 placeholder:text-slate-400 focus:border-blue-600"
+          placeholder="e.g. Python, Rust, TypeScript"
+          value={value.tech}
+          onChange={(e) => set("tech", e.target.value)}
+        />
       </div>
       <div className="space-y-2.5">
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span id="f-score-label">Score range</span>
-          <span className="font-mono tabular-nums">{value.score[0]}–{value.score[1]}</span>
+        <div className="flex justify-between text-xs font-medium text-slate-600">
+          <span id="f-score-label">Match Score Range</span>
+          <span className="font-mono tabular-nums text-slate-800 font-bold">{value.score[0]}–{value.score[1]}</span>
         </div>
-        <Slider aria-labelledby="f-score-label" min={0} max={100} step={5} value={value.score} onValueChange={(v) => set("score", [v[0], v[1]] as [number, number])} />
+        <Slider
+          aria-labelledby="f-score-label"
+          min={0}
+          max={100}
+          step={5}
+          value={value.score}
+          onValueChange={(v) => set("score", [v[0], v[1]] as [number, number])}
+          className="cursor-pointer"
+        />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="f-sort" className="text-xs text-muted-foreground">Sort</Label>
+        <Label htmlFor="f-sort" className="text-xs font-medium text-slate-600">Sort Ordering</Label>
         <Select value={value.sort} onValueChange={(v) => set("sort", v as SortKey)}>
-          <SelectTrigger id="f-sort" className="h-9"><SelectValue /></SelectTrigger>
+          <SelectTrigger id="f-sort" className="h-9 border-slate-200 bg-white text-slate-800"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="score_desc">Highest score</SelectItem>
-            <SelectItem value="freshness_desc">Newest</SelectItem>
+            <SelectItem value="score_desc">Highest match score</SelectItem>
+            <SelectItem value="freshness_desc">Newest tickets</SelectItem>
             <SelectItem value="verified_desc">Recently verified</SelectItem>
           </SelectContent>
         </Select>
       </div>
-      <Button variant="outline" className="h-9" onClick={onRefresh} disabled={refreshing}>
-        <RotateCw className={refreshing ? "size-4 animate-spin" : "size-4"} />Refresh
+      <Button
+        variant="outline"
+        className="h-9 border-slate-200 bg-white hover:bg-slate-50 text-slate-700 active:scale-[0.98]"
+        onClick={onRefresh}
+        disabled={refreshing}
+      >
+        <RotateCw className={refreshing ? "size-3.5 mr-1.5 animate-spin text-blue-600" : "size-3.5 mr-1.5 text-slate-500"} />
+        Refresh
       </Button>
     </div>
   );

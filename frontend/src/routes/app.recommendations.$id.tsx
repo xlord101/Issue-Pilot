@@ -26,7 +26,7 @@ function DetailPage() {
     <div className="space-y-6">
       <Link
         to="/app/feed"
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-white transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
       >
         <ArrowLeft className="size-3.5" />
         Back to recommendations feed
@@ -37,17 +37,17 @@ function DetailPage() {
           <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
             <div className="min-w-0 space-y-6">
               {/* Header Box */}
-              <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-xl p-6 specular-top shadow-xl">
-                <div className="flex flex-wrap items-center gap-2.5 text-xs text-muted-foreground">
+              <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm">
+                <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-500">
                   <SourceBadge source={rec.issue.source} />
-                  <span className="font-mono text-slate-300 font-semibold">{rec.issue.repo_key}</span>
+                  <span className="font-mono text-slate-900 font-bold">{rec.issue.repo_key}</span>
                   <span className="font-mono text-slate-500">#{rec.issue.native_id}</span>
                   <div className="ml-auto">
                     <VerificationBadge issue={rec.issue} />
                   </div>
                 </div>
 
-                <h1 className="mt-3 text-xl sm:text-2xl font-bold tracking-tight text-slate-100 leading-snug">
+                <h1 className="mt-3 text-xl sm:text-2xl font-bold tracking-tight text-slate-900 leading-snug">
                   {rec.issue.title}
                 </h1>
 
@@ -55,44 +55,44 @@ function DetailPage() {
                   <LabelList labels={rec.issue.labels} source={rec.issue.source} />
                 </div>
 
-                <div className="mt-6 border-t border-white/10 pt-4">
+                <div className="mt-6 border-t border-slate-100 pt-4">
                   <FeedbackActions rec={rec} />
                 </div>
               </div>
 
               {/* Explainable Fit */}
-              <section className="rounded-xl border border-primary/20 bg-primary/5 p-5 specular-top">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-primary flex items-center gap-1.5">
+              <section className="rounded-xl border border-blue-200/80 bg-blue-50/60 p-5 shadow-xs">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-blue-700 flex items-center gap-1.5">
                   <Sparkles className="size-3.5" />
                   Deterministic Ranking Justification
                 </h2>
-                <p className="mt-2 text-sm text-slate-300 leading-relaxed">
+                <p className="mt-2 text-sm text-slate-700 leading-relaxed">
                   {rec.why ?? "High alignment with your verified skill profile, recent activity in this language, and fast maintainer response time."}
                 </p>
               </section>
 
               {/* Issue Description */}
-              <section className="rounded-xl border border-white/10 bg-slate-900/40 p-6 specular-top space-y-3">
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-200 flex items-center gap-2">
-                  <FileText className="size-4 text-cyan-400" />
+              <section className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm space-y-3">
+                <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                  <FileText className="size-4 text-blue-600" />
                   Issue Description
                 </h2>
                 {rec.issue.body ? (
-                  <p className="whitespace-pre-wrap text-sm text-slate-300 leading-relaxed font-sans">
+                  <p className="whitespace-pre-wrap text-sm text-slate-700 leading-relaxed font-sans">
                     {rec.issue.body}
                   </p>
                 ) : (
-                  <p className="text-sm italic text-muted-foreground">
+                  <p className="text-sm italic text-slate-400">
                     No description ingested. View the complete issue on the source repository.
                   </p>
                 )}
 
                 {rec.issue.technologies && rec.issue.technologies.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-1.5 pt-3 border-t border-white/5">
+                  <div className="mt-4 flex flex-wrap gap-1.5 pt-3 border-t border-slate-100">
                     {rec.issue.technologies.map((t) => (
                       <span
                         key={t}
-                        className="rounded-md border border-white/10 bg-slate-950/60 px-2 py-0.5 font-mono text-xs text-slate-300"
+                        className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-xs text-slate-700 font-medium"
                       >
                         {t}
                       </span>
@@ -103,7 +103,7 @@ function DetailPage() {
 
               {/* Supporting Evidence */}
               <section className="space-y-3">
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-200">
+                <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
                   Signal Evidence Trail
                 </h2>
                 {rec.issue.evidence === null ? (
@@ -115,18 +115,18 @@ function DetailPage() {
                     {rec.issue.evidence.map((ev, i) => (
                       <div
                         key={i}
-                        className="rounded-xl border border-white/10 bg-slate-900/30 p-4 text-xs space-y-1"
+                        className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 text-xs space-y-1"
                       >
-                        <div className="text-[10px] font-mono uppercase tracking-wider text-primary font-semibold">
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-blue-700 font-bold">
                           {ev.signal ? SIGNAL_META[ev.signal]?.label : "General Factor"}
                         </div>
-                        <p className="text-slate-300">{ev.description}</p>
+                        <p className="text-slate-700">{ev.description}</p>
                         {ev.url && (
                           <a
                             href={ev.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline font-mono"
+                            className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:underline font-mono font-medium"
                           >
                             Inspect Source <ExternalLink className="size-2.5" />
                           </a>
@@ -139,13 +139,13 @@ function DetailPage() {
             </div>
 
             {/* Sticky Score Sidebar */}
-            <aside className="h-fit rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-xl p-5 lg:sticky lg:top-24 specular-top shadow-xl space-y-5">
-              <div className="flex items-start justify-between border-b border-white/10 pb-4">
+            <aside className="h-fit rounded-2xl border border-slate-200/90 bg-white p-5 lg:sticky lg:top-24 shadow-sm space-y-5">
+              <div className="flex items-start justify-between border-b border-slate-100 pb-4">
                 <div>
-                  <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-200">
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
                     6-Factor Breakdown
                   </h2>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                  <p className="text-[11px] text-slate-500 mt-0.5">
                     Authoritative C++ core output
                   </p>
                 </div>
@@ -154,13 +154,13 @@ function DetailPage() {
 
               <ScoreBreakdown breakdown={rec.breakdown} detailed />
 
-              <div className="rounded-lg border border-white/5 bg-slate-950/60 p-3 text-[11px] font-mono text-slate-400 leading-relaxed">
-                <span className="text-emerald-400">Score</span> = 0.35S + 0.25D + 0.15R + 0.10H + 0.10F + 0.05N. Each component is normalized $0–100$.
+              <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 text-[11px] font-mono text-slate-600 leading-relaxed">
+                <span className="text-emerald-700 font-bold">Score</span> = 0.35S + 0.25D + 0.15R + 0.10H + 0.10F + 0.05N. Each factor normalized $0–100$.
               </div>
 
               <Button
                 asChild
-                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium active:scale-[0.98]"
+                className="w-full bg-blue-600 text-white hover:bg-blue-700 font-medium shadow-xs active:scale-[0.98]"
               >
                 <a href={rec.issue.url} target="_blank" rel="noreferrer">
                   Open on {rec.issue.source} <ExternalLink className="size-3.5 ml-1.5" />

@@ -33,28 +33,28 @@ function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#080C14] text-slate-100 flex flex-col antialiased selection:bg-primary/20 selection:text-primary">
-      <header className="flex h-16 items-center border-b border-white/10 bg-slate-950/60 px-5 sm:px-8 backdrop-blur-xl specular-top">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col antialiased selection:bg-blue-600 selection:text-white font-sans">
+      <header className="flex h-16 items-center border-b border-slate-200/90 bg-white/80 px-5 sm:px-8 backdrop-blur-md">
         <Logo />
       </header>
 
       <main className="flex flex-1 items-center justify-center px-4 py-16">
-        <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900/50 p-8 sm:p-10 backdrop-blur-2xl specular-top shadow-2xl space-y-6">
+        <div className="w-full max-w-md rounded-2xl border border-slate-200/90 bg-white p-8 sm:p-10 shadow-lg shadow-slate-900/5 space-y-6">
           <div className="space-y-2 text-center">
-            <h1 className="text-2xl font-bold tracking-tight text-white">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
               Sign In to Issue Pilot
             </h1>
-            <p className="text-sm text-slate-400">
-              We inspect your public repositories to derive your verified capability rating and stack proficiency.
+            <p className="text-sm text-slate-600">
+              We inspect public contributions to derive your verified capability rating and stack proficiency.
             </p>
           </div>
 
-          <div className="rounded-xl border border-white/5 bg-slate-950/60 p-4 space-y-2 text-xs font-mono text-slate-300">
-            <div className="flex items-center gap-2 text-emerald-400">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 space-y-2 text-xs font-mono text-slate-700">
+            <div className="flex items-center gap-2 text-blue-600">
               <ShieldCheck className="size-4" />
-              <span className="font-semibold">Security &amp; Privacy Guarantees:</span>
+              <span className="font-semibold text-slate-900">Security &amp; Privacy Guarantees:</span>
             </div>
-            <ul className="list-disc list-inside text-muted-foreground space-y-1 pl-1">
+            <ul className="list-disc list-inside text-slate-600 space-y-1 pl-1">
               <li>Strictly read-only OAuth permission</li>
               <li>No access to private repositories or internal code</li>
               <li>Zero automated pull request creation</li>
@@ -62,7 +62,7 @@ function LoginPage() {
           </div>
 
           <Button
-            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold h-11 active:scale-[0.98] shadow-lg shadow-primary/20"
+            className="w-full bg-blue-600 text-white hover:bg-blue-700 font-semibold h-11 active:scale-[0.98] shadow-sm transition-all"
             size="lg"
             onClick={go}
             disabled={busy}
@@ -74,7 +74,7 @@ function LoginPage() {
           <div className="pt-2 text-center">
             <Link
               to="/onboarding"
-              className="text-xs text-slate-400 hover:text-white underline underline-offset-4"
+              className="text-xs text-slate-500 hover:text-slate-900 underline underline-offset-4"
             >
               Skip directly to Behavioral Calibration Flow &rarr;
             </Link>
@@ -90,7 +90,7 @@ function LoginPage() {
           )}
 
           {err != null && !(err instanceof NotConnectedError) && (
-            <p role="alert" className="text-center text-xs text-rose-400">
+            <p role="alert" className="text-center text-xs text-rose-600 font-medium">
               {err instanceof Error ? err.message : "Sign-in initialization failed."}
             </p>
           )}

@@ -18,7 +18,7 @@ const search = z.object({
 
 export const Route = createFileRoute("/auth/callback")({
   validateSearch: (s) => search.parse(s),
-  head: () => ({ ...pageMeta("Completing sign-in", "Finishing your GitHub sign-in."), }),
+  head: () => ({ ...pageMeta("Completing sign-in", "Finishing your GitHub sign-in.") }),
   component: Callback,
 });
 
@@ -48,35 +48,49 @@ function Callback() {
   }, [q.isSuccess, q.data, qc, navigate]);
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="flex h-14 items-center border-b px-4 sm:px-6"><Logo /></header>
-      <main className="flex flex-1 items-center justify-center px-4">
-        <div className="w-full max-w-sm text-center" aria-live="polite">
+    <div className="flex min-h-screen flex-col bg-[#f8fafc] text-slate-900 font-sans antialiased">
+      <header className="flex h-16 items-center border-b border-slate-200/90 bg-white/80 px-5 sm:px-8 backdrop-blur-md">
+        <Logo />
+      </header>
+      <main className="flex flex-1 items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md rounded-2xl border border-slate-200/90 bg-white p-8 text-center shadow-lg shadow-slate-900/5" aria-live="polite">
           {q.isPending && (
-            <>
-              <Loader2 className="mx-auto size-8 animate-spin text-primary" />
-              <h1 className="mt-4 text-lg font-semibold">Completing sign-in…</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Confirming your session with Issue Pilot.</p>
-            </>
+            <div>
+              <Loader2 className="mx-auto size-9 animate-spin text-blue-600" />
+              <h1 className="mt-4 text-xl font-bold tracking-tight text-slate-900">Completing sign-in…</h1>
+              <p className="mt-1 text-sm text-slate-600">Confirming your session with Issue Pilot.</p>
+            </div>
           )}
           {q.isSuccess && (
-            <>
-              <CheckCircle2 className="mx-auto size-8 text-success" />
-              <h1 className="mt-4 text-lg font-semibold">Signed in as {q.data.user.login}</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Taking you to profile setup…</p>
-              <Button asChild variant="outline" className="mt-5"><Link to="/onboarding">Continue</Link></Button>
-            </>
+            <div>
+              <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
+                <CheckCircle2 className="size-6" />
+              </div>
+              <h1 className="mt-4 text-xl font-bold tracking-tight text-slate-900">Signed in as {q.data.user.login}</h1>
+              <p className="mt-1 text-sm text-slate-600">Taking you to profile setup…</p>
+              <Button asChild className="mt-5 bg-blue-600 hover:bg-blue-700 text-white font-medium active:scale-[0.98]">
+                <Link to="/onboarding">Continue</Link>
+              </Button>
+            </div>
           )}
-          {q.isError && (q.error instanceof NotConnectedError ? (
-            <NotConnectedState name={q.error.endpointName} contract="GET /auth/me → Session (reads httpOnly cookie)" />
-          ) : (
-            <>
-              <XCircle className="mx-auto size-8 text-destructive" />
-              <h1 className="mt-4 text-lg font-semibold">Sign-in didn't complete</h1>
-              <p className="mt-1 text-sm text-muted-foreground">{q.error.message}</p>
-              <Button asChild className="mt-5"><Link to="/login">Try again</Link></Button>
-            </>
-          ))}
+          {q.isError && (
+            <div>
+              {q.error instanceof NotConnectedError ? (
+                <NotConnectedState name={q.error.endpointName} contract="GET /auth/me -> Session" />
+              ) : (
+                <>
+                  <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-rose-50 text-rose-600 border border-rose-200">
+                    <XCircle className="size-6" />
+                  </div>
+                  <h1 className="mt-4 text-xl font-bold tracking-tight text-slate-900">Sign-in didn't complete</h1>
+                  <p className="mt-1 text-sm text-slate-600">{q.error.message}</p>
+                  <Button asChild className="mt-5 bg-blue-600 hover:bg-blue-700 text-white font-medium active:scale-[0.98]">
+                    <Link to="/login">Try again</Link>
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </main>
     </div>
