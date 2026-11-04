@@ -16,7 +16,7 @@ export const Route = createFileRoute("/onboarding")({
   head: () =>
     pageMeta(
       "Behavioral Calibration Flow",
-      "Calibrate your developer capability rating and technology stack for the 6-factor C++ ranking engine."
+      "Calibrate your developer capability rating and technology stack for personalized issue recommendations."
     ),
   component: OnboardingPage,
 });
@@ -74,7 +74,7 @@ function OnboardingPage() {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100/90 px-3 py-1 text-xs">
             <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-mono text-slate-700 font-medium">C++ Ranking Core Online</span>
+            <span className="font-mono text-slate-700 font-medium">Ranking Engine Online</span>
           </div>
         </div>
       </header>
@@ -96,7 +96,7 @@ function OnboardingPage() {
                 <span className="font-mono font-bold text-blue-600">
                   {calibrated.derivedCapability}/100
                 </span>
-                . The 6-factor C++ ranking engine is now prepared to deliver precision recommendations.
+                . The ranking engine is now prepared to deliver personalized recommendations.
               </p>
             </div>
 
@@ -144,7 +144,7 @@ function OnboardingPage() {
                 </h1>
               </div>
               <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-                Calibrate your open-source profile in 3 questions. Issue Pilot calculates your capability dial and maps non-linear technology affinity vectors directly for the C++ engine.
+                Calibrate your open-source profile in 3 questions. Issue Pilot calculates your capability dial and maps your technology affinity vectors to surface the highest-signal issues.
               </p>
             </div>
 

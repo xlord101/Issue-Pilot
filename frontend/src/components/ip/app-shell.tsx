@@ -114,7 +114,7 @@ export function AppShell({ session, children }: { session: Session; children: Re
             </span>
             <span className="text-emerald-700 font-semibold flex items-center gap-1">
               <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              C++ Core &bull; &lt;2ms
+              Online &bull; &lt;2ms
             </span>
           </div>
           <div className="flex items-center justify-between text-xs font-mono">
@@ -122,7 +122,7 @@ export function AppShell({ session, children }: { session: Session; children: Re
               <Database className="size-3 text-blue-600" />
               Candidates
             </span>
-            <span className="text-slate-700 font-medium">Atlas Pool</span>
+            <span className="text-slate-700 font-medium">Verified Pool</span>
           </div>
         </div>
 
@@ -165,7 +165,7 @@ export function AppShell({ session, children }: { session: Session; children: Re
           <div className="hidden md:flex items-center gap-2.5">
             <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100/80 px-3 py-1 text-xs">
               <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-mono text-slate-700 font-medium">C++ 6-Factor Engine Active</span>
+              <span className="font-mono text-slate-700 font-medium">6-Factor Engine Online</span>
             </div>
             <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100/80 px-3 py-1 text-xs text-slate-700">
               <span className="font-medium text-slate-500">Capability:</span>

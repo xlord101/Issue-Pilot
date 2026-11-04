@@ -73,10 +73,10 @@ const LIFECYCLE_TABS = [
   {
     id: "build",
     tabLabel: "Build",
-    stepName: "2. C++ 6-Factor Rank",
+    stepName: "2. 6-Factor Scoring",
     title: "Deterministic mathematical scoring. Zero LLM hallucinations.",
     description:
-      "Once your profile is set, our compiled native C++ engine calculates a weighted 6-factor score across Skill Match (35%), Difficulty (25%), Maintainer Responsiveness (15%), Repo Health (10%), Taste Feedback (10%), and Freshness (5%) in under 2ms.",
+      "Once your profile is set, our deterministic ranking engine calculates a weighted 6-factor score across Skill Match (35%), Difficulty (25%), Maintainer Responsiveness (15%), Repo Health (10%), Taste Feedback (10%), and Freshness (5%) in under 2ms.",
     badge: "RANKING CORE",
   },
   {
@@ -90,29 +90,6 @@ const LIFECYCLE_TABS = [
   },
 ];
 
-const TESTIMONIALS = [
-  {
-    company: "Tokio Rust Contributor",
-    quote:
-      "Not only does Issue Pilot provide the quickest turnaround time for issue discovery, they are also the most cost-effective and accurate tool for finding unclaimed work.",
-    author: "Shawn Wilson",
-    role: "Staff Infrastructure Engineer",
-  },
-  {
-    company: "GitLab Ecosystem",
-    quote:
-      "Issue Pilot adapts each recommendation to the contributor's real profile instead of forcing generic beginner tickets. It gives us true signal over noise across 4 code hosts.",
-    author: "Roger Quach",
-    role: "VP of Engineering & Open Source Lead",
-  },
-  {
-    company: "Mozilla & RedHat SIG",
-    quote:
-      "What I liked most was the maintainer responsiveness factor. It reliably filtered out inactive bugzilla tickets and sent me to active maintainers who merged my PR in 36 hours.",
-    author: "Heather Jordan",
-    role: "Director of Systems Technology",
-  },
-];
 
 const TELEMETRY_FEED = [
   {
@@ -257,7 +234,7 @@ function LandingPage() {
         <div className="mx-auto max-w-4xl px-4 pt-16 pb-28 sm:pt-24 sm:pb-36 text-center relative z-20 space-y-6">
           {/* Inc 5000 style top tag pill */}
           <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/20 px-3.5 py-1 text-xs text-white backdrop-blur-md">
-            <span className="font-semibold text-white">C++ Deterministic Ranking Core</span>
+            <span className="font-semibold text-white">Deterministic Ranking Engine</span>
             <span className="text-white/60">with sub-2ms latency</span>
             <Link
               to="/app/simulator"
@@ -278,7 +255,7 @@ function LandingPage() {
           <p className="mx-auto max-w-2xl text-base sm:text-lg text-white/90 leading-relaxed font-normal">
             Issue Pilot continuously indexes unclaimed issues across GitHub,
             GitLab, Codeberg, and Bugzilla, matching them to your verified
-            capability dial with a deterministic 6-factor C++ core.
+            capability dial with an automated 6-factor ranking engine.
           </p>
 
           {/* MindCloud Exact White Floating CTA Prompt Bar */}
@@ -367,11 +344,11 @@ function LandingPage() {
                   <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
                     Matching is hard,
                     <br />
-                    <span className="text-blue-400">let C++ do the work.</span>
+                    <span className="text-blue-400">let precision ranking do the work.</span>
                   </h2>
                   <p className="text-sm sm:text-base text-slate-400 leading-relaxed">
                     For developers tired of reading dead issues or assigned PRs,
-                    Issue Pilot pairs a compiled C++ 6-factor ranking engine with
+                    Issue Pilot pairs a deterministic 6-factor ranking engine with
                     continuous live unclaimed verification across GitHub, GitLab,
                     Codeberg, and Bugzilla.
                   </p>
@@ -485,7 +462,7 @@ function LandingPage() {
                       <div className="flex items-center gap-2">
                         <Cpu className="size-5 text-blue-400" />
                         <span className="text-sm font-semibold text-slate-200">
-                          C++ Deterministic Formula
+                          Deterministic Scoring Formula
                         </span>
                       </div>
                       <div className="text-right font-mono">
@@ -589,7 +566,7 @@ function LandingPage() {
 
                 {/* Footer strip of card */}
                 <div className="border-t border-slate-800 pt-3 flex items-center justify-between text-[11px] font-mono text-slate-400">
-                  <span>Engine: Native C++20 Core</span>
+                  <span>Engine: 6-Factor Scoring Core</span>
                   <span className="text-emerald-400">Execution: 1.84ms</span>
                 </div>
               </div>
@@ -598,46 +575,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* 4. TESTIMONIALS (MindCloud Pure White Background with Cards) */}
-      <section className="bg-white py-20 border-t border-slate-100">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 space-y-12">
-          <div className="text-center space-y-2 max-w-xl mx-auto">
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
-              Leaders trust us. Operators depend on us.
-            </h2>
-            <p className="text-sm text-slate-500">
-              Trusted by active open-source contributors and engineering teams around the world.
-            </p>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-3">
-            {TESTIMONIALS.map((t) => (
-              <div
-                key={t.author}
-                className="rounded-2xl border border-slate-200/80 bg-white p-7 shadow-sm hover:shadow-md transition-shadow space-y-5 flex flex-col justify-between"
-              >
-                <div className="space-y-3">
-                  <div className="text-xs font-mono font-semibold uppercase tracking-wider text-slate-400">
-                    {t.company}
-                  </div>
-                  <p className="text-sm text-slate-700 leading-relaxed">
-                    &ldquo;{t.quote}&rdquo;
-                  </p>
-                </div>
-
-                <div className="border-t border-slate-100 pt-4">
-                  <div className="text-sm font-bold text-slate-900">
-                    {t.author}
-                  </div>
-                  <div className="text-xs text-slate-500">{t.role}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 5. NUMBERS SECTION (MindCloud Pure White Section with Big Black Stats) */}
+            {/* 5. NUMBERS SECTION (MindCloud Pure White Section with Big Black Stats) */}
       <section id="numbers" className="bg-white py-20 sm:py-28 border-t border-slate-100">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
@@ -702,7 +640,7 @@ function LandingPage() {
                   &lt; 2ms
                 </div>
                 <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-                  C++ Ranking Latency
+                  Ranking Latency
                 </div>
               </div>
 
@@ -790,7 +728,7 @@ function LandingPage() {
               </div>
               <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
                 Precision open-source issue intelligence powered by a compiled
-                deterministic C++ ranking core and real-time unclaimed verification.
+                deterministic 6-factor ranking engine and real-time unclaimed verification.
               </p>
             </div>
 
@@ -829,7 +767,7 @@ function LandingPage() {
               <ul className="space-y-2 text-xs text-slate-600">
                 <li>
                   <a href="#pipeline" className="hover:text-slate-900">
-                    Deterministic C++ Engine
+                    6-Factor Scoring Model
                   </a>
                 </li>
                 <li>
@@ -838,10 +776,10 @@ function LandingPage() {
                   </a>
                 </li>
                 <li>
-                  <span className="text-slate-400">Spring Boot 3.4.3</span>
+                  <Link to="/app/feed" className="hover:text-slate-900">Live Recommendations</Link>
                 </li>
                 <li>
-                  <span className="text-slate-400">204 / 204 Tests Passing</span>
+                  <Link to="/app/simulator" className="hover:text-slate-900">Weight Calibration</Link>
                 </li>
               </ul>
             </div>

@@ -28,7 +28,7 @@ export const endpoints = {
     starterProfile: "/api/profile/onboarding/confirm" as Endpoint,
   },
   recommendations: {
-    /** POST /api/recommendations/personalized → 6-factor C++ ranked recommendations */
+    /** POST /api/recommendations/personalized → 6-factor deterministic ranked recommendations */
     list: "/api/recommendations/personalized" as Endpoint,
     /** GET /api/recommendations/:id */
     detail: "/api/recommendations/:id" as Endpoint,

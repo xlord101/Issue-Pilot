@@ -244,7 +244,7 @@ export function BehavioralCalibrationDeck({
               What is your current open-source contribution rhythm?
             </h3>
             <p className="mt-0.5 text-xs text-slate-500">
-              Calibrates how steeply the C++ core discounts complex multi-file pull requests.
+              Calibrates how strictly the ranking engine discounts complex multi-file pull requests.
             </p>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -360,7 +360,7 @@ export function BehavioralCalibrationDeck({
               Select Languages &amp; Core Frameworks
             </h3>
             <p className="mt-1 text-xs text-slate-500">
-              The C++ ranking engine evaluates direct technology matches and cross-ecosystem affinity.
+              The ranking engine evaluates direct technology matches and cross-ecosystem affinity.
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2">

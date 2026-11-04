@@ -13,7 +13,7 @@ export const Route = createFileRoute("/app/recommendations/$id")({
   head: () =>
     pageMeta(
       "Recommendation Diagnostics & Evidence",
-      "Full 6-factor C++ score decomposition, signal confidences, and repository evidence."
+      "Full 6-factor score decomposition, signal confidences, and repository evidence."
     ),
   component: DetailPage,
 });
@@ -146,7 +146,7 @@ function DetailPage() {
                     6-Factor Breakdown
                   </h2>
                   <p className="text-[11px] text-slate-500 mt-0.5">
-                    Authoritative C++ core output
+                    Authoritative 6-factor engine output
                   </p>
                 </div>
                 <ScoreTotal value={rec.total_score} />

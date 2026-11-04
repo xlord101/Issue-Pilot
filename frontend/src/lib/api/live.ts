@@ -174,7 +174,7 @@ export const liveApi: IssuePilotApi = {
             { signal: "feedback", score: 80, max: 100, confidence: 0.8, summary: "Positive" },
             { signal: "freshness", score: 85, max: 100, confidence: 0.85, summary: "Active" },
           ],
-          why: item.why_recommended ?? "Ranked #1 by native C++ 6-factor model for current contributor skill profile.",
+          why: item.why_recommended ?? "Highest-ranked match across your verified skill and difficulty profile.",
           created_at: new Date().toISOString(),
           decision: null,
         }));

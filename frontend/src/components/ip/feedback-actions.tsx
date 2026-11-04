@@ -23,7 +23,7 @@ export function FeedbackActions({ rec }: { rec: Recommendation }) {
         {
           description:
             d === "accepted"
-              ? "C++ affinity engine adjusted. Open source PRs happen on the platform repository."
+              ? "Recommendation preferences adjusted. Open source PRs happen on the platform repository."
               : "Algorithm weights updated to de-prioritize similar candidate profiles.",
         }
       );
@@ -46,7 +46,7 @@ export function FeedbackActions({ rec }: { rec: Recommendation }) {
         ? "Preference saved: Fewer issues like this"
         : "Vote cleared",
       {
-        description: "Your live affinity vector updated in the C++ engine.",
+        description: "Your recommendation preferences have been updated.",
       }
     );
   };

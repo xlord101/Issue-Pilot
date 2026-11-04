@@ -57,7 +57,7 @@ function Feed() {
               </h1>
             </div>
             <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">
-              Issues are ranked through the native C++ 6-factor core ($S, D, R, H, F, N$) and verified live for open, unassigned status.
+              Issues are scored across six factors ($S, D, R, H, F, N$) and verified live for open, unassigned status.
             </p>
           </div>
 
@@ -80,7 +80,7 @@ function Feed() {
         <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-slate-100 pt-4 text-xs font-mono text-slate-600">
           <span className="flex items-center gap-1.5 text-emerald-700 font-semibold">
             <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-            C++ Ranking Core Active
+            6-Factor Ranking Engine Active
           </span>
           <span className="text-slate-300">&bull;</span>
           <span>Capability Benchmark: <strong className="text-slate-800">76/100</strong></span>
