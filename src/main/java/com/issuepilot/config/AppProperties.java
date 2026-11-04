@@ -168,7 +168,7 @@ public class AppProperties {
     @Value("${CPP_ENGINE_PATH:ranking_engine/build/issue_pilot_ranking_engine.exe}")
     private String cppEnginePath;
 
-    @Value("${CORS_ORIGINS:*}")
+    @Value("${CORS_ORIGINS:http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173}")
     private String corsOrigins;
 
     @Value("${APP_JWT_SECRET:}")

@@ -403,7 +403,9 @@ export function BehavioralCalibrationDeck({
                       min={10}
                       max={100}
                       step={5}
-                      onValueChange={([val]) => setTechScore(tech, val)}
+                      onValueChange={([val]) => {
+                        if (val != null) setTechScore(tech, val);
+                      }}
                       className="cursor-pointer py-1"
                     />
                   </div>

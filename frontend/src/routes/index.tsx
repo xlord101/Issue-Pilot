@@ -412,10 +412,10 @@ function LandingPage() {
 
                   <div className="space-y-2">
                     <h3 className="text-base font-semibold text-slate-200">
-                      {LIFECYCLE_TABS[activeTab].title}
+                      {LIFECYCLE_TABS[activeTab]?.title ?? ""}
                     </h3>
                     <p className="text-xs text-slate-400 leading-relaxed">
-                      {LIFECYCLE_TABS[activeTab].description}
+                      {LIFECYCLE_TABS[activeTab]?.description ?? ""}
                     </p>
                   </div>
                 </div>

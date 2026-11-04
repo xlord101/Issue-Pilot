@@ -27,8 +27,11 @@ export const Route = createFileRoute("/app/simulator")({
   component: SimulatorPage,
 });
 
+type WeightKey = "skill_match" | "difficulty_match" | "responsiveness" | "repo_health" | "feedback" | "freshness";
+type Weights = Record<WeightKey, number>;
+
 interface FactorConfig {
-  key: "skill_match" | "difficulty_match" | "responsiveness" | "repo_health" | "feedback" | "freshness";
+  key: WeightKey;
   label: string;
   symbol: string;
   defaultVal: number;
@@ -118,7 +121,7 @@ interface SimulationCandidate {
   number: number;
   title: string;
   technologies: string[];
-  rawScores: Record<string, number>;
+  rawScores: Weights;
   url: string;
 }
 
@@ -205,7 +208,7 @@ const SAMPLE_CANDIDATES: SimulationCandidate[] = [
   },
 ];
 
-const PRESETS = [
+const PRESETS: { name: string; weights: Weights; desc: string }[] = [
   {
     name: "Balanced Default",
     weights: { skill_match: 35, difficulty_match: 25, responsiveness: 15, repo_health: 10, feedback: 10, freshness: 5 },
@@ -228,8 +231,8 @@ const PRESETS = [
   },
 ];
 
-export function SimulatorPage() {
-  const [weights, setWeights] = useState<Record<string, number>>({
+function SimulatorPage() {
+  const [weights, setWeights] = useState<Weights>({
     skill_match: 35,
     difficulty_match: 25,
     responsiveness: 15,
@@ -245,7 +248,7 @@ export function SimulatorPage() {
     return Object.values(weights).reduce((a, b) => a + b, 0);
   }, [weights]);
 
-  const activePersona = PERSONAS.find((p) => p.id === selectedPersona) || PERSONAS[0];
+  const activePersona: Persona = PERSONAS.find((p) => p.id === selectedPersona) ?? PERSONAS[0]!;
 
   const rankedCandidates = useMemo(() => {
     const list = SAMPLE_CANDIDATES.map((c) => {
@@ -258,7 +261,7 @@ export function SimulatorPage() {
       const baseDiff = c.rawScores.difficulty_match;
       const personaDiffBonus = 100 - Math.abs(activePersona.capability - (100 - baseDiff));
 
-      const scores = {
+      const scores: Weights = {
         skill_match: Math.round(c.rawScores.skill_match * skillMultiplier),
         difficulty_match: Math.max(20, Math.min(100, Math.round(personaDiffBonus))),
         responsiveness: c.rawScores.responsiveness,
@@ -297,7 +300,7 @@ export function SimulatorPage() {
     setPrevRanks((prev) => (Object.keys(prev).length === 0 ? newRanks : prev));
   }, [rankedCandidates]);
 
-  const updateWeight = (key: string, val: number) => {
+  const updateWeight = (key: WeightKey, val: number) => {
     const snapshot: Record<string, number> = {};
     rankedCandidates.forEach((c, idx) => {
       snapshot[c.id] = idx + 1;
@@ -310,7 +313,7 @@ export function SimulatorPage() {
     }));
   };
 
-  const applyPreset = (presetWeights: Record<string, number>) => {
+  const applyPreset = (presetWeights: Weights) => {
     const snapshot: Record<string, number> = {};
     rankedCandidates.forEach((c, idx) => {
       snapshot[c.id] = idx + 1;
@@ -322,9 +325,9 @@ export function SimulatorPage() {
   const normalizeWeights = () => {
     if (totalWeight === 0) return;
     const factor = 100 / totalWeight;
-    const normalized: Record<string, number> = {};
+    const keys: WeightKey[] = ["skill_match", "difficulty_match", "responsiveness", "repo_health", "feedback", "freshness"];
+    const normalized: Partial<Weights> = {};
     let sum = 0;
-    const keys = Object.keys(weights);
     keys.forEach((k, idx) => {
       if (idx === keys.length - 1) {
         normalized[k] = 100 - sum;
@@ -334,7 +337,7 @@ export function SimulatorPage() {
         sum += v;
       }
     });
-    setWeights(normalized);
+    setWeights(normalized as Weights);
   };
 
   return (
@@ -368,7 +371,7 @@ export function SimulatorPage() {
         <div className="mt-6 flex flex-wrap items-center gap-2">
           <span className="text-xs font-semibold text-slate-500 mr-1 uppercase tracking-wider">Presets:</span>
           {PRESETS.map((p) => {
-            const isMatch = Object.keys(p.weights).every((k) => weights[k] === p.weights[k as keyof typeof p.weights]);
+            const isMatch = (Object.keys(p.weights) as WeightKey[]).every((k) => weights[k] === p.weights[k]);
             return (
               <button
                 key={p.name}
@@ -389,7 +392,10 @@ export function SimulatorPage() {
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => applyPreset(PRESETS[0].weights)}
+            onClick={() => {
+              const defaultPreset = PRESETS[0];
+              if (defaultPreset) applyPreset(defaultPreset.weights);
+            }}
             className="ml-auto h-7 text-xs text-slate-500 hover:text-slate-900"
           >
             <RotateCcw className="size-3 mr-1" />
@@ -484,7 +490,9 @@ export function SimulatorPage() {
                       min={0}
                       max={100}
                       step={5}
-                      onValueChange={([v]) => updateWeight(f.key, v)}
+                      onValueChange={([v]) => {
+                        if (v != null) updateWeight(f.key, v);
+                      }}
                       className="cursor-pointer py-1"
                     />
 

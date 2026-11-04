@@ -177,7 +177,7 @@ const PLATFORMS: { id: "all" | Source; label: string }[] = [
 
 const TECH_TAGS = ["All", "Python", "TypeScript", "React", "Go", "C++", "Rust", "FastAPI", "MongoDB"];
 
-export function ExplorePage() {
+function ExplorePage() {
   const [platform, setPlatform] = useState<"all" | Source>("all");
   const [tech, setTech] = useState<string>("All");
   const [search, setSearch] = useState<string>("");
