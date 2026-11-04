@@ -176,7 +176,7 @@ public class GitLabAdapter implements BaseIssueSourceAdapter {
         report.put("configured", configured);
 
         try {
-            String url = properties.getGitlabApiBaseUrl() + "/issues?per_page=1&scope=all";
+            String url = configured ? properties.getGitlabApiBaseUrl() + "/user" : properties.getGitlabApiBaseUrl() + "/projects?per_page=1";
             HttpRequest request = newRequestBuilder(url).GET().build();
             HttpResponse<String> response = executeWithRetry(request);
 

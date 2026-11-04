@@ -65,6 +65,7 @@ public class RealDataRecommendationPipelineTest {
                 try (java.io.InputStream is = cpr.getInputStream()) {
                     List<Map<String, Object>> backupIssues = objectMapper.readValue(is, new com.fasterxml.jackson.core.type.TypeReference<List<Map<String, Object>>>() {});
                     for (Map<String, Object> issue : backupIssues) {
+                        issue.put("stale_status", "verified");
                         issueRepository.upsertIssue(issue, true);
                     }
                 }
