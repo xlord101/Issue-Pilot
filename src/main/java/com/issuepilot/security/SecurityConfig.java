@@ -117,6 +117,40 @@ public class SecurityConfig {
     }
 
     @Bean
+    public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource(AppProperties properties) {
+        org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
+        String frontendUrl = properties.getFrontendAppUrl();
+        List<String> origins = new ArrayList<>();
+        if (frontendUrl != null && !frontendUrl.isBlank()) {
+            origins.add(frontendUrl.trim());
+        }
+        origins.add("http://localhost:3000");
+        origins.add("http://localhost:5173");
+        origins.add("http://127.0.0.1:3000");
+        origins.add("http://127.0.0.1:5173");
+
+        String configured = properties.getCorsOrigins();
+        if (configured != null && !configured.isBlank() && !configured.equals("*")) {
+            for (String o : configured.split(",")) {
+                if (!o.isBlank() && !origins.contains(o.trim())) {
+                    origins.add(o.trim());
+                }
+            }
+        }
+
+        configuration.setAllowedOriginPatterns(origins);
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+
+        org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             JwtDecoder jwtDecoder

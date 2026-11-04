@@ -78,7 +78,6 @@ export async function request<T>(
 
   const res = await fetch(buildUrl(path, opts.params, opts.query), {
     method: opts.method ?? "GET",
-    credentials: "include",
     headers,
     body: opts.body !== undefined ? JSON.stringify(opts.body) : null,
   });
