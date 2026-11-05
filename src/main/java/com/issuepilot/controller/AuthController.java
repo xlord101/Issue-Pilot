@@ -223,17 +223,20 @@ public class AuthController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Active security principal is required.");
         }
 
-        Map<String, Object> userDoc = null;
-        if (mongoConfig.isConnected()) {
-            userDoc = userRepository.getUser(userId);
-        }
+        Map<String, Object> userDoc = userRepository.getUser(userId);
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("user_id", userId);
         response.put("authenticated", true);
 
         if (userDoc != null) {
-            response.put("identity", userDoc.get("identity"));
+            Object identityObj = userDoc.get("identity");
+            response.put("identity", identityObj);
+            if (identityObj instanceof Map<?, ?> identity) {
+                if (identity.get("username") != null) response.put("username", identity.get("username"));
+                if (identity.get("display_name") != null) response.put("display_name", identity.get("display_name"));
+                if (identity.get("avatar_url") != null) response.put("avatar_url", identity.get("avatar_url"));
+            }
             response.put("onboarding_completed", userDoc.getOrDefault("onboarding_completed", false));
             response.put("capability", userDoc.getOrDefault("capability", 70.0));
             response.put("skills_count", userDoc.get("skills") instanceof Map ? ((Map<?, ?>) userDoc.get("skills")).size() : 0);
@@ -242,6 +245,13 @@ public class AuthController {
         } else {
             response.put("onboarding_completed", false);
             response.put("note", "Profile not yet persisted or running in memory mode.");
+        }
+
+        if (!response.containsKey("username") && authentication != null && authentication.getPrincipal() instanceof org.springframework.security.oauth2.jwt.Jwt jwt) {
+            String preferred = jwt.getClaimAsString("preferred_username");
+            if (preferred != null && !preferred.isBlank()) {
+                response.put("username", preferred);
+            }
         }
 
         return response;

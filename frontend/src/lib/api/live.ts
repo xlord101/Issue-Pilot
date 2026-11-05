@@ -25,13 +25,31 @@ export const liveApi: IssuePilotApi = {
         const data = await request<any>("auth.me", e.auth.me);
         if (!data || !data.authenticated) return null;
 
-        const login = data.user_id ? String(data.user_id).replace("github:", "") : "contributor";
+        const identity = (data.identity as Record<string, any>) || {};
+        const numericId = data.user_id ? String(data.user_id).replace("github:", "") : "";
+        const login =
+          identity["username"] ||
+          identity["login"] ||
+          data.username ||
+          numericId ||
+          "contributor";
+        const displayName =
+          identity["display_name"] ||
+          identity["name"] ||
+          data.display_name ||
+          data.name ||
+          login;
+        const avatarUrl =
+          identity["avatar_url"] ||
+          data.avatar_url ||
+          (numericId ? `https://avatars.githubusercontent.com/u/${numericId}` : null);
+
         return {
           user: {
             id: data.user_id || "1",
             login: login,
-            name: (data.identity as any)?.name ?? login,
-            avatar_url: (data.identity as any)?.avatar_url ?? null,
+            name: displayName,
+            avatar_url: avatarUrl,
           },
           roles: ["contributor"],
           is_demo: false,
@@ -230,7 +248,7 @@ export const liveApi: IssuePilotApi = {
             evidence_count: 5,
           }));
           return {
-            login: profile.user_id ? String(profile.user_id).replace("github:", "") : "contributor",
+            login: (profile.identity as any)?.username || profile.username || (profile.user_id ? String(profile.user_id).replace("github:", "") : "contributor"),
             skills: skillsList,
             repos_analyzed: 12,
             contributions_analyzed: 34,
