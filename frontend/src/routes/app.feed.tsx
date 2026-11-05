@@ -1,9 +1,8 @@
 import { useDeferredValue, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { SlidersHorizontal, Sparkles, Cpu, RefreshCw, LayoutList, CheckCircle2 } from "lucide-react";
+import { SlidersHorizontal, LayoutList } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DemoDataBadge } from "@/components/ip/badges";
 import { DEFAULT_FILTERS, FilterBar, type FeedFilters } from "@/components/ip/filter-bar";
 import { IssueCard } from "@/components/ip/issue-card";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ip/states";
@@ -43,10 +42,10 @@ function Feed() {
   const total = q.data?.pages[0]?.total;
 
   return (
-    <div className="space-y-8">
-      {/* Hero Feed Banner */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6">
+      {/* Header Banner */}
+      <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm shadow-slate-900/5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5">
               <span className="flex size-8 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-600">
@@ -57,7 +56,7 @@ function Feed() {
               </h1>
             </div>
             <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">
-              Issues are scored across six factors ($S, D, R, H, F, N$) and verified live for open, unassigned status.
+              Personalized open-source issues matched to your skill profile and verified unclaimed in real-time.
             </p>
           </div>
 
@@ -75,21 +74,6 @@ function Feed() {
             </Button>
           </div>
         </div>
-
-        {/* Telemetry Bar */}
-        <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-slate-100 pt-4 text-xs font-mono text-slate-600">
-          <span className="flex items-center gap-1.5 text-emerald-700 font-semibold">
-            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-            6-Factor Ranking Engine Active
-          </span>
-          <span className="text-slate-300">&bull;</span>
-          <span>Capability Benchmark: <strong className="text-slate-800">76/100</strong></span>
-          <span className="text-slate-300">&bull;</span>
-          <span className="flex items-center gap-1 text-slate-700">
-            <CheckCircle2 className="size-3.5 text-blue-600" />
-            Zero-Assignment Live Verification
-          </span>
-        </div>
       </div>
 
       {/* Filter Controls */}
@@ -102,56 +86,42 @@ function Feed() {
 
       {/* Issues List */}
       {q.isPending ? (
-        <LoadingState rows={3} label="Running 6-factor ranking core" />
+        <LoadingState rows={3} label="Loading personalized recommendations" />
       ) : q.isError ? (
         <ErrorState error={q.error} onRetry={() => q.refetch()} />
       ) : items.length === 0 ? (
         <EmptyState
           title="No recommendations match these filters"
-          hint="Try adjusting the match score range, clearing the technology query, or selecting All Platforms."
-          action={
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setFilters(DEFAULT_FILTERS)}
-              className="border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
-            >
-              Reset filters
-            </Button>
-          }
+          hint="Try broadening your source platform or technology criteria, or recalibrate in onboarding."
         />
       ) : (
         <div className="space-y-4">
-          <div className="flex items-center justify-between text-xs text-slate-500">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-mono">
             <span>
-              Showing <span className="font-bold text-slate-900">{items.length}</span>
-              {total != null ? ` of ${total} ranked candidates` : " candidates"}
+              Showing {items.length} of {total ?? items.length} ranked candidates
             </span>
-            <span className="font-mono text-[11px]">Ranked by total match score</span>
+            <span>Ranked by total match score</span>
           </div>
 
-          <div className="stagger space-y-4">
-            {items.map((r) => (
-              <IssueCard key={r.id} rec={r} />
+          <div className="space-y-3">
+            {items.map((item) => (
+              <IssueCard key={item.id} rec={item} />
             ))}
           </div>
 
-          <div className="mt-8 flex justify-center">
-            {q.hasNextPage ? (
+          {q.hasNextPage && (
+            <div className="pt-2 text-center">
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => q.fetchNextPage()}
                 disabled={q.isFetchingNextPage}
-                className="border-slate-200 bg-white text-slate-700 hover:bg-slate-50 px-6 active:scale-[0.98]"
+                className="border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs active:scale-[0.98]"
               >
-                {q.isFetchingNextPage ? "Querying Engine…" : "Load More Candidates"}
+                {q.isFetchingNextPage ? "Loading more..." : "Load more issues"}
               </Button>
-            ) : (
-              <span className="text-xs font-mono text-slate-400">
-                End of candidate pool
-              </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
     </div>
