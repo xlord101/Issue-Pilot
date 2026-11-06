@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { GitHubMark, GitLabMark, CodebergMark, BugzillaMark } from "@/components/ip/badges";
 import { Logo } from "@/components/ip/logo";
@@ -64,29 +65,29 @@ const PLATFORMS = [
 const LIFECYCLE_TABS = [
   {
     id: "calibrate",
-    tabLabel: "Requirements",
-    stepName: "1. Calibrate Profile",
-    title: "Derive your capability dial from verified code history.",
+    stepNumber: "01",
+    tabLabel: "Profile Calibration",
+    title: "Derive your capability target from verified code history.",
     description:
       "Most contributor matching fails because of self-reported surveys. Issue Pilot analyzes your public pull requests, commits, and language comfort zones into an objective capability score (0–100).",
     badge: "CALIBRATION",
   },
   {
-    id: "build",
-    tabLabel: "Build",
-    stepName: "2. Precision Matching",
+    id: "match",
+    stepNumber: "02",
+    tabLabel: "Precision Matching",
     title: "Multi-signal scoring matched to your stack and experience.",
     description:
-      "Once your profile is set, our recommendation engine evaluates language overlap, capability fit, maintainer response speed, and repository health in real time.",
-    badge: "MATCHING CORE",
+      "Every candidate is scored across language overlap, difficulty fit, maintainer response speed, and repository health in real time.",
+    badge: "MATCHING",
   },
   {
-    id: "launch",
-    tabLabel: "Launch and support",
-    stepName: "3. Verify & Claim",
-    title: "Live unclaimed validation. Zero stale collisions.",
+    id: "verify",
+    stepNumber: "03",
+    tabLabel: "Zero-Collision Guarantee",
+    title: "Live unclaimed validation. Never work on taken tasks.",
     description:
-      "Before an issue appears in your recommendations, our backend queries live platform APIs to verify zero active assignees and zero open pull requests. You never waste hours reading an already claimed ticket.",
+      "Before an issue appears in your feed, our backend queries live platform APIs to verify zero active assignees and zero open pull requests.",
     badge: "VERIFICATION",
   },
 ];
@@ -328,77 +329,100 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* 3. STEP-SWITCHER (MindCloud's dark rounded stage inside the light page) */}
+      {/* 3. STEP-SWITCHER (Interactive Pipeline Showcase) */}
       <section id="pipeline" className="bg-white py-20 sm:py-28">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          {/* The dark stage container */}
-          <div className="rounded-3xl bg-[#111318] p-8 sm:p-14 text-white shadow-2xl relative overflow-hidden border border-slate-800">
-            <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
-              {/* Left Column */}
+          {/* Engineered Dark Stage Container */}
+          <div className="relative rounded-3xl bg-gradient-to-b from-[#0c101d] via-[#090d16] to-[#070a12] p-8 sm:p-14 text-white shadow-2xl overflow-hidden border border-slate-800/80 before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent">
+            {/* Ambient Background Glows */}
+            <div className="pointer-events-none absolute -top-32 -right-32 size-96 rounded-full bg-blue-600/10 blur-[120px]" />
+            <div className="pointer-events-none absolute -bottom-32 -left-32 size-96 rounded-full bg-indigo-600/10 blur-[120px]" />
+
+            <div className="grid gap-12 lg:grid-cols-2 lg:items-center relative z-10">
+              {/* Left Column: Heading, 3 Interactive Step Cards, and CTA */}
               <div className="space-y-8">
                 <div className="space-y-3">
-                  <div className="text-xs font-mono font-semibold uppercase tracking-wider text-slate-400">
-                    Full-Service Matching
+                  <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-mono font-semibold text-blue-400">
+                    THE DISCOVERY PIPELINE
                   </div>
-                  <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
-                    Matching is hard,
+                  <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+                    From repository discovery
                     <br />
-                    <span className="text-blue-400">let precision ranking do the work.</span>
+                    <span className="text-blue-400">to your first merged PR.</span>
                   </h2>
-                  <p className="text-sm sm:text-base text-slate-400 leading-relaxed">
-                    For developers tired of reading dead issues or assigned PRs,
-                    Issue Pilot pairs a deterministic 6-factor ranking engine with
-                    continuous live unclaimed verification across GitHub, GitLab,
-                    Codeberg, and Bugzilla.
+                  <p className="text-sm sm:text-base text-slate-400 leading-relaxed max-w-xl">
+                    Three automated stages that eliminate stale tickets, unmatched skill curves,
+                    and unresponsive maintainers across GitHub, GitLab, Codeberg, and Bugzilla.
                   </p>
                 </div>
 
-                <div>
+                {/* 3 Interactive Vertical Step Cards */}
+                <div className="space-y-3 pt-2">
+                  {LIFECYCLE_TABS.map((tab, idx) => {
+                    const isActive = activeTab === idx;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setActiveTab(idx)}
+                        className={cn(
+                          "w-full text-left rounded-2xl p-4 transition-all active:scale-[0.98] border",
+                          isActive
+                            ? "border-blue-500/50 bg-slate-800/70 shadow-lg shadow-blue-500/10 ring-1 ring-blue-500/30"
+                            : "border-slate-800/80 bg-slate-900/30 hover:bg-slate-800/40 text-slate-400 hover:text-slate-200 cursor-pointer"
+                        )}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span
+                              className={cn(
+                                "text-xs font-mono font-bold px-2 py-0.5 rounded-md",
+                                isActive
+                                  ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                                  : "bg-slate-800 text-slate-500 border border-slate-700/50"
+                              )}
+                            >
+                              {tab.stepNumber}
+                            </span>
+                            <span
+                              className={cn(
+                                "text-sm font-semibold tracking-tight",
+                                isActive ? "text-white" : "text-slate-300"
+                              )}
+                            >
+                              {tab.tabLabel}
+                            </span>
+                          </div>
+                          {isActive && (
+                            <span className="size-2 rounded-full bg-blue-400 animate-pulse" />
+                          )}
+                        </div>
+                        {isActive && (
+                          <p className="text-xs text-slate-400 leading-relaxed mt-2.5 pl-9">
+                            {tab.description}
+                          </p>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Primary CTA Button */}
+                <div className="pt-2">
                   <Button
                     asChild
                     size="default"
-                    className="bg-white text-slate-900 hover:bg-slate-100 font-semibold px-5 active:scale-[0.98]"
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 shadow-md shadow-blue-600/25 active:scale-[0.98]"
                   >
                     <Link to="/onboarding">
                       Calibrate your profile &rarr;
                     </Link>
                   </Button>
                 </div>
-
-                {/* 3 Interactive Horizontal Tabs */}
-                <div className="border-t border-slate-800 pt-6 space-y-4">
-                  <div className="flex border-b border-slate-800 pb-2 gap-8 text-sm font-semibold">
-                    {LIFECYCLE_TABS.map((tab, idx) => (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(idx)}
-                        className={`relative pb-2 transition-colors active:scale-[0.98] ${
-                          activeTab === idx
-                            ? "text-white"
-                            : "text-slate-500 hover:text-slate-300"
-                        }`}
-                      >
-                        {tab.tabLabel}
-                        {activeTab === idx && (
-                          <span className="absolute bottom-0 inset-x-0 h-0.5 bg-blue-500 rounded-full" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="space-y-2">
-                    <h3 className="text-base font-semibold text-slate-200">
-                      {LIFECYCLE_TABS[activeTab]?.title ?? ""}
-                    </h3>
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      {LIFECYCLE_TABS[activeTab]?.description ?? ""}
-                    </p>
-                  </div>
-                </div>
               </div>
 
-              {/* Right Column: Visual Stage */}
-              <div className="rounded-2xl border border-slate-800 bg-[#161922] p-6 shadow-inner relative min-h-[420px] flex flex-col justify-between">
+              {/* Right Column: Visual Stage (Elevated Glass Card) */}
+              <div className="rounded-2xl border border-white/10 bg-slate-900/80 backdrop-blur-xl p-6 sm:p-7 shadow-2xl relative min-h-[440px] flex flex-col justify-between">
                 {/* Tab 0 Visual: Profile & Dial */}
                 {activeTab === 0 && (
                   <div className="space-y-6">
@@ -409,12 +433,13 @@ function LandingPage() {
                           Contributor Capability Dial
                         </span>
                       </div>
-                      <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-xs font-mono font-bold text-emerald-400">
+                      <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-xs font-mono font-bold text-emerald-400">
+                        <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
                         VERIFIED: 78/100
-                      </span>
+                      </div>
                     </div>
 
-                    <div className="rounded-xl border border-slate-800 bg-slate-950 p-4 flex items-center justify-between">
+                    <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-4 flex items-center justify-between">
                       <div>
                         <div className="text-xs font-mono text-slate-400">
                           Primary Focus Area
@@ -423,10 +448,10 @@ function LandingPage() {
                           Systems &amp; Backends
                         </div>
                         <div className="text-xs text-slate-400 mt-0.5">
-                          Comfort: Feature development &amp; performance fixes
+                          Target difficulty: 65 – 85 pts (Optimal growth zone)
                         </div>
                       </div>
-                      <div className="size-14 rounded-full border-4 border-blue-500 border-t-emerald-400 flex items-center justify-center font-mono font-bold text-sm text-white">
+                      <div className="size-14 rounded-full border-4 border-blue-500 border-t-emerald-400 flex items-center justify-center font-mono font-bold text-sm text-white bg-slate-900 shadow-inner">
                         78%
                       </div>
                     </div>
@@ -436,9 +461,9 @@ function LandingPage() {
                         Language Confidence Breakdown
                       </div>
                       {[
-                        { lang: "Rust", score: 94, bar: "w-[94%] bg-orange-500" },
-                        { lang: "TypeScript", score: 88, bar: "w-[88%] bg-blue-500" },
-                        { lang: "Go", score: 72, bar: "w-[72%] bg-cyan-500" },
+                        { lang: "Rust", score: 94, bar: "w-[94%] bg-blue-500" },
+                        { lang: "TypeScript", score: 88, bar: "w-[88%] bg-sky-400" },
+                        { lang: "Go", score: 72, bar: "w-[72%] bg-indigo-400" },
                       ].map((item) => (
                         <div key={item.lang} className="space-y-1">
                           <div className="flex justify-between text-xs font-mono">
@@ -454,20 +479,20 @@ function LandingPage() {
                   </div>
                 )}
 
-                {/* Tab 1 Visual: Live 6-Factor Sliders */}
+                {/* Tab 1 Visual: Dynamic Weights Tuning */}
                 {activeTab === 1 && (
                   <div className="space-y-5">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                       <div className="flex items-center gap-2">
                         <Cpu className="size-5 text-blue-400" />
                         <span className="text-sm font-semibold text-slate-200">
-                          Deterministic Scoring Formula
+                          Personalized Priority Weights
                         </span>
                       </div>
                       <div className="text-right font-mono">
-                        <span className="text-xs text-slate-400 mr-2">Score:</span>
-                        <span className="text-lg font-bold text-emerald-400">
-                          {simulatedScore} PTS
+                        <span className="text-xs text-slate-400 mr-2">Simulated Match:</span>
+                        <span className="text-base font-bold text-emerald-400">
+                          {simulatedScore}%
                         </span>
                       </div>
                     </div>
@@ -475,7 +500,7 @@ function LandingPage() {
                     <div className="space-y-3 text-xs font-mono">
                       <div>
                         <div className="flex justify-between pb-1">
-                          <span className="text-slate-300">Skill Match (S):</span>
+                          <span className="text-slate-300">Skill Alignment:</span>
                           <span className="text-blue-400 font-bold">{skillWeight}%</span>
                         </div>
                         <input
@@ -490,7 +515,7 @@ function LandingPage() {
 
                       <div>
                         <div className="flex justify-between pb-1">
-                          <span className="text-slate-300">Difficulty Fit (D):</span>
+                          <span className="text-slate-300">Difficulty Stretch:</span>
                           <span className="text-blue-400 font-bold">{diffWeight}%</span>
                         </div>
                         <input
@@ -505,7 +530,7 @@ function LandingPage() {
 
                       <div>
                         <div className="flex justify-between pb-1">
-                          <span className="text-slate-300">Maintainer Velocity (R):</span>
+                          <span className="text-slate-300">Maintainer Velocity:</span>
                           <span className="text-blue-400 font-bold">{respWeight}%</span>
                         </div>
                         <input
@@ -519,13 +544,18 @@ function LandingPage() {
                       </div>
                     </div>
 
-                    <div className="rounded-lg border border-slate-800 bg-slate-950 p-3 text-[11px] font-mono text-slate-400">
-                      <span className="text-emerald-400">Calibrated Matching:</span> Dynamically aligns recommendations to your active development goals.
+                    <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-mono text-slate-400">Matched Candidate</span>
+                        <span className="font-mono text-emerald-400 font-semibold">{simulatedScore} Match</span>
+                      </div>
+                      <div className="text-sm font-semibold text-slate-200">tokio-rs/tokio #6810</div>
+                      <div className="text-xs text-slate-400">Support graceful task cancellation during runtime shutdown</div>
                     </div>
                   </div>
                 )}
 
-                {/* Tab 2 Visual: Live Telemetry Terminal */}
+                {/* Tab 2 Visual: Live Zero-Collision Runtime Validator */}
                 {activeTab === 2 && (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -540,11 +570,23 @@ function LandingPage() {
                       </span>
                     </div>
 
-                    <div className="rounded-xl border border-slate-800 bg-slate-950 p-4 font-mono text-xs text-slate-300 space-y-2 overflow-hidden">
-                      <div className="text-slate-500">[0.2ms] GET api.github.com/repos/tokio-rs/tokio/issues/6810</div>
-                      <div className="text-slate-400">[0.7ms] Checking linked PRs &rarr; 0 active pull requests</div>
-                      <div className="text-blue-400">[1.4ms] Maintainer response velocity: 1.8h avg (Fast)</div>
-                      <div className="text-emerald-400 font-semibold">[1.9ms] Unclaimed guarantee verified. Ready to ship.</div>
+                    <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-4 font-mono text-xs text-slate-300 space-y-2.5">
+                      <div className="flex items-center gap-2 text-slate-300">
+                        <Check className="size-4 text-emerald-400 shrink-0" />
+                        <span>Source verification: Open issue confirmed</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-slate-300">
+                        <Check className="size-4 text-emerald-400 shrink-0" />
+                        <span>Zero assignees: Unclaimed &amp; available to claim</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-slate-300">
+                        <Check className="size-4 text-emerald-400 shrink-0" />
+                        <span>Zero open pull requests: No duplicate work in progress</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-slate-300">
+                        <Check className="size-4 text-emerald-400 shrink-0" />
+                        <span>Maintainer velocity: 1.8h avg response time</span>
+                      </div>
                     </div>
 
                     <Button
@@ -562,8 +604,8 @@ function LandingPage() {
 
                 {/* Footer strip of card */}
                 <div className="border-t border-slate-800 pt-3 flex items-center justify-between text-[11px] font-mono text-slate-400">
-                  <span>Signal Matching Engine</span>
-                  <span className="text-emerald-400">Status: Verified</span>
+                  <span>Continuous Verification</span>
+                  <span className="text-emerald-400">Zero stale collisions guaranteed</span>
                 </div>
               </div>
             </div>
