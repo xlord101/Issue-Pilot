@@ -162,46 +162,46 @@ function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 antialiased selection:bg-blue-600 selection:text-white font-sans">
-      {/* 1. HERO SECTION (Animated 3-Color Aurora Mesh Background) */}
+      {/* 1. HERO SECTION (Animated 3-Color Pastel Aura Mesh Background) */}
       <AuroraBackground
         intensity="vibrant"
-        className="bg-[#070b14] text-white"
+        className="text-slate-900"
       >
         {/* Navigation Bar inside Hero Header */}
-        <header className="border-b border-white/10 relative z-30">
+        <header className="border-b border-slate-200/70 relative z-30">
           <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
             <div className="flex items-center gap-8">
-              <Link to="/" className="flex items-center gap-2 text-white">
-                <div className="size-8 rounded-lg bg-white/10 flex items-center justify-center border border-white/20">
-                  <div className="size-4 rounded-sm bg-white" />
+              <Link to="/" className="flex items-center gap-2 text-slate-900">
+                <div className="size-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-sm">
+                  <div className="size-3.5 rounded-sm bg-white" />
                 </div>
-                <span className="font-bold text-lg tracking-tight text-white">
+                <span className="font-bold text-lg tracking-tight text-slate-900">
                   issue pilot
                 </span>
               </Link>
 
-              <nav className="hidden md:flex items-center gap-6 text-sm text-white/80">
+              <nav className="hidden md:flex items-center gap-6 text-sm text-slate-600 font-medium">
                 <Link
                   to="/app/simulator"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-slate-900 transition-colors"
                 >
                   Preferences
                 </Link>
                 <Link
                   to="/app/explore"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-slate-900 transition-colors"
                 >
                   Issue Explorer
                 </Link>
                 <a
                   href="#pipeline"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-slate-900 transition-colors"
                 >
                   Architecture
                 </a>
                 <a
                   href="#numbers"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-slate-900 transition-colors"
                 >
                   Coverage
                 </a>
@@ -213,14 +213,14 @@ function LandingPage() {
                 asChild
                 variant="ghost"
                 size="sm"
-                className="text-white hover:text-white hover:bg-white/10 active:scale-[0.98]"
+                className="text-slate-700 hover:text-slate-900 hover:bg-slate-200/50 active:scale-[0.98]"
               >
                 <Link to="/login">Sign in</Link>
               </Button>
               <Button
                 asChild
                 size="sm"
-                className="bg-white text-blue-900 hover:bg-white/90 font-semibold px-4 shadow-sm active:scale-[0.98]"
+                className="bg-blue-600 text-white hover:bg-blue-700 font-semibold px-4 shadow-sm shadow-blue-600/20 active:scale-[0.98]"
               >
                 <Link to="/onboarding">Get started</Link>
               </Button>
@@ -231,26 +231,27 @@ function LandingPage() {
         {/* Hero Content */}
         <div className="mx-auto max-w-4xl px-4 pt-16 pb-28 sm:pt-24 sm:pb-36 text-center relative z-20 space-y-6">
           {/* Top tag pill */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/20 px-3.5 py-1 text-xs text-white backdrop-blur-md">
-            <span className="font-semibold text-white">Continuous Match Engine</span>
-            <span className="text-white/60">Live unclaimed verification</span>
+          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200/90 bg-white/80 px-3.5 py-1 text-xs text-slate-700 backdrop-blur-md shadow-xs">
+            <span className="font-semibold text-slate-900">Continuous Match Engine</span>
+            <span className="text-slate-400">•</span>
+            <span className="text-slate-500">Live unclaimed verification</span>
             <Link
               to="/app/explore"
-              className="ml-1 text-blue-200 underline hover:text-white font-medium"
+              className="ml-1 text-blue-600 underline hover:text-blue-700 font-medium"
             >
               Explore issues &rarr;
             </Link>
           </div>
 
           {/* Huge Main Headline */}
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white leading-[1.08]">
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.08]">
             Find open-source issues.
             <br />
-            Ship code that matters.
+            <span className="text-slate-900">Ship code that matters.</span>
           </h1>
 
           {/* Clean Subtitle */}
-          <p className="mx-auto max-w-2xl text-base sm:text-lg text-white/90 leading-relaxed font-normal">
+          <p className="mx-auto max-w-2xl text-base sm:text-lg text-slate-600 leading-relaxed font-normal">
             Issue Pilot continuously indexes unclaimed issues across GitHub,
             GitLab, Codeberg, and Bugzilla, matching them to your verified
             stack proficiency and capability target.
@@ -260,7 +261,7 @@ function LandingPage() {
           <div className="mx-auto max-w-2xl pt-4">
             <form
               onSubmit={handleSearchSubmit}
-              className="relative flex items-center rounded-2xl bg-white p-2 shadow-2xl transition-all focus-within:ring-4 focus-within:ring-blue-500/30 border border-slate-200/50"
+              className="relative flex items-center rounded-2xl bg-white p-2 shadow-xl shadow-slate-200/60 transition-all focus-within:ring-4 focus-within:ring-blue-500/20 border border-slate-200/80"
             >
               <Search className="size-5 ml-3 text-slate-400 shrink-0" />
               <input
@@ -281,12 +282,12 @@ function LandingPage() {
 
             {/* Quick chips below prompt */}
             <div className="flex flex-wrap items-center justify-center gap-2 pt-3">
-              <span className="text-xs text-white/80 font-medium">Popular:</span>
+              <span className="text-xs text-slate-500 font-medium">Popular:</span>
               {QUICK_TAGS.map((t) => (
                 <button
                   key={t.label}
                   onClick={() => handleTagClick(t.query)}
-                  className="rounded-full bg-white/20 hover:bg-white/30 border border-white/25 px-2.5 py-0.5 text-xs text-white transition-all active:scale-[0.98]"
+                  className="rounded-full bg-white/80 hover:bg-white border border-slate-200/80 hover:border-slate-300 px-2.5 py-0.5 text-xs text-slate-700 hover:text-slate-900 shadow-2xs transition-all active:scale-[0.98]"
                 >
                   {t.label}
                 </button>
