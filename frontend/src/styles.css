@@ -203,6 +203,50 @@
   from { opacity: 0; transform: translateY(6px); filter: blur(2px); }
   to { opacity: 1; transform: none; filter: none; }
 }
+
+@keyframes aura-float-1 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(60px, -40px) scale(1.15);
+  }
+  66% {
+    transform: translate(-40px, 30px) scale(0.92);
+  }
+}
+
+@keyframes aura-float-2 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(-50px, 35px) scale(1.1);
+  }
+  66% {
+    transform: translate(45px, -25px) scale(0.95);
+  }
+}
+
+@keyframes aura-float-3 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  50% {
+    transform: translate(30px, 40px) scale(1.2);
+  }
+}
+
+.animate-aura-1 {
+  animation: aura-float-1 20s ease-in-out infinite;
+}
+.animate-aura-2 {
+  animation: aura-float-2 24s ease-in-out infinite;
+}
+.animate-aura-3 {
+  animation: aura-float-3 28s ease-in-out infinite;
+}
+
 @utility page-enter {
   animation: ip-enter 320ms var(--ease-out) both;
 }

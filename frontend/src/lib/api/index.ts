@@ -17,6 +17,8 @@ export interface IssuePilotApi {
       error?: string | undefined;
       exchange_code?: string | undefined;
     }): Promise<T.Session>;
+    register(payload: { firstName: string; lastName: string; email: string; password: string }): Promise<T.Session>;
+    signInWithPassword(payload: { email: string; password: string }): Promise<T.Session>;
     signOut(): Promise<void>;
   };
   onboarding: {
@@ -30,7 +32,7 @@ export interface IssuePilotApi {
   };
   feedback: {
     list(): Promise<T.FeedbackEntry[]>;
-    submit(recommendationId: string, decision: T.FeedbackDecision): Promise<T.FeedbackEntry>;
+    submit(recommendationId: string, decision: T.FeedbackDecision, reason?: string): Promise<T.FeedbackEntry>;
   };
   portfolio: { list(): Promise<T.PortfolioItem[]> };
   profile: { me(): Promise<T.TechProfile> };

@@ -23,6 +23,9 @@ public class IssueVote {
 
     private int vote; // +1 for like, -1 for dislike
 
+    @JsonProperty("reason")
+    private String reason;
+
     @JsonProperty("recommendation_run_id")
     private String recommendationRunId;
 
@@ -58,6 +61,9 @@ public class IssueVote {
 
     public int getVote() { return vote; }
     public void setVote(int vote) { this.vote = vote; }
+
+    public String getReason() { return reason; }
+    public void setReason(String reason) { this.reason = reason; }
 
     public String getRecommendationRunId() { return recommendationRunId; }
     public void setRecommendationRunId(String recommendationRunId) { this.recommendationRunId = recommendationRunId; }

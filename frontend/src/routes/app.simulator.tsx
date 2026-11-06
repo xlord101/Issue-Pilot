@@ -21,8 +21,8 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/app/simulator")({
   head: () =>
     pageMeta(
-      "What-If Algorithm Simulator",
-      "Interactive 6-factor weight calibration for the ranking engine."
+      "Recommendation Preferences & Tuning",
+      "Calibrate ranking priorities to align recommendations with your goals."
     ),
   component: SimulatorPage,
 });
@@ -351,19 +351,12 @@ function SimulatorPage() {
                 <SlidersHorizontal className="size-4" />
               </span>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                What-If Algorithm Simulator
+                Recommendation Preferences
               </h1>
             </div>
             <p className="mt-1.5 text-sm text-slate-600 max-w-2xl leading-relaxed">
-              Calibrate the six deterministic ranking weights in real-time. Candidate scores are recomputed instantly with zero synthetic latency.
+              Fine-tune matching priorities to align recommendations with your goals. The candidate pool dynamically updates in real time.
             </p>
-          </div>
-
-          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-xs">
-            <div className="flex items-center gap-1.5 px-3 py-1 text-xs font-mono text-emerald-700 font-semibold">
-              <Cpu className="size-3.5 text-emerald-600" />
-              <span>Execution Latency &bull; 1.4ms</span>
-            </div>
           </div>
         </div>
 
@@ -412,9 +405,9 @@ function SimulatorPage() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
-                  Hardware Fader Board
+                  Matching Preferences
                 </h2>
-                <p className="text-xs text-slate-500">Relative influence on final score</p>
+                <p className="text-xs text-slate-500">Relative influence on ranking order</p>
               </div>
 
               <div className="flex items-center gap-2">

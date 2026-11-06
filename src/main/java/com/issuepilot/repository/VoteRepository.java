@@ -116,6 +116,9 @@ public class VoteRepository {
 
                 Document setFields = new Document("vote", vote.getVote())
                         .append("updated_at", nowIso);
+                if (vote.getReason() != null) {
+                    setFields.append("reason", vote.getReason());
+                }
                 if (vote.getRecommendationRunId() != null) {
                     setFields.append("recommendation_run_id", vote.getRecommendationRunId());
                 }

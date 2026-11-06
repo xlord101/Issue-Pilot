@@ -14,6 +14,10 @@ export const endpoints = {
     exchange: "/api/auth/exchange" as Endpoint,
     /** GET → Current User Identity / 401 */
     me: "/api/auth/me" as Endpoint,
+    /** POST { first_name, last_name, email, password } → { access_token } */
+    register: "/api/auth/register" as Endpoint,
+    /** POST { email, password } → { access_token } */
+    login: "/api/auth/login" as Endpoint,
     /** POST → Logout confirmation */
     logout: "/api/auth/logout" as Endpoint,
   },

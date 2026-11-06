@@ -3,6 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { GitHubMark, GitLabMark, CodebergMark, BugzillaMark } from "@/components/ip/badges";
 import { Logo } from "@/components/ip/logo";
+import { AuroraBackground } from "@/components/ip/aurora-background";
 import { pageMeta } from "@/lib/format";
 import {
   ArrowRight,
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/")({
   head: () =>
     pageMeta(
       "Issue Pilot — Precision Open-Source Matching Engine",
-      "Deterministic 6-factor recommendation core and live unclaimed verification across GitHub, GitLab, Codeberg, and Bugzilla."
+      "Intelligent recommendation engine and live unclaimed verification across GitHub, GitLab, Codeberg, and Bugzilla."
     ),
   component: LandingPage,
 });
@@ -73,11 +74,11 @@ const LIFECYCLE_TABS = [
   {
     id: "build",
     tabLabel: "Build",
-    stepName: "2. 6-Factor Scoring",
-    title: "Deterministic mathematical scoring. Zero LLM hallucinations.",
+    stepName: "2. Precision Matching",
+    title: "Multi-signal scoring matched to your stack and experience.",
     description:
-      "Once your profile is set, our deterministic ranking engine calculates a weighted 6-factor score across Skill Match (35%), Difficulty (25%), Maintainer Responsiveness (15%), Repo Health (10%), Taste Feedback (10%), and Freshness (5%) in under 2ms.",
-    badge: "RANKING CORE",
+      "Once your profile is set, our recommendation engine evaluates language overlap, capability fit, maintainer response speed, and repository health in real time.",
+    badge: "MATCHING CORE",
   },
   {
     id: "launch",
@@ -161,13 +162,10 @@ function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 antialiased selection:bg-blue-600 selection:text-white font-sans">
-      {/* 1. HERO SECTION (MindCloud exact gradient: #030917 -> #0056ec -> #dcebff -> #ffffff) */}
-      <section
-        className="relative overflow-hidden"
-        style={{
-          background:
-            "linear-gradient(180deg, #030917 0%, #011949 19%, #012a7a 34%, #0056ec 52%, #3f86ff 67%, #9cc4ff 81%, #dcebff 91%, #ffffff 100%)",
-        }}
+      {/* 1. HERO SECTION (Animated 3-Color Aurora Mesh Background) */}
+      <AuroraBackground
+        intensity="vibrant"
+        className="bg-[#070b14] text-white"
       >
         {/* Navigation Bar inside Hero Header */}
         <header className="border-b border-white/10 relative z-30">
@@ -187,7 +185,7 @@ function LandingPage() {
                   to="/app/simulator"
                   className="hover:text-white transition-colors"
                 >
-                  What-If Simulator
+                  Preferences
                 </Link>
                 <Link
                   to="/app/explore"
@@ -205,7 +203,7 @@ function LandingPage() {
                   href="#numbers"
                   className="hover:text-white transition-colors"
                 >
-                  Telemetry
+                  Coverage
                 </a>
               </nav>
             </div>
@@ -232,15 +230,15 @@ function LandingPage() {
 
         {/* Hero Content */}
         <div className="mx-auto max-w-4xl px-4 pt-16 pb-28 sm:pt-24 sm:pb-36 text-center relative z-20 space-y-6">
-          {/* Inc 5000 style top tag pill */}
+          {/* Top tag pill */}
           <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/20 px-3.5 py-1 text-xs text-white backdrop-blur-md">
-            <span className="font-semibold text-white">Deterministic Ranking Engine</span>
-            <span className="text-white/60">with sub-2ms latency</span>
+            <span className="font-semibold text-white">Continuous Match Engine</span>
+            <span className="text-white/60">Live unclaimed verification</span>
             <Link
-              to="/app/simulator"
+              to="/app/explore"
               className="ml-1 text-blue-200 underline hover:text-white font-medium"
             >
-              Test simulator &rarr;
+              Explore issues &rarr;
             </Link>
           </div>
 
@@ -255,7 +253,7 @@ function LandingPage() {
           <p className="mx-auto max-w-2xl text-base sm:text-lg text-white/90 leading-relaxed font-normal">
             Issue Pilot continuously indexes unclaimed issues across GitHub,
             GitLab, Codeberg, and Bugzilla, matching them to your verified
-            capability dial with an automated 6-factor ranking engine.
+            stack proficiency and capability target.
           </p>
 
           {/* MindCloud Exact White Floating CTA Prompt Bar */}
@@ -296,7 +294,7 @@ function LandingPage() {
             </div>
           </div>
         </div>
-      </section>
+      </AuroraBackground>
 
       {/* 2. LOGO / ECOSYSTEM STRIP (Pure White Background) */}
       <section className="bg-white py-12 border-b border-slate-100">
@@ -521,10 +519,7 @@ function LandingPage() {
                     </div>
 
                     <div className="rounded-lg border border-slate-800 bg-slate-950 p-3 text-[11px] font-mono text-slate-400">
-                      <span className="text-emerald-400">Score(u,i)</span> ={" "}
-                      {(skillWeight / 100).toFixed(2)}S +{" "}
-                      {(diffWeight / 100).toFixed(2)}D +{" "}
-                      {(respWeight / 100).toFixed(2)}R + 0.10H + 0.10F + 0.05N
+                      <span className="text-emerald-400">Calibrated Matching:</span> Dynamically aligns recommendations to your active development goals.
                     </div>
                   </div>
                 )}
@@ -566,8 +561,8 @@ function LandingPage() {
 
                 {/* Footer strip of card */}
                 <div className="border-t border-slate-800 pt-3 flex items-center justify-between text-[11px] font-mono text-slate-400">
-                  <span>Engine: 6-Factor Scoring Core</span>
-                  <span className="text-emerald-400">Execution: 1.84ms</span>
+                  <span>Signal Matching Engine</span>
+                  <span className="text-emerald-400">Status: Verified</span>
                 </div>
               </div>
             </div>
@@ -575,7 +570,7 @@ function LandingPage() {
         </div>
       </section>
 
-            {/* 5. NUMBERS SECTION (MindCloud Pure White Section with Big Black Stats) */}
+      {/* 5. NUMBERS SECTION (MindCloud Pure White Section with Big Black Stats) */}
       <section id="numbers" className="bg-white py-20 sm:py-28 border-t border-slate-100">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">

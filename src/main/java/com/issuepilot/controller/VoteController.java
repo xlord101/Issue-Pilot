@@ -28,6 +28,7 @@ public class VoteController {
         public String source;
         public String platform_issue_id;
         public int vote; // +1 or -1
+        public String reason;
         public String recommendation_run_id;
         public Map<String, Object> feature_snapshot;
     }
@@ -94,6 +95,7 @@ public class VoteController {
                     req.source,
                     req.platform_issue_id,
                     req.vote,
+                    req.reason,
                     req.recommendation_run_id,
                     req.feature_snapshot
             );

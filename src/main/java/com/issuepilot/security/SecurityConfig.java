@@ -179,6 +179,8 @@ public class SecurityConfig {
                     "/api/auth/github/login",
                     "/api/auth/github/callback",
                     "/api/auth/exchange",
+                    "/api/auth/register",
+                    "/api/auth/login",
                     "/",
                     "/index.html",
                     "/error",

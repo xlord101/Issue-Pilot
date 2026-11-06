@@ -87,6 +87,48 @@ export const liveApi: IssuePilotApi = {
       }
       return s;
     },
+    async register(payload) {
+      try {
+        const res = await request<any>("auth.register", e.auth.register, {
+          method: "POST",
+          body: {
+            first_name: payload.firstName,
+            last_name: payload.lastName,
+            email: payload.email,
+            password: payload.password,
+          },
+        });
+        const token = res?.access_token || res?.token;
+        if (token) {
+          setStoredAuthToken(token);
+        }
+        const s = await liveApi.auth.getSession();
+        if (s) return s;
+      } catch (err) {
+        if (!(err instanceof NotConnectedError)) throw err;
+      }
+      return mockApi.auth.register(payload);
+    },
+    async signInWithPassword(payload) {
+      try {
+        const res = await request<any>("auth.login", e.auth.login, {
+          method: "POST",
+          body: {
+            email: payload.email,
+            password: payload.password,
+          },
+        });
+        const token = res?.access_token || res?.token;
+        if (token) {
+          setStoredAuthToken(token);
+        }
+        const s = await liveApi.auth.getSession();
+        if (s) return s;
+      } catch (err) {
+        if (!(err instanceof NotConnectedError)) throw err;
+      }
+      return mockApi.auth.signInWithPassword(payload);
+    },
     async signOut() {
       try {
         await request<void>("auth.logout", e.auth.logout, { method: "POST" });
@@ -218,7 +260,7 @@ export const liveApi: IssuePilotApi = {
     async list() {
       return mockApi.feedback.list();
     },
-    async submit(recommendationId, decision) {
+    async submit(recommendationId, decision, reason) {
       try {
         await request<any>("votes.record", e.votes.record, {
           method: "POST",
@@ -227,12 +269,13 @@ export const liveApi: IssuePilotApi = {
             source: "github",
             platform_issue_id: recommendationId,
             vote: decision === "accepted" ? 1 : -1,
+            reason: reason || undefined,
           },
         });
       } catch {
         /* fallback to mock */
       }
-      return mockApi.feedback.submit(recommendationId, decision);
+      return mockApi.feedback.submit(recommendationId, decision, reason);
     },
   },
   portfolio: { list: () => mockApi.portfolio.list() },

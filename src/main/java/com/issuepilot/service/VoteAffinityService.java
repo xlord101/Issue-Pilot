@@ -132,6 +132,17 @@ public class VoteAffinityService {
             int voteValue,
             String recommendationRunId,
             Map<String, Object> featureSnapshot) {
+        return recordVote(userId, source, platformIssueId, voteValue, null, recommendationRunId, featureSnapshot);
+    }
+
+    public IssueVote recordVote(
+            String userId,
+            String source,
+            String platformIssueId,
+            int voteValue,
+            String reason,
+            String recommendationRunId,
+            Map<String, Object> featureSnapshot) {
         if (userId == null || userId.isBlank()) {
             throw new IllegalArgumentException("User ID cannot be empty.");
         }
@@ -146,6 +157,7 @@ public class VoteAffinityService {
         }
 
         IssueVote vote = new IssueVote(userId, source, platformIssueId, voteValue);
+        vote.setReason(reason);
         vote.setRecommendationRunId(recommendationRunId);
 
         // Stage 1 Security Decision 6:

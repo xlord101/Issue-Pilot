@@ -101,6 +101,28 @@ export const mockApi: IssuePilotApi = {
       window.sessionStorage.setItem(DEMO_FLAG, "1");
       return session;
     },
+    async register(payload) {
+      await wait(500);
+      const name = `${payload.firstName} ${payload.lastName}`.trim() || payload.email.split("@")[0] || "Contributor";
+      const userSession = {
+        user: { id: "user_" + Date.now(), login: payload.email.split("@")[0] || "user", name, avatar_url: null },
+        roles: ["contributor"] as ("contributor" | "maintainer" | "admin")[],
+        is_demo: true,
+      };
+      window.sessionStorage.setItem(DEMO_FLAG, "1");
+      return userSession;
+    },
+    async signInWithPassword(payload) {
+      await wait(500);
+      const name = payload.email.split("@")[0] || "Contributor";
+      const userSession = {
+        user: { id: "user_" + Date.now(), login: name, name, avatar_url: null },
+        roles: ["contributor"] as ("contributor" | "maintainer" | "admin")[],
+        is_demo: true,
+      };
+      window.sessionStorage.setItem(DEMO_FLAG, "1");
+      return userSession;
+    },
     async signOut() {
       window.sessionStorage.removeItem(DEMO_FLAG);
     },
@@ -162,14 +184,14 @@ export const mockApi: IssuePilotApi = {
       await wait();
       return feedback;
     },
-    async submit(recommendationId, decision: FeedbackDecision) {
+    async submit(recommendationId, decision: FeedbackDecision, reason?: string) {
       await wait(300);
       const r = getRecs().find((x) => x.id === recommendationId);
       if (r) {
         r.decision = decision;
         personalize(r, decision);
       }
-      const entry = { id: `fb_${Date.now()}`, recommendation_id: recommendationId, issue_title: r?.issue.title ?? recommendationId, repo_key: r?.issue.repo_key ?? "", source: r?.issue.source ?? "github", decision, decided_at: new Date().toISOString() };
+      const entry = { id: `fb_${Date.now()}`, recommendation_id: recommendationId, issue_title: r?.issue.title ?? recommendationId, repo_key: r?.issue.repo_key ?? "", source: r?.issue.source ?? "github", decision, reason, decided_at: new Date().toISOString() };
       feedback = [entry, ...feedback];
       return entry;
     },

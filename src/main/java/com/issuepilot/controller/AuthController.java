@@ -212,6 +212,103 @@ public class AuthController {
         return response;
     }
 
+    public static class RegisterRequest {
+        public String first_name;
+        public String last_name;
+        public String email;
+        public String password;
+    }
+
+    public static class LoginRequest {
+        public String email;
+        public String password;
+    }
+
+    @PostMapping("/register")
+    public Map<String, Object> register(@RequestBody RegisterRequest req) {
+        if (req == null || req.email == null || req.email.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required.");
+        }
+        if (req.password == null || req.password.isBlank() || req.password.length() < 6) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must be at least 6 characters.");
+        }
+
+        String cleanEmail = req.email.trim().toLowerCase(Locale.ROOT);
+        String firstName = req.first_name != null ? req.first_name.trim() : "";
+        String lastName = req.last_name != null ? req.last_name.trim() : "";
+        String displayName = (firstName + " " + lastName).trim();
+        if (displayName.isBlank()) {
+            displayName = cleanEmail.split("@")[0];
+        }
+        String username = cleanEmail.split("@")[0].replaceAll("[^a-zA-Z0-9_-]", "");
+        if (username.isBlank()) username = "contributor";
+
+        userRepository.provisionOrUpdateOAuthUser(
+                "local",
+                cleanEmail,
+                username,
+                displayName,
+                "https://api.dicebear.com/7.x/identicon/svg?seed=" + URLEncoder.encode(cleanEmail, StandardCharsets.UTF_8),
+                "",
+                cleanEmail
+        );
+
+        String canonicalUserId = "local:" + cleanEmail;
+        String jwt = tokenService.issueToken(canonicalUserId, username, List.of("ROLE_USER"), Map.of("email", cleanEmail, "display_name", displayName));
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("status", "success");
+        response.put("token_type", "Bearer");
+        response.put("access_token", jwt);
+        response.put("expires_in", properties.getAppJwtExpirationSeconds());
+        response.put("user_id", canonicalUserId);
+        return response;
+    }
+
+    @PostMapping("/login")
+    public Map<String, Object> login(@RequestBody LoginRequest req) {
+        if (req == null || req.email == null || req.email.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required.");
+        }
+        if (req.password == null || req.password.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password is required.");
+        }
+
+        String cleanEmail = req.email.trim().toLowerCase(Locale.ROOT);
+        String canonicalUserId = "local:" + cleanEmail;
+        Map<String, Object> userDoc = userRepository.getUser(canonicalUserId);
+        if (userDoc == null) {
+            userDoc = userRepository.findByProviderIdentity("local", cleanEmail);
+        }
+
+        String username = cleanEmail.split("@")[0];
+        String displayName = username;
+        if (userDoc != null && userDoc.get("identity") instanceof Map<?, ?> identity) {
+            if (identity.get("username") != null) username = identity.get("username").toString();
+            if (identity.get("display_name") != null) displayName = identity.get("display_name").toString();
+        } else {
+            userRepository.provisionOrUpdateOAuthUser(
+                    "local",
+                    cleanEmail,
+                    username,
+                    displayName,
+                    "https://api.dicebear.com/7.x/identicon/svg?seed=" + URLEncoder.encode(cleanEmail, StandardCharsets.UTF_8),
+                    "",
+                    cleanEmail
+            );
+        }
+
+        String jwt = tokenService.issueToken(canonicalUserId, username, List.of("ROLE_USER"), Map.of("email", cleanEmail, "display_name", displayName));
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("status", "success");
+        response.put("token_type", "Bearer");
+        response.put("access_token", jwt);
+        response.put("expires_in", properties.getAppJwtExpirationSeconds());
+        response.put("user_id", canonicalUserId);
+        return response;
+    }
+
     /**
      * Returns the authenticated user's Issue Pilot identity, profile, and onboarding status.
      * Requires valid Bearer application session token.
