@@ -8,11 +8,8 @@ import { AuroraBackground } from "@/components/ip/aurora-background";
 import { pageMeta } from "@/lib/format";
 import {
   ArrowRight,
-  Cpu,
   CheckCircle2,
   SlidersHorizontal,
-  Compass,
-  Terminal,
   Check,
   Search,
 } from "lucide-react";
@@ -62,33 +59,30 @@ const PLATFORMS = [
   },
 ];
 
-const LIFECYCLE_TABS = [
+const STEPS = [
   {
-    id: "calibrate",
     stepNumber: "01",
-    tabLabel: "Profile Calibration",
-    title: "Derive your capability target from verified code history.",
+    label: "Calibration",
+    title: "Calibrate your skills",
     description:
-      "Most contributor matching fails because of self-reported surveys. Issue Pilot analyzes your public pull requests, commits, and language comfort zones into an objective capability score (0–100).",
-    badge: "CALIBRATION",
+      "Select your active tech stack and comfort level, or connect GitHub to derive your capability target directly from verified code history.",
+    highlight: "No guesswork or subjective self-assessments",
   },
   {
-    id: "match",
     stepNumber: "02",
-    tabLabel: "Precision Matching",
-    title: "Multi-signal scoring matched to your stack and experience.",
+    label: "Matching",
+    title: "Precision recommendations",
     description:
-      "Every candidate is scored across language overlap, difficulty fit, maintainer response speed, and repository health in real time.",
-    badge: "MATCHING",
+      "Our recommendation engine continuously scores issues across language familiarity, issue complexity, repository health, and maintainer response velocity.",
+    highlight: "Ranked to your target growth zone",
   },
   {
-    id: "verify",
     stepNumber: "03",
-    tabLabel: "Zero-Collision Guarantee",
-    title: "Live unclaimed validation. Never work on taken tasks.",
+    label: "Verification",
+    title: "Zero-collision guarantee",
     description:
-      "Before an issue appears in your feed, our backend queries live platform APIs to verify zero active assignees and zero open pull requests.",
-    badge: "VERIFICATION",
+      "Before any issue appears in your feed, live platform APIs verify zero active assignees and zero open pull requests. Never waste time on claimed tickets.",
+    highlight: "Live checked across all 4 platforms",
   },
 ];
 
@@ -124,22 +118,6 @@ const TELEMETRY_FEED = [
 function LandingPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState(0);
-
-  // Interactive weights for Tab 2 visualizer
-  const [skillWeight, setSkillWeight] = useState(35);
-  const [diffWeight, setDiffWeight] = useState(25);
-  const [respWeight, setRespWeight] = useState(15);
-
-  const simulatedScore = Math.min(
-    100,
-    Math.round(
-      (skillWeight / 35) * 34 +
-        (diffWeight / 25) * 23 +
-        (respWeight / 15) * 14 +
-        24
-    )
-  );
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -329,285 +307,77 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* 3. STEP-SWITCHER (Interactive Pipeline Showcase) */}
-      <section id="pipeline" className="bg-white py-20 sm:py-28">
+      {/* 3. HOW IT WORKS (Clean, non-interactive 3-step feature section) */}
+      <section id="pipeline" className="bg-slate-50/70 py-20 sm:py-28 border-b border-slate-100">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          {/* Engineered Dark Stage Container */}
-          <div className="relative rounded-3xl bg-gradient-to-b from-[#0c101d] via-[#090d16] to-[#070a12] p-8 sm:p-14 text-white shadow-2xl overflow-hidden border border-slate-800/80 before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent">
-            {/* Ambient Background Glows */}
-            <div className="pointer-events-none absolute -top-32 -right-32 size-96 rounded-full bg-blue-600/10 blur-[120px]" />
-            <div className="pointer-events-none absolute -bottom-32 -left-32 size-96 rounded-full bg-indigo-600/10 blur-[120px]" />
+          {/* Section Header */}
+          <div className="text-center max-w-2xl mx-auto space-y-4 mb-16">
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50/80 px-3 py-1 text-xs font-semibold text-blue-700">
+              How It Works
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+              Find issues you can actually ship.
+            </h2>
+            <p className="text-base text-slate-600 leading-relaxed">
+              Three simple steps to move from browsing open source to having your pull request reviewed and merged.
+            </p>
+          </div>
 
-            <div className="grid gap-12 lg:grid-cols-2 lg:items-center relative z-10">
-              {/* Left Column: Heading, 3 Interactive Step Cards, and CTA */}
-              <div className="space-y-8">
-                <div className="space-y-3">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-mono font-semibold text-blue-400">
-                    THE DISCOVERY PIPELINE
+          {/* 3 Step Cards */}
+          <div className="grid md:grid-cols-3 gap-8">
+            {STEPS.map((step) => (
+              <div
+                key={step.stepNumber}
+                className="relative rounded-2xl border border-slate-200/80 bg-white p-7 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all flex flex-col justify-between space-y-6"
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="size-11 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">
+                      {step.stepNumber}
+                    </div>
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      {step.label}
+                    </span>
                   </div>
-                  <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
-                    From repository discovery
-                    <br />
-                    <span className="text-blue-400">to your first merged PR.</span>
-                  </h2>
-                  <p className="text-sm sm:text-base text-slate-400 leading-relaxed max-w-xl">
-                    Three automated stages that eliminate stale tickets, unmatched skill curves,
-                    and unresponsive maintainers across GitHub, GitLab, Codeberg, and Bugzilla.
+                  <h3 className="text-lg font-bold text-slate-900">
+                    {step.title}
+                  </h3>
+                  <p className="text-sm text-slate-600 leading-relaxed">
+                    {step.description}
                   </p>
                 </div>
-
-                {/* 3 Interactive Vertical Step Cards */}
-                <div className="space-y-3 pt-2">
-                  {LIFECYCLE_TABS.map((tab, idx) => {
-                    const isActive = activeTab === idx;
-                    return (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => setActiveTab(idx)}
-                        className={cn(
-                          "w-full text-left rounded-2xl p-4 transition-all active:scale-[0.98] border",
-                          isActive
-                            ? "border-blue-500/50 bg-slate-800/70 shadow-lg shadow-blue-500/10 ring-1 ring-blue-500/30"
-                            : "border-slate-800/80 bg-slate-900/30 hover:bg-slate-800/40 text-slate-400 hover:text-slate-200 cursor-pointer"
-                        )}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <span
-                              className={cn(
-                                "text-xs font-mono font-bold px-2 py-0.5 rounded-md",
-                                isActive
-                                  ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                                  : "bg-slate-800 text-slate-500 border border-slate-700/50"
-                              )}
-                            >
-                              {tab.stepNumber}
-                            </span>
-                            <span
-                              className={cn(
-                                "text-sm font-semibold tracking-tight",
-                                isActive ? "text-white" : "text-slate-300"
-                              )}
-                            >
-                              {tab.tabLabel}
-                            </span>
-                          </div>
-                          {isActive && (
-                            <span className="size-2 rounded-full bg-blue-400 animate-pulse" />
-                          )}
-                        </div>
-                        {isActive && (
-                          <p className="text-xs text-slate-400 leading-relaxed mt-2.5 pl-9">
-                            {tab.description}
-                          </p>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Primary CTA Button */}
-                <div className="pt-2">
-                  <Button
-                    asChild
-                    size="default"
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 shadow-md shadow-blue-600/25 active:scale-[0.98]"
-                  >
-                    <Link to="/onboarding">
-                      Calibrate your profile &rarr;
-                    </Link>
-                  </Button>
+                <div className="pt-4 border-t border-slate-100 flex items-center text-xs font-medium text-slate-500">
+                  <Check className="size-4 text-blue-600 mr-2 shrink-0" />
+                  {step.highlight}
                 </div>
               </div>
+            ))}
+          </div>
 
-              {/* Right Column: Visual Stage (Elevated Glass Card) */}
-              <div className="rounded-2xl border border-white/10 bg-slate-900/80 backdrop-blur-xl p-6 sm:p-7 shadow-2xl relative min-h-[440px] flex flex-col justify-between">
-                {/* Tab 0 Visual: Profile & Dial */}
-                {activeTab === 0 && (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                      <div className="flex items-center gap-2">
-                        <Compass className="size-5 text-blue-400" />
-                        <span className="text-sm font-semibold text-slate-200">
-                          Contributor Capability Dial
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-xs font-mono font-bold text-emerald-400">
-                        <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        VERIFIED: 78/100
-                      </div>
-                    </div>
-
-                    <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-4 flex items-center justify-between">
-                      <div>
-                        <div className="text-xs font-mono text-slate-400">
-                          Primary Focus Area
-                        </div>
-                        <div className="text-xl font-bold text-white mt-1">
-                          Systems &amp; Backends
-                        </div>
-                        <div className="text-xs text-slate-400 mt-0.5">
-                          Target difficulty: 65 – 85 pts (Optimal growth zone)
-                        </div>
-                      </div>
-                      <div className="size-14 rounded-full border-4 border-blue-500 border-t-emerald-400 flex items-center justify-center font-mono font-bold text-sm text-white bg-slate-900 shadow-inner">
-                        78%
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="text-xs font-mono text-slate-400">
-                        Language Confidence Breakdown
-                      </div>
-                      {[
-                        { lang: "Rust", score: 94, bar: "w-[94%] bg-blue-500" },
-                        { lang: "TypeScript", score: 88, bar: "w-[88%] bg-sky-400" },
-                        { lang: "Go", score: 72, bar: "w-[72%] bg-indigo-400" },
-                      ].map((item) => (
-                        <div key={item.lang} className="space-y-1">
-                          <div className="flex justify-between text-xs font-mono">
-                            <span className="text-slate-300">{item.lang}</span>
-                            <span className="text-slate-400">{item.score}%</span>
-                          </div>
-                          <div className="h-1.5 w-full rounded-full bg-slate-800 overflow-hidden">
-                            <div className={`h-full rounded-full ${item.bar}`} />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Tab 1 Visual: Dynamic Weights Tuning */}
-                {activeTab === 1 && (
-                  <div className="space-y-5">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                      <div className="flex items-center gap-2">
-                        <Cpu className="size-5 text-blue-400" />
-                        <span className="text-sm font-semibold text-slate-200">
-                          Personalized Priority Weights
-                        </span>
-                      </div>
-                      <div className="text-right font-mono">
-                        <span className="text-xs text-slate-400 mr-2">Simulated Match:</span>
-                        <span className="text-base font-bold text-emerald-400">
-                          {simulatedScore}%
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3 text-xs font-mono">
-                      <div>
-                        <div className="flex justify-between pb-1">
-                          <span className="text-slate-300">Skill Alignment:</span>
-                          <span className="text-blue-400 font-bold">{skillWeight}%</span>
-                        </div>
-                        <input
-                          type="range"
-                          min="10"
-                          max="60"
-                          value={skillWeight}
-                          onChange={(e) => setSkillWeight(Number(e.target.value))}
-                          className="w-full accent-blue-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
-                        />
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between pb-1">
-                          <span className="text-slate-300">Difficulty Stretch:</span>
-                          <span className="text-blue-400 font-bold">{diffWeight}%</span>
-                        </div>
-                        <input
-                          type="range"
-                          min="10"
-                          max="50"
-                          value={diffWeight}
-                          onChange={(e) => setDiffWeight(Number(e.target.value))}
-                          className="w-full accent-blue-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
-                        />
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between pb-1">
-                          <span className="text-slate-300">Maintainer Velocity:</span>
-                          <span className="text-blue-400 font-bold">{respWeight}%</span>
-                        </div>
-                        <input
-                          type="range"
-                          min="5"
-                          max="40"
-                          value={respWeight}
-                          onChange={(e) => setRespWeight(Number(e.target.value))}
-                          className="w-full accent-blue-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 space-y-1.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-mono text-slate-400">Matched Candidate</span>
-                        <span className="font-mono text-emerald-400 font-semibold">{simulatedScore} Match</span>
-                      </div>
-                      <div className="text-sm font-semibold text-slate-200">tokio-rs/tokio #6810</div>
-                      <div className="text-xs text-slate-400">Support graceful task cancellation during runtime shutdown</div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Tab 2 Visual: Live Zero-Collision Runtime Validator */}
-                {activeTab === 2 && (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                      <div className="flex items-center gap-2">
-                        <Terminal className="size-5 text-blue-400" />
-                        <span className="text-sm font-semibold text-slate-200">
-                          Unclaimed Runtime Validator
-                        </span>
-                      </div>
-                      <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-xs font-mono font-bold text-emerald-400">
-                        100% UNCLAIMED
-                      </span>
-                    </div>
-
-                    <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-4 font-mono text-xs text-slate-300 space-y-2.5">
-                      <div className="flex items-center gap-2 text-slate-300">
-                        <Check className="size-4 text-emerald-400 shrink-0" />
-                        <span>Source verification: Open issue confirmed</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-slate-300">
-                        <Check className="size-4 text-emerald-400 shrink-0" />
-                        <span>Zero assignees: Unclaimed &amp; available to claim</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-slate-300">
-                        <Check className="size-4 text-emerald-400 shrink-0" />
-                        <span>Zero open pull requests: No duplicate work in progress</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-slate-300">
-                        <Check className="size-4 text-emerald-400 shrink-0" />
-                        <span>Maintainer velocity: 1.8h avg response time</span>
-                      </div>
-                    </div>
-
-                    <Button
-                      asChild
-                      size="sm"
-                      className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium active:scale-[0.98]"
-                    >
-                      <Link to="/app/feed">
-                        <Check className="size-4 mr-2" />
-                        View Live Unclaimed Feed
-                      </Link>
-                    </Button>
-                  </div>
-                )}
-
-                {/* Footer strip of card */}
-                <div className="border-t border-slate-800 pt-3 flex items-center justify-between text-[11px] font-mono text-slate-400">
-                  <span>Continuous Verification</span>
-                  <span className="text-emerald-400">Zero stale collisions guaranteed</span>
-                </div>
+          {/* Clean Bottom Callout Banner */}
+          <div className="mt-14 rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xs">
+            <div className="space-y-1 text-center sm:text-left">
+              <div className="text-base font-bold text-slate-900">
+                Ready to find your next open-source contribution?
               </div>
+              <div className="text-sm text-slate-600">
+                Calibrate your profile in under 2 minutes and explore personalized, unclaimed issues.
+              </div>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <Button
+                asChild
+                variant="outline"
+                className="border-slate-300 text-slate-700 hover:text-slate-900 hover:bg-slate-50 active:scale-[0.98]"
+              >
+                <Link to="/app/explore">Explore issues</Link>
+              </Button>
+              <Button
+                asChild
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 shadow-xs active:scale-[0.98]"
+              >
+                <Link to="/onboarding">Get started &rarr;</Link>
+              </Button>
             </div>
           </div>
         </div>
