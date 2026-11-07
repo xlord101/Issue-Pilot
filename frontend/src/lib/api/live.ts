@@ -69,9 +69,12 @@ export const liveApi: IssuePilotApi = {
     },
     async completeCallback(search) {
       if (search.error) {
+        setStoredAuthToken(null);
         throw new ApiError(search.error, 401);
       }
       if (search.exchange_code) {
+        // Clear any previous expired token before redeeming a new exchange code
+        setStoredAuthToken(null);
         const res = await request<any>("auth.exchange", e.auth.exchange, {
           method: "POST",
           body: { exchange_code: search.exchange_code },

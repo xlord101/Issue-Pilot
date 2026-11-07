@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ip/logo";
 import { NotConnectedState } from "@/components/ip/states";
 import { api, NotConnectedError } from "@/lib/api";
+import { setStoredAuthToken } from "@/lib/api/http";
 import { pageMeta } from "@/lib/format";
 
 const search = z.object({
@@ -44,8 +45,11 @@ function Callback() {
       const t = setTimeout(() => navigate({ to: "/onboarding", replace: true }), 900);
       return () => clearTimeout(t);
     }
+    if (q.isError) {
+      setStoredAuthToken(null);
+    }
     return undefined;
-  }, [q.isSuccess, q.data, qc, navigate]);
+  }, [q.isSuccess, q.isError, q.data, qc, navigate]);
 
   return (
     <div className="flex min-h-screen flex-col bg-[#f8fafc] text-slate-900 font-sans antialiased">

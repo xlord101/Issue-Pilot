@@ -13,8 +13,7 @@ import { NotConnectedState } from "@/components/ip/states";
 import { api, NotConnectedError } from "@/lib/api";
 import { pageMeta } from "@/lib/format";
 import { toast } from "sonner";
-import { Eye, EyeOff, ArrowRight, Check } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Eye, EyeOff } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
   head: () =>
@@ -98,103 +97,98 @@ function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#07090e] text-slate-100 flex items-center justify-center p-3 sm:p-6 md:p-10 font-sans selection:bg-indigo-600 selection:text-white antialiased">
-      {/* Outer Card with spec border and specular highlight */}
-      <div className="w-full max-w-5xl rounded-3xl border border-white/10 bg-[#0d121f]/90 shadow-2xl backdrop-blur-2xl grid grid-cols-1 lg:grid-cols-12 overflow-hidden relative">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex items-center justify-center p-3 sm:p-6 md:p-10 font-sans selection:bg-blue-600 selection:text-white antialiased relative overflow-hidden">
+      {/* Soft Luminous Aurora Ambient Backdrop */}
+      <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-[#cfbee5]/40 blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 -right-32 w-[32rem] h-[32rem] rounded-full bg-[#abc0ef]/35 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-32 left-1/3 w-96 h-96 rounded-full bg-[#a2d3f4]/35 blur-3xl pointer-events-none" />
+
+      {/* Outer Card with subtle border and crisp elevation */}
+      <div className="w-full max-w-5xl rounded-3xl border border-slate-200/90 bg-white/95 shadow-2xl shadow-slate-900/5 backdrop-blur-xl grid grid-cols-1 lg:grid-cols-12 overflow-hidden relative z-10">
         {/* Specular top highlight line */}
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/25 to-transparent pointer-events-none" />
 
         {/* ======================================================== */}
-        {/* LEFT PANEL: Atmospheric Dune Landscape Hero Card         */}
+        {/* LEFT PANEL: Luminous Pastel Hero Card                    */}
         {/* ======================================================== */}
         <div className="lg:col-span-5 p-3 sm:p-4 flex flex-col">
-          <div className="relative rounded-2xl overflow-hidden min-h-[460px] sm:min-h-[580px] flex-1 flex flex-col justify-between p-6 sm:p-8 bg-gradient-to-b from-[#211b44] via-[#14152e] to-[#0a0d18] border border-white/10 shadow-inner">
-            {/* Atmospheric SVG Dune and Night Sky Art */}
+          <div className="relative rounded-2xl overflow-hidden min-h-[440px] sm:min-h-[560px] flex-1 flex flex-col justify-between p-6 sm:p-8 bg-gradient-to-br from-[#ebedf8] via-[#f1f3fa] to-[#ede7f6] border border-slate-200/80 shadow-inner">
+            {/* Soft Luminous Vector Art */}
             <svg
-              className="absolute inset-0 size-full pointer-events-none select-none opacity-85"
+              className="absolute inset-0 size-full pointer-events-none select-none opacity-80"
               preserveAspectRatio="none"
               viewBox="0 0 400 600"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
-              {/* Starry Night Sky Gradient */}
-              <rect width="400" height="600" fill="url(#skyGradient)" />
-              {/* Distant Atmospheric Nebula Glow */}
-              <circle cx="280" cy="120" r="140" fill="#7c3aed" opacity="0.25" filter="blur(60px)" />
-              <circle cx="100" cy="240" r="160" fill="#2563eb" opacity="0.2" filter="blur(70px)" />
+              {/* Luminous Pastel Sky Gradient */}
+              <rect width="400" height="600" fill="url(#lightSkyGradient)" />
+              {/* Subtle Glowing Pastel Light Sources */}
+              <circle cx="300" cy="140" r="150" fill="#cfbee5" opacity="0.6" filter="blur(60px)" />
+              <circle cx="90" cy="240" r="160" fill="#abc0ef" opacity="0.5" filter="blur(70px)" />
+              <circle cx="200" cy="420" r="140" fill="#a2d3f4" opacity="0.45" filter="blur(60px)" />
 
-              {/* Twinkling Star Points */}
-              <circle cx="45" cy="40" r="1" fill="#ffffff" opacity="0.8" />
-              <circle cx="120" cy="80" r="1" fill="#ffffff" opacity="0.6" />
-              <circle cx="210" cy="50" r="1.5" fill="#ffffff" opacity="0.9" />
-              <circle cx="340" cy="90" r="1" fill="#ffffff" opacity="0.7" />
-              <circle cx="70" cy="140" r="1" fill="#ffffff" opacity="0.5" />
-              <circle cx="160" cy="180" r="1" fill="#ffffff" opacity="0.75" />
-              <circle cx="290" cy="170" r="1.5" fill="#ffffff" opacity="0.85" />
-              <circle cx="370" cy="130" r="1" fill="#ffffff" opacity="0.6" />
-              <circle cx="230" cy="220" r="1" fill="#ffffff" opacity="0.7" />
-
-              {/* Soft Distant Mountain Ridge */}
+              {/* Gentle Sculpted Landscape Ridges in Pastel Slate */}
               <path
-                d="M-20 380 Q100 320 220 345 T420 310 L420 600 L-20 600 Z"
-                fill="#161533"
-                opacity="0.9"
+                d="M-20 370 Q110 320 220 345 T420 310 L420 600 L-20 600 Z"
+                fill="#d8dceb"
+                opacity="0.65"
               />
-              {/* Midground Velvet Dune */}
               <path
-                d="M-20 420 Q120 360 260 410 T420 370 L420 600 L-20 600 Z"
-                fill="#1c193f"
+                d="M-20 420 Q120 365 260 415 T420 375 L420 600 L-20 600 Z"
+                fill="#ccd2e4"
+                opacity="0.75"
               />
-              {/* Foreground Sculpted Shadow Dune */}
               <path
-                d="M-20 480 Q140 430 290 500 T420 460 L420 600 L-20 600 Z"
-                fill="#101124"
+                d="M-20 480 Q140 435 290 500 T420 460 L420 600 L-20 600 Z"
+                fill="#c0c7dc"
+                opacity="0.85"
               />
 
               <defs>
-                <linearGradient id="skyGradient" x1="200" y1="0" x2="200" y2="600" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#312563" />
-                  <stop offset="0.4" stopColor="#1b173c" />
-                  <stop offset="0.8" stopColor="#0d0e1e" />
-                  <stop offset="1" stopColor="#080a14" />
+                <linearGradient id="lightSkyGradient" x1="200" y1="0" x2="200" y2="600" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#f4f6fc" />
+                  <stop offset="0.4" stopColor="#ebedf8" />
+                  <stop offset="0.8" stopColor="#e4e8f4" />
+                  <stop offset="1" stopColor="#dce1ee" />
                 </linearGradient>
               </defs>
             </svg>
 
             {/* Top Bar inside Left Visual Card */}
             <div className="relative z-10 flex items-center justify-between gap-3">
-              <Link to="/" className="flex items-center gap-2 text-white">
+              <Link to="/" className="flex items-center gap-2">
                 <Logo compact className="size-8" />
-                <span className="font-bold text-base tracking-tight text-white">
+                <span className="font-bold text-base tracking-tight text-slate-900">
                   Issue Pilot
                 </span>
               </Link>
 
               <Link
                 to="/"
-                className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/10 px-3.5 py-1 text-xs font-medium text-white/90 hover:bg-white/20 transition-all active:scale-[0.98] backdrop-blur-md"
+                className="inline-flex items-center gap-1 rounded-full border border-slate-200/90 bg-white/90 px-3.5 py-1 text-xs font-medium text-slate-700 hover:bg-white hover:text-slate-900 transition-all shadow-xs active:scale-[0.98] backdrop-blur-md"
               >
                 Back to website &rarr;
               </Link>
             </div>
 
             {/* Bottom Hero Typography & Slide Indicators */}
-            <div className="relative z-10 space-y-5 pt-12">
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-snug">
+            <div className="relative z-10 space-y-4 pt-12">
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 leading-snug">
                 Matching Developers
                 <br />
                 to Real-World Code
               </h2>
 
-              <p className="text-xs sm:text-sm text-slate-300/90 leading-relaxed max-w-xs font-normal">
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-xs font-normal">
                 Continuous unclaimed issue indexing across GitHub, GitLab, Codeberg, and Bugzilla.
               </p>
 
               {/* 3 Pagination Indicator Dots */}
               <div className="flex items-center gap-1.5 pt-1">
-                <span className="h-1.5 w-6 rounded-full bg-white shadow-xs" />
-                <span className="h-1.5 w-1.5 rounded-full bg-white/40" />
-                <span className="h-1.5 w-1.5 rounded-full bg-white/40" />
+                <span className="h-1.5 w-6 rounded-full bg-blue-600 shadow-xs" />
+                <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
               </div>
             </div>
           </div>
@@ -207,17 +201,17 @@ function AuthPage() {
           <div className="max-w-md w-full mx-auto space-y-6">
             {/* Title & Toggle Switcher */}
             <div className="space-y-1.5">
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
                 {mode === "register" ? "Create an account" : "Welcome back"}
               </h1>
-              <p className="text-xs sm:text-sm text-slate-400">
+              <p className="text-xs sm:text-sm text-slate-600">
                 {mode === "register" ? (
                   <>
                     Already have an account?{" "}
                     <button
                       type="button"
                       onClick={() => setMode("login")}
-                      className="text-indigo-400 hover:text-indigo-300 font-medium underline underline-offset-4 transition-colors"
+                      className="text-blue-600 hover:text-blue-700 font-semibold underline underline-offset-4 transition-colors cursor-pointer"
                     >
                       Log in
                     </button>
@@ -228,7 +222,7 @@ function AuthPage() {
                     <button
                       type="button"
                       onClick={() => setMode("register")}
-                      className="text-indigo-400 hover:text-indigo-300 font-medium underline underline-offset-4 transition-colors"
+                      className="text-blue-600 hover:text-blue-700 font-semibold underline underline-offset-4 transition-colors cursor-pointer"
                     >
                       Sign up
                     </button>
@@ -242,7 +236,7 @@ function AuthPage() {
               {mode === "register" && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                    <label className="block text-xs font-medium text-slate-700 mb-1.5">
                       First name
                     </label>
                     <Input
@@ -250,11 +244,11 @@ function AuthPage() {
                       placeholder="Fletcher"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      className="h-11 bg-white/[0.04] border-white/10 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl"
+                      className="h-11 bg-slate-50/80 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 rounded-xl transition-all"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                    <label className="block text-xs font-medium text-slate-700 mb-1.5">
                       Last name
                     </label>
                     <Input
@@ -262,14 +256,14 @@ function AuthPage() {
                       placeholder="Shears"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      className="h-11 bg-white/[0.04] border-white/10 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl"
+                      className="h-11 bg-slate-50/80 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 rounded-xl transition-all"
                     />
                   </div>
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                <label className="block text-xs font-medium text-slate-700 mb-1.5">
                   Email
                 </label>
                 <Input
@@ -278,13 +272,13 @@ function AuthPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-11 bg-white/[0.04] border-white/10 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl"
+                  className="h-11 bg-slate-50/80 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 rounded-xl transition-all"
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-medium text-slate-300">
+                  <label className="text-xs font-medium text-slate-700">
                     Password
                   </label>
                   {mode === "login" && (
@@ -292,10 +286,11 @@ function AuthPage() {
                       type="button"
                       onClick={() =>
                         toast.info("Password reset", {
-                          description: "Please check your registered email for password reset instructions.",
+                          description:
+                            "Please check your registered email for password reset instructions.",
                         })
                       }
-                      className="text-[11px] text-slate-400 hover:text-indigo-400 transition-colors"
+                      className="text-[11px] text-slate-500 hover:text-blue-600 transition-colors cursor-pointer"
                     >
                       Forgot password?
                     </button>
@@ -308,12 +303,12 @@ function AuthPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="h-11 pr-10 bg-white/[0.04] border-white/10 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl"
+                    className="h-11 pr-10 bg-slate-50/80 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 rounded-xl transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
                     tabIndex={-1}
                   >
                     {showPassword ? (
@@ -331,13 +326,13 @@ function AuthPage() {
                     type="checkbox"
                     checked={agreedToTerms}
                     onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="size-4 rounded border-white/20 bg-white/5 text-indigo-600 focus:ring-indigo-500 accent-indigo-600 cursor-pointer"
+                    className="size-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 accent-blue-600 cursor-pointer"
                   />
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-slate-600">
                     I agree to the{" "}
                     <Link
                       to="/"
-                      className="text-slate-300 underline underline-offset-2 hover:text-white"
+                      className="text-slate-800 underline underline-offset-2 hover:text-blue-600 font-medium"
                     >
                       Terms &amp; Conditions
                     </Link>
@@ -348,7 +343,7 @@ function AuthPage() {
               <Button
                 type="submit"
                 disabled={busy}
-                className="w-full h-11 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-all active:scale-[0.98] shadow-md shadow-indigo-600/25 text-sm"
+                className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all active:scale-[0.98] shadow-md shadow-blue-500/20 text-sm cursor-pointer"
               >
                 {busy
                   ? "Processing..."
@@ -361,9 +356,9 @@ function AuthPage() {
             {/* Divider */}
             <div className="relative flex items-center justify-center pt-2">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/10" />
+                <div className="w-full border-t border-slate-200" />
               </div>
-              <span className="relative bg-[#0d121f] px-3 text-[11px] font-medium uppercase tracking-wider text-slate-400">
+              <span className="relative bg-white px-3 text-[11px] font-medium uppercase tracking-wider text-slate-400">
                 {mode === "register" ? "Or register with" : "Or continue with"}
               </span>
             </div>
@@ -375,9 +370,9 @@ function AuthPage() {
                 type="button"
                 onClick={handleGitHubSignIn}
                 disabled={busy}
-                className="flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] hover:bg-white/[0.12] text-white p-2.5 text-xs font-semibold transition-all active:scale-[0.98]"
+                className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-900 p-2.5 text-xs font-semibold transition-all active:scale-[0.98] shadow-xs hover:border-slate-300 cursor-pointer"
               >
-                <GitHubMark className="size-4 text-white" />
+                <GitHubMark className="size-4 text-slate-900" />
                 <span>GitHub</span>
               </button>
 
@@ -385,13 +380,13 @@ function AuthPage() {
               <button
                 type="button"
                 onClick={() => handleProviderComingSoon("GitLab")}
-                className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.06] text-slate-300 p-2.5 text-xs font-medium transition-all active:scale-[0.98]"
+                className="flex items-center justify-between rounded-xl border border-slate-200/80 bg-slate-50/70 hover:bg-slate-100/80 text-slate-700 p-2.5 text-xs font-medium transition-all active:scale-[0.98] cursor-pointer"
               >
                 <div className="flex items-center gap-2">
                   <GitLabMark className="size-4" />
                   <span>GitLab</span>
                 </div>
-                <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-white/5 text-slate-400 border border-white/10">
+                <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-white text-slate-500 border border-slate-200">
                   Soon
                 </span>
               </button>
@@ -400,13 +395,13 @@ function AuthPage() {
               <button
                 type="button"
                 onClick={() => handleProviderComingSoon("Codeberg")}
-                className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.06] text-slate-300 p-2.5 text-xs font-medium transition-all active:scale-[0.98]"
+                className="flex items-center justify-between rounded-xl border border-slate-200/80 bg-slate-50/70 hover:bg-slate-100/80 text-slate-700 p-2.5 text-xs font-medium transition-all active:scale-[0.98] cursor-pointer"
               >
                 <div className="flex items-center gap-2">
                   <CodebergMark className="size-4" />
                   <span>Codeberg</span>
                 </div>
-                <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-white/5 text-slate-400 border border-white/10">
+                <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-white text-slate-500 border border-slate-200">
                   Soon
                 </span>
               </button>
@@ -415,13 +410,13 @@ function AuthPage() {
               <button
                 type="button"
                 onClick={() => handleProviderComingSoon("Bugzilla")}
-                className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.06] text-slate-300 p-2.5 text-xs font-medium transition-all active:scale-[0.98]"
+                className="flex items-center justify-between rounded-xl border border-slate-200/80 bg-slate-50/70 hover:bg-slate-100/80 text-slate-700 p-2.5 text-xs font-medium transition-all active:scale-[0.98] cursor-pointer"
               >
                 <div className="flex items-center gap-2">
                   <BugzillaMark className="size-4" />
                   <span>Bugzilla</span>
                 </div>
-                <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-white/5 text-slate-400 border border-white/10">
+                <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-white text-slate-500 border border-slate-200">
                   Soon
                 </span>
               </button>

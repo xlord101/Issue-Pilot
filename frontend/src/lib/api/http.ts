@@ -71,8 +71,17 @@ export async function request<T>(
     headers["Content-Type"] = "application/json";
   }
 
+  // Do not send Bearer token on public authentication or health check endpoints
+  const isPublicEndpoint =
+    path === "/api/auth/exchange" ||
+    path === "/api/auth/login" ||
+    path === "/api/auth/register" ||
+    path === "/api/auth/github/login" ||
+    path === "/api/auth/github/callback" ||
+    path.startsWith("/api/health");
+
   const token = getStoredAuthToken();
-  if (token && !headers["Authorization"]) {
+  if (token && !headers["Authorization"] && !isPublicEndpoint) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
@@ -92,6 +101,12 @@ export async function request<T>(
     } catch {
       /* ignore */
     }
+
+    if (res.status === 401) {
+      // Clear expired or invalidated token to prevent poisoning future authentication attempts
+      setStoredAuthToken(null);
+    }
+
     throw new ApiError(detail || `Request failed (${res.status})`, res.status);
   }
 
