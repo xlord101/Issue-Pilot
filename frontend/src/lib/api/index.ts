@@ -25,6 +25,15 @@ export interface IssuePilotApi {
     status(): Promise<T.ExtractionStatus>;
     retry(): Promise<T.ExtractionStatus>;
     submitStarterProfile(input: T.StarterProfile): Promise<T.ExtractionStatus>;
+    confirmCalibration(input: {
+      confirmed_skills: { technology: string; score: number; level: string; category?: string }[];
+      dismissed_skills: string[];
+      capability: number;
+      capability_confidence: number;
+      open_source_experience: string;
+      codebase_navigation_comfort: string;
+      target_challenge_goal: string;
+    }): Promise<any>;
   };
   recommendations: {
     list(q: T.RecommendationQuery): Promise<T.Page<T.Recommendation>>;

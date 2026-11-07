@@ -28,25 +28,38 @@ function OnboardingPage() {
 
   const saveMutation = useMutation({
     mutationFn: async (data: CalibrationData) => {
-      const starter: StarterProfile = {
-        languages: Object.keys(data.stack),
-        technologies: Object.keys(data.stack),
-        experience:
-          data.experience === "first_time"
-            ? "beginner"
-            : data.experience === "seasoned"
-            ? "advanced"
-            : "intermediate",
-        interests: [data.navigation, data.challengeGoal],
-        contribution_areas: [data.challengeGoal],
-        resume_filename: null,
-      };
+      const allKnownTechs = [
+        "TypeScript",
+        "Python",
+        "React",
+        "C++",
+        "Java",
+        "Go",
+        "Rust",
+        "FastAPI",
+        "MongoDB",
+        "Docker",
+      ];
+      // Any technology from the deck that is not in the active stack is explicitly dismissed
+      const dismissed = allKnownTechs.filter((t) => data.stack[t] === undefined);
 
-      try {
-        await api.onboarding.submitStarterProfile(starter);
-      } catch (e) {
-        console.warn("Backend onboarding API fallback:", e);
-      }
+      const confirmed_skills = Object.entries(data.stack).map(([tech, score]) => ({
+        technology: tech,
+        score,
+        level: score >= 85 ? "expert" : score >= 70 ? "advanced" : score >= 50 ? "intermediate" : "beginner",
+        category: "language",
+      }));
+
+      await api.onboarding.confirmCalibration({
+        confirmed_skills,
+        dismissed_skills: dismissed,
+        capability: data.derivedCapability,
+        capability_confidence: data.confidenceScore,
+        open_source_experience: data.experience,
+        codebase_navigation_comfort: data.navigation,
+        target_challenge_goal: data.challengeGoal,
+      });
+
       return data;
     },
     onSuccess: (data) => {

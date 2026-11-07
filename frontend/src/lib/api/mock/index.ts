@@ -148,6 +148,10 @@ export const mockApi: IssuePilotApi = {
       }
       return extraction();
     },
+    async confirmCalibration(input) {
+      await wait(500);
+      return { status: "success", capability: input.capability };
+    },
   },
   recommendations: {
     async list(q) {

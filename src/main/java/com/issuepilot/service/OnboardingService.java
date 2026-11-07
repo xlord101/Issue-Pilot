@@ -127,6 +127,17 @@ public class OnboardingService {
             }
         }
 
+        // Synchronize confirmed skills when re-calibrating:
+        // Any previously confirmed skill not present in the new confirmed skills list is dismissed
+        if (confirmedList != null && !deduplicatedConfirmed.isEmpty() && profile.getSkills() != null) {
+            Set<String> existingKeys = new HashSet<>(profile.getSkills().keySet());
+            for (String existingKey : existingKeys) {
+                if (!deduplicatedConfirmed.containsKey(existingKey)) {
+                    profile.dismissSkill(existingKey);
+                }
+            }
+        }
+
         // Apply confirmed skills
         for (SkillConfirmationDto confirmed : deduplicatedConfirmed.values()) {
             profile.confirmSkill(confirmed.getTechnology(), confirmed.getScore(), 1.0, confirmed.getLevel());
@@ -294,7 +305,10 @@ public class OnboardingService {
         if (rawLevel == null || rawLevel.isBlank()) {
             return "intermediate"; // default safe level
         }
-        String clean = rawLevel.trim().toLowerCase();
+        String clean = rawLevel.trim().toLowerCase(Locale.ROOT);
+        if ("proficient".equals(clean)) {
+            return "advanced";
+        }
         if (!ALLOWED_LEVELS.contains(clean)) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,

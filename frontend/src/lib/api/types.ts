@@ -137,6 +137,8 @@ export interface TechSkill {
 export interface TechProfile {
   login: string;
   skills: TechSkill[];
+  capability?: number | null;
+  capability_confidence?: number | null;
   repos_analyzed: number | null;
   contributions_analyzed: number | null;
   extraction: ExtractionStatus;

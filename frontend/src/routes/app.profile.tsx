@@ -65,7 +65,7 @@ function ProfilePage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
                   <div className="flex size-14 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 text-blue-700 font-mono text-2xl font-bold shadow-xs">
-                    76
+                    {p.capability ?? 70}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
@@ -73,7 +73,7 @@ function ProfilePage() {
                       <StatusBadge tone="success">Active Contributor</StatusBadge>
                     </div>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Calibrated Capability Dial: <span className="font-mono text-blue-700 font-bold">76 / 100</span> &bull; High Reliability
+                      Calibrated Capability Dial: <span className="font-mono text-blue-700 font-bold">{p.capability ?? 70} / 100</span> &bull; High Reliability
                     </p>
                   </div>
                 </div>

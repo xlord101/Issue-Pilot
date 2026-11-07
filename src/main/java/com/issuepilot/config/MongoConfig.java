@@ -84,6 +84,11 @@ public class MongoConfig {
         } catch (Exception e) {
             logger.error("Failed to construct MongoDB client: {}", e.getMessage());
             this.connected = false;
+            try {
+                this.mongoClient = MongoClients.create("mongodb://localhost:27017");
+            } catch (Exception fallbackEx) {
+                logger.warn("Could not create fallback localhost MongoClient: {}", fallbackEx.getMessage());
+            }
         }
 
         return this.mongoClient;
@@ -117,9 +122,17 @@ public class MongoConfig {
             return this.mongoTemplate;
         }
         MongoClient client = mongoClient();
+        if (client == null) {
+            try {
+                client = MongoClients.create("mongodb://localhost:27017");
+                this.mongoClient = client;
+            } catch (Exception ignored) {}
+        }
+        String dbName = getEffectiveDatabaseName();
         if (client != null) {
-            String dbName = getEffectiveDatabaseName();
             this.mongoTemplate = new MongoTemplate(new SimpleMongoClientDatabaseFactory(client, dbName));
+        } else {
+            this.mongoTemplate = new MongoTemplate(new SimpleMongoClientDatabaseFactory(MongoClients.create(), dbName));
         }
         return this.mongoTemplate;
     }

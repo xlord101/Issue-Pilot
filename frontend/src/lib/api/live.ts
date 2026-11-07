@@ -176,8 +176,8 @@ export const liveApi: IssuePilotApi = {
         await request<any>("onboarding.starterProfile", e.onboarding.starterProfile, {
           method: "POST",
           body: {
-            confirmed_skills: body.languages.map((l) => ({ technology: l, proficiency_level: "proficient" })),
-            dismissed_technologies: [],
+            confirmed_skills: body.languages.map((l) => ({ technology: l, score: 75, level: "intermediate", category: "language" })),
+            dismissed_skills: [],
             preferences: {
               experience: body.experience,
               interests: body.interests,
@@ -189,11 +189,18 @@ export const liveApi: IssuePilotApi = {
         return mockApi.onboarding.submitStarterProfile(body);
       }
     },
+    async confirmCalibration(input) {
+      const res = await request<any>("onboarding.confirmCalibration", e.onboarding.starterProfile, {
+        method: "POST",
+        body: input,
+      });
+      return res;
+    },
   },
   recommendations: {
     async list(q) {
       try {
-        const payload = {
+        const payload: Record<string, any> = {
           demo_mode: false,
           prefer_live_atlas: true,
           target_count: q.limit ?? 4,
@@ -206,6 +213,18 @@ export const liveApi: IssuePilotApi = {
             freshness: 0.05,
           },
         };
+        if (q.source && q.source !== "all") {
+          payload.source_filter = q.source;
+        }
+        if (q.tech && q.tech.trim()) {
+          payload.technology_filter = q.tech.trim();
+        }
+        if (q.min_score != null && q.min_score > 0) {
+          payload.min_difficulty = q.min_score;
+        }
+        if (q.max_score != null && q.max_score < 100) {
+          payload.max_difficulty = q.max_score;
+        }
         const res = await request<any>("recommendations.list", e.recommendations.list, {
           method: "POST",
           body: payload,
@@ -286,16 +305,20 @@ export const liveApi: IssuePilotApi = {
     async me() {
       try {
         const profile = await request<any>("profile.me", e.profile.me);
-        if (profile && profile.skills) {
-          const skillsList: T.TechSkill[] = Object.values(profile.skills).map((s: any) => ({
-            name: s.technology || "Unknown",
-            kind: "language",
-            strength: Math.round(s.score ?? 75),
-            evidence_count: 5,
-          }));
+        if (profile) {
+          const skillsList: T.TechSkill[] = profile.skills
+            ? Object.values(profile.skills).map((s: any) => ({
+                name: s.technology || "Unknown",
+                kind: "language",
+                strength: Math.round(s.score ?? 75),
+                evidence_count: 5,
+              }))
+            : [];
           return {
             login: (profile.identity as any)?.username || profile.username || (profile.user_id ? String(profile.user_id).replace("github:", "") : "contributor"),
             skills: skillsList,
+            capability: profile.capability != null ? Math.round(profile.capability) : 70,
+            capability_confidence: profile.capability_confidence ?? 0.85,
             repos_analyzed: 12,
             contributions_analyzed: 34,
             extraction: {

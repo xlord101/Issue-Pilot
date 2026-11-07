@@ -402,6 +402,29 @@ public class TechnologyMatchingService {
             }
         }
 
+        // 5. Dismissed Skills Filter: exclude candidates whose technologies only contain dismissed skills
+        Set<String> dismissedSkills = getNormalizedDismissedSkills(profile);
+        if (!dismissedSkills.isEmpty()) {
+            Set<String> issueTechs = getIssueTechnologies(issue);
+            if (!issueTechs.isEmpty()) {
+                Set<String> confirmedSkills = getConfirmedSkills(profile).keySet();
+                boolean hasConfirmedMatch = false;
+                for (String it : issueTechs) {
+                    if (confirmedSkills.contains(it)) {
+                        hasConfirmedMatch = true;
+                        break;
+                    }
+                }
+                if (!hasConfirmedMatch) {
+                    for (String it : issueTechs) {
+                        if (dismissedSkills.contains(it)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
         return false;
     }
 
@@ -528,30 +551,63 @@ public class TechnologyMatchingService {
         Double minDiff = req != null ? req.min_difficulty : null;
         Double maxDiff = req != null ? req.max_difficulty : null;
 
-        List<Map<String, Object>> fetched;
-        if (!targetTechs.isEmpty()) {
-            // Perform single multi-tech query avoiding N+1 round-trips
-            fetched = issueRepository.queryIssuesMultiTech(
-                    "open",
-                    false,
-                    targetTechs,
-                    minDiff,
-                    maxDiff,
-                    null,
-                    sourceFilter,
-                    targetLimit,
-                    0);
+        List<Map<String, Object>> fetched = new ArrayList<>();
+        boolean isMultiPlatformQuery = (sourceFilter == null || sourceFilter.isBlank() || "all".equalsIgnoreCase(sourceFilter));
+
+        if (isMultiPlatformQuery) {
+            // Proportional multi-platform stratification across available sources:
+            // Ensures active platforms (e.g. GitHub) are not starved out by recent single-source bulk ingests.
+            Map<String, Integer> quotas = new LinkedHashMap<>();
+            quotas.put("github", Math.max(10, (int) Math.round(targetLimit * 0.50)));
+            quotas.put("gitlab", Math.max(5, (int) Math.round(targetLimit * 0.15)));
+            quotas.put("codeberg", Math.max(5, (int) Math.round(targetLimit * 0.15)));
+            quotas.put("bugzilla", Math.max(5, (int) Math.round(targetLimit * 0.20)));
+
+            Set<String> collectedIds = new HashSet<>();
+            for (Map.Entry<String, Integer> entry : quotas.entrySet()) {
+                String plat = entry.getKey();
+                int quota = entry.getValue();
+                List<Map<String, Object>> platIssues;
+                if (!targetTechs.isEmpty()) {
+                    platIssues = issueRepository.queryIssuesMultiTech(
+                            "open", false, targetTechs, minDiff, maxDiff, null, plat, quota, 0
+                    );
+                } else {
+                    platIssues = issueRepository.queryIssues(
+                            "open", false, null, minDiff, maxDiff, null, plat, quota, 0
+                    );
+                }
+                for (Map<String, Object> issue : platIssues) {
+                    String id = (String) issue.get("id");
+                    if (id != null && collectedIds.add(id)) {
+                        fetched.add(issue);
+                    }
+                }
+            }
         } else {
-            fetched = issueRepository.queryIssues(
-                    "open",
-                    false,
-                    null,
-                    minDiff,
-                    maxDiff,
-                    null,
-                    sourceFilter,
-                    targetLimit,
-                    0);
+            if (!targetTechs.isEmpty()) {
+                fetched = issueRepository.queryIssuesMultiTech(
+                        "open",
+                        false,
+                        targetTechs,
+                        minDiff,
+                        maxDiff,
+                        null,
+                        sourceFilter,
+                        targetLimit,
+                        0);
+            } else {
+                fetched = issueRepository.queryIssues(
+                        "open",
+                        false,
+                        null,
+                        minDiff,
+                        maxDiff,
+                        null,
+                        sourceFilter,
+                        targetLimit,
+                        0);
+            }
         }
 
         // If matching candidates are fewer than target and soft preferences allow

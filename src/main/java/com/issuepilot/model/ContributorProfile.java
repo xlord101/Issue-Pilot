@@ -249,6 +249,9 @@ public class ContributorProfile {
         String finalTech = (norm != null) ? norm : technology.trim();
 
         getDismissedSkills().add(finalTech);
+        if (this.skills != null) {
+            this.skills.remove(finalTech);
+        }
 
         // Update status of matching inferred skill if present
         if (this.inferredSkills != null) {
