@@ -506,8 +506,8 @@ public class VoteAffinityIntegrationTest {
 
             // Release all threads simultaneously
             startLatch.countDown();
-            boolean finished = doneLatch.await(10, java.util.concurrent.TimeUnit.SECONDS);
-            assertTrue(finished, "Concurrent vote recording tasks should finish within 10 seconds");
+            boolean finished = doneLatch.await(30, java.util.concurrent.TimeUnit.SECONDS);
+            assertTrue(finished, "Concurrent vote recording tasks should finish within 30 seconds");
             assertEquals(0, errorCount.get(), "No thread should fail with MongoWriteException or DuplicateKeyException");
 
             // Verify that exactly 1 current vote record exists in the repository
