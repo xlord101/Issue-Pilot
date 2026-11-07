@@ -8,6 +8,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -254,6 +255,17 @@ public class MongoConfig {
             logger.info("MongoDB Atlas indexes for all 6 collections verified and ready.");
         } catch (Exception e) {
             logger.error("Failed to initialize MongoDB indexes: {}", e.getMessage());
+        }
+    }
+
+    @PreDestroy
+    public void close() {
+        if (this.mongoClient != null) {
+            try {
+                this.mongoClient.close();
+            } catch (Exception ignored) {}
+            this.mongoClient = null;
+            this.connected = false;
         }
     }
 }

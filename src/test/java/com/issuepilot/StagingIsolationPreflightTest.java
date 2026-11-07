@@ -219,19 +219,23 @@ public class StagingIsolationPreflightTest {
         setField(props, "mongodbDatabase", "issue_pilot_staging");
 
         MongoConfig mongoConfig = new MongoConfig(props);
-        StagingPreflightService service = new StagingPreflightService(mongoConfig, props, objectMapper);
+        try {
+            StagingPreflightService service = new StagingPreflightService(mongoConfig, props, objectMapper);
 
-        PreflightResult result = service.validateStagingEnvironment(true, "staging.example.net");
+            PreflightResult result = service.validateStagingEnvironment(true, "staging.example.net");
 
-        // Cluster isolation and safety checks pass; connectivity ping fails as this is a dummy host in unit test
-        assertTrue(result.getChecks().get("cluster_level_isolation"));
-        assertTrue(result.getChecks().get("database_name_safe"));
-        assertTrue(result.getChecks().get("database_name_consistent"));
-        assertTrue(result.getChecks().get("staging_cluster_identity_verified"));
-        assertEquals("DEDICATED_STAGING_CLUSTER", result.getClusterIsolationLevel());
-        assertEquals("issue_pilot_staging", result.getTargetDatabase());
-        assertFalse(result.getSanitizedUri().contains("synthetic_staging_token"));
-        assertTrue(result.getSanitizedUri().contains("synthetic_staging_user:****@"));
+            // Cluster isolation and safety checks pass; connectivity ping fails as this is a dummy host in unit test
+            assertTrue(result.getChecks().get("cluster_level_isolation"));
+            assertTrue(result.getChecks().get("database_name_safe"));
+            assertTrue(result.getChecks().get("database_name_consistent"));
+            assertTrue(result.getChecks().get("staging_cluster_identity_verified"));
+            assertEquals("DEDICATED_STAGING_CLUSTER", result.getClusterIsolationLevel());
+            assertEquals("issue_pilot_staging", result.getTargetDatabase());
+            assertFalse(result.getSanitizedUri().contains("synthetic_staging_token"));
+            assertTrue(result.getSanitizedUri().contains("synthetic_staging_user:****@"));
+        } finally {
+            mongoConfig.close();
+        }
     }
 
     @Test
