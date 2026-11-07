@@ -2,7 +2,7 @@
 
 UI for Issue Pilot: discover live, unclaimed open-source issues across GitHub, GitLab, Codeberg/Gitea and Bugzilla, matched to a contributor's demonstrated skills. Maintainers approve AI-suggested triage labels; nothing is written externally without an explicit approval click.
 
-**This is frontend only.** Auth, scoring, verification and persistence live in the FastAPI + MongoDB backend. The browser never scores or verifies issues, never runs OAuth itself, and never stores tokens.
+**This is frontend only.** Auth, scoring, verification, and persistence live in the Spring Boot 3.4.3 (Java 21) backend + C++ Ranking Engine + MongoDB Atlas. The browser never scores or verifies issues, never runs OAuth itself, and never stores tokens.
 
 ## Stack
 TanStack Start (React 19, Vite, file-based routing), TanStack Query, Tailwind v4, shadcn/ui. Everything under `src/lib/api`, `src/components/ip` and `src/routes` is portable to the parent project's `web/` folder.
@@ -10,7 +10,7 @@ TanStack Start (React 19, Vite, file-based routing), TanStack Query, Tailwind v4
 ## Env vars (`.env.example`)
 | Var | Meaning |
 | --- | --- |
-| `VITE_API_BASE_URL` | FastAPI base URL, e.g. `http://localhost:8000` |
+| `VITE_API_BASE_URL` | Spring Boot backend base URL, e.g. `http://localhost:8000` |
 | `VITE_USE_MOCK_API` | `true` (default) = demo fixtures labelled "Demo data"; `false` = live backend |
 
 ## Routes
@@ -42,10 +42,9 @@ Final model: Score(u,i) = 0.35·Skill Match + 0.25·Difficulty Match + 0.15·Res
 Mock mode uses an obvious "demo sign-in" (a sessionStorage boolean flag, not a credential).
 
 ## Switching to the real backend
-1. Set `VITE_USE_MOCK_API=false` and `VITE_API_BASE_URL`.
-2. Fill in the `null` entries in `endpoints.ts` as backend routes ship; adjust paths to match FastAPI.
-3. Configure CORS on FastAPI with `allow_credentials=True` and the frontend origin.
-4. Delete `src/lib/api/mock/` once everything is live.
+1. Set `VITE_USE_MOCK_API=false` and `VITE_API_BASE_URL=http://localhost:8000`.
+2. Configure CORS on Spring Boot (`WebConfig`) with `allowCredentials=true` and the frontend origin.
+3. Use `/api/recommendations/personalized` for live 6-factor issue feeds with live zero-assignment verification.
 
 ## Backend endpoints still needed
 `auth.me`, `auth.logout`, `onboarding.status`, `onboarding.retry`, `profile.me`, `notifications.status`, `maintainer.repos`, `maintainer.registerRepo`, `maintainer.triageDecision`, `maintainer.history`, all `admin.*`. Confirm path of `auth.githubStart` and `recommendations.detail`.
