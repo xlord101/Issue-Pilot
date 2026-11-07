@@ -139,6 +139,8 @@ export interface TechProfile {
   skills: TechSkill[];
   capability?: number | null;
   capability_confidence?: number | null;
+  onboarding_completed?: boolean;
+  preferences?: Record<string, any>;
   repos_analyzed: number | null;
   contributions_analyzed: number | null;
   extraction: ExtractionStatus;

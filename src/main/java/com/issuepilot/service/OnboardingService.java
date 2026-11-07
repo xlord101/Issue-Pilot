@@ -143,16 +143,25 @@ public class OnboardingService {
             profile.confirmSkill(confirmed.getTechnology(), confirmed.getScore(), 1.0, confirmed.getLevel());
         }
 
-        // Process and merge preferences
+        // Process and merge preferences and behavioral anchors
+        Map<String, Object> currentPrefs = profile.getPreferences();
+        if (currentPrefs == null) {
+            currentPrefs = new LinkedHashMap<>();
+        }
+        if (request.getOpenSourceExperience() != null) {
+            currentPrefs.put("open_source_experience", request.getOpenSourceExperience());
+        }
+        if (request.getCodebaseNavigationComfort() != null) {
+            currentPrefs.put("codebase_navigation_comfort", request.getCodebaseNavigationComfort());
+        }
+        if (request.getTargetChallengeGoal() != null) {
+            currentPrefs.put("target_challenge_goal", request.getTargetChallengeGoal());
+        }
         if (request.getPreferences() != null && !request.getPreferences().isEmpty()) {
             validatePreferences(request.getPreferences());
-            Map<String, Object> currentPrefs = profile.getPreferences();
-            if (currentPrefs == null) {
-                currentPrefs = new LinkedHashMap<>();
-            }
             currentPrefs.putAll(request.getPreferences());
-            profile.setPreferences(currentPrefs);
         }
+        profile.setPreferences(currentPrefs);
 
         // Behavioral calibration and capability derivation
         CalibratedCapabilityResult calibResult = deriveCalibratedCapability(request, profile);

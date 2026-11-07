@@ -42,14 +42,31 @@ function Callback() {
   useEffect(() => {
     if (q.isSuccess) {
       qc.setQueryData(["session"], q.data);
-      const t = setTimeout(() => navigate({ to: "/onboarding", replace: true }), 900);
-      return () => clearTimeout(t);
+      // Determine if user has already completed onboarding/calibration
+      api.profile
+        .me()
+        .then((profile) => {
+          if (profile && (profile.onboarding_completed || (profile.skills && profile.skills.length > 0))) {
+            navigate({ to: "/app/feed", replace: true });
+          } else if (s.new_user === "false") {
+            navigate({ to: "/app/feed", replace: true });
+          } else {
+            navigate({ to: "/onboarding", replace: true });
+          }
+        })
+        .catch(() => {
+          if (s.new_user === "false") {
+            navigate({ to: "/app/feed", replace: true });
+          } else {
+            navigate({ to: "/onboarding", replace: true });
+          }
+        });
     }
     if (q.isError) {
       setStoredAuthToken(null);
     }
     return undefined;
-  }, [q.isSuccess, q.isError, q.data, qc, navigate]);
+  }, [q.isSuccess, q.isError, q.data, qc, navigate, s.new_user]);
 
   return (
     <div className="flex min-h-screen flex-col bg-[#f8fafc] text-slate-900 font-sans antialiased">

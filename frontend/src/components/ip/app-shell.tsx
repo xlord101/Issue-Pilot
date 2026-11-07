@@ -1,6 +1,6 @@
 import { useState, useEffect, type ReactNode } from "react";
 import { Link, useNavigate, useLocation, type LinkProps } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import {
   Compass,
   Gauge,
@@ -127,6 +127,13 @@ export function AppShell({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const qc = useQueryClient();
   const navigate = useNavigate();
+
+  const profileQuery = useQuery({
+    queryKey: ["profile"],
+    queryFn: () => api.profile.me(),
+    staleTime: 30000,
+  });
+  const capabilityScore = profileQuery.data?.capability != null ? Math.round(profileQuery.data.capability) : 75;
 
   // Load initial collapsed preference from localStorage
   useEffect(() => {
@@ -347,7 +354,7 @@ export function AppShell({
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100/80 px-3 py-1 text-xs text-slate-700">
               <span className="font-medium text-slate-500">Capability:</span>
-              <span className="font-mono font-bold text-blue-700">76/100</span>
+              <span className="font-mono font-bold text-blue-700">{capabilityScore}/100</span>
               <Link
                 to="/onboarding"
                 className="ml-1 text-[11px] text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-0.5"

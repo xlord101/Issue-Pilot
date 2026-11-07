@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Compass,
   Check,
@@ -102,21 +102,72 @@ const GOAL_OPTIONS = [
 ];
 
 export function BehavioralCalibrationDeck({
+  initialProfile,
   onComplete,
   pending,
 }: {
+  initialProfile?: {
+    skills?: { name: string; strength: number }[];
+    preferences?: Record<string, any>;
+    capability?: number | null;
+  } | null;
   onComplete: (data: CalibrationData) => void;
   pending?: boolean;
 }) {
+  const initialData = useMemo(() => {
+    let exp: "first_time" | "familiar" | "seasoned" = "familiar";
+    let nav: "surgical" | "modular" | "architectural" = "modular";
+    let goal: "quick_win" | "deep_dive" | "high_impact" = "deep_dive";
+    let stack: Record<string, number> = {
+      TypeScript: 80,
+      Python: 75,
+      React: 70,
+    };
+
+    if (initialProfile) {
+      const pExp = initialProfile.preferences?.open_source_experience;
+      if (pExp === "first_time" || pExp === "familiar" || pExp === "seasoned") {
+        exp = pExp;
+      }
+      const pNav = initialProfile.preferences?.codebase_navigation_comfort;
+      if (pNav === "surgical" || pNav === "modular" || pNav === "architectural") {
+        nav = pNav;
+      }
+      const pGoal = initialProfile.preferences?.target_challenge_goal;
+      if (pGoal === "quick_win" || pGoal === "deep_dive" || pGoal === "high_impact") {
+        goal = pGoal;
+      }
+
+      if (initialProfile.skills && initialProfile.skills.length > 0) {
+        const loadedStack: Record<string, number> = {};
+        for (const s of initialProfile.skills) {
+          if (s.name) {
+            const score = s.strength > 1 ? Math.round(s.strength) : Math.round(s.strength * 100);
+            const canonical = TECH_OPTIONS.find((t) => t.toLowerCase() === s.name.toLowerCase()) || s.name;
+            loadedStack[canonical] = Math.max(30, Math.min(100, score || 75));
+          }
+        }
+        if (Object.keys(loadedStack).length > 0) {
+          stack = loadedStack;
+        }
+      }
+    }
+    return { exp, nav, goal, stack };
+  }, [initialProfile]);
+
   const [step, setStep] = useState<number>(1);
-  const [experience, setExperience] = useState<"first_time" | "familiar" | "seasoned">("familiar");
-  const [navigation, setNavigation] = useState<"surgical" | "modular" | "architectural">("modular");
-  const [challengeGoal, setChallengeGoal] = useState<"quick_win" | "deep_dive" | "high_impact">("deep_dive");
-  const [selectedTechs, setSelectedTechs] = useState<Record<string, number>>({
-    TypeScript: 80,
-    Python: 75,
-    React: 70,
-  });
+  const [experience, setExperience] = useState<"first_time" | "familiar" | "seasoned">(initialData.exp);
+  const [navigation, setNavigation] = useState<"surgical" | "modular" | "architectural">(initialData.nav);
+  const [challengeGoal, setChallengeGoal] = useState<"quick_win" | "deep_dive" | "high_impact">(initialData.goal);
+  const [selectedTechs, setSelectedTechs] = useState<Record<string, number>>(initialData.stack);
+
+  // Sync state when initialProfile loads or updates asynchronously
+  useEffect(() => {
+    setExperience(initialData.exp);
+    setNavigation(initialData.nav);
+    setChallengeGoal(initialData.goal);
+    setSelectedTechs(initialData.stack);
+  }, [initialData]);
 
   const { derivedCapability, confidenceScore } = useMemo(() => {
     const expObj = EXPERIENCE_OPTIONS.find((e) => e.id === experience)!;

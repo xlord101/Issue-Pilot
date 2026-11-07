@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Logo } from "@/components/ip/logo";
 import { api, USE_MOCK_API, type StarterProfile } from "@/lib/api";
@@ -25,6 +25,11 @@ function OnboardingPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [calibrated, setCalibrated] = useState<CalibrationData | null>(null);
+
+  const profileQuery = useQuery({
+    queryKey: ["profile"],
+    queryFn: () => api.profile.me(),
+  });
 
   const saveMutation = useMutation({
     mutationFn: async (data: CalibrationData) => {
@@ -85,10 +90,12 @@ function OnboardingPage() {
       <header className="flex h-16 items-center justify-between border-b border-slate-200/90 bg-white/80 px-5 sm:px-8 backdrop-blur-md">
         <Logo />
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100/90 px-3 py-1 text-xs">
-            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-mono text-slate-700 font-medium">Ranking Engine Online</span>
-          </div>
+          <Link
+            to="/app/feed"
+            className="text-xs font-medium text-slate-600 hover:text-slate-900 border border-slate-200/90 rounded-full px-3.5 py-1.5 bg-white hover:bg-slate-50 transition-all shadow-2xs active:scale-[0.98]"
+          >
+            &larr; Back to Feed
+          </Link>
         </div>
       </header>
 
@@ -162,6 +169,7 @@ function OnboardingPage() {
             </div>
 
             <BehavioralCalibrationDeck
+              initialProfile={profileQuery.data}
               onComplete={(data) => saveMutation.mutate(data)}
               pending={saveMutation.isPending}
             />

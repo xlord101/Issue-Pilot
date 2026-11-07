@@ -27,14 +27,20 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Controller handling GitHub OAuth 2.0 authentication, session handoff, and identity introspection.
+ * Controller handling GitHub OAuth 2.0 authentication, session handoff, and
+ * identity introspection.
  *
  * Endpoints:
- * - GET /api/auth/github/login (Public) -> Starts flow, redirects to GitHub with secure state.
- * - GET /api/auth/github/callback (Public) -> Exchanges code, provisions user, redirects to frontend with short-lived exchange code.
- * - POST /api/auth/exchange (Public) -> Redeems short-lived exchange code for application Bearer JWT (no tokens in URLs).
- * - GET /api/auth/me (Protected) -> Returns authenticated Issue Pilot identity and profile summary.
- * - POST /api/auth/logout (Protected) -> Informs client to discard stateless session token.
+ * - GET /api/auth/github/login (Public) -> Starts flow, redirects to GitHub
+ * with secure state.
+ * - GET /api/auth/github/callback (Public) -> Exchanges code, provisions user,
+ * redirects to frontend with short-lived exchange code.
+ * - POST /api/auth/exchange (Public) -> Redeems short-lived exchange code for
+ * application Bearer JWT (no tokens in URLs).
+ * - GET /api/auth/me (Protected) -> Returns authenticated Issue Pilot identity
+ * and profile summary.
+ * - POST /api/auth/logout (Protected) -> Informs client to discard stateless
+ * session token.
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -59,8 +65,7 @@ public class AuthController {
             UserCredentialService userCredentialService,
             MongoConfig mongoConfig,
             AppProperties properties,
-            UserIdentityResolver userIdentityResolver
-    ) {
+            UserIdentityResolver userIdentityResolver) {
         this.gitHubOAuthService = gitHubOAuthService;
         this.oAuthStateStore = oAuthStateStore;
         this.tokenService = tokenService;
@@ -72,13 +77,15 @@ public class AuthController {
     }
 
     /**
-     * Initiates the GitHub OAuth 2.0 flow. Generates a cryptographically random single-use state
+     * Initiates the GitHub OAuth 2.0 flow. Generates a cryptographically random
+     * single-use state
      * and redirects the browser to GitHub.
      */
     @GetMapping("/github/login")
     public ResponseEntity<Void> loginWithGitHub() {
         if (!gitHubOAuthService.isConfigured()) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "GitHub OAuth is not configured on this server.");
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                    "GitHub OAuth is not configured on this server.");
         }
         String state = oAuthStateStore.generateState();
         String authorizationUrl = gitHubOAuthService.buildAuthorizationUrl(state);
@@ -90,7 +97,8 @@ public class AuthController {
 
     /**
      * OAuth callback invoked by GitHub redirect.
-     * Validates state, exchanges code for access token server-side, provisions user profile,
+     * Validates state, exchanges code for access token server-side, provisions user
+     * profile,
      * and redirects to frontend with a short-lived exchange code.
      */
     @GetMapping("/github/callback")
@@ -98,26 +106,29 @@ public class AuthController {
             @RequestParam(required = false) String code,
             @RequestParam(required = false) String state,
             @RequestParam(required = false) String error,
-            @RequestParam(name = "error_description", required = false) String errorDescription
-    ) {
+            @RequestParam(name = "error_description", required = false) String errorDescription) {
         if (error != null && !error.isBlank()) {
             logger.warn("GitHub OAuth access denied or error: {}", error);
             String redirectUrl = properties.getFrontendAppUrl() + "/auth/callback?error="
                     + URLEncoder.encode(errorDescription != null ? errorDescription : error, StandardCharsets.UTF_8);
-            return ResponseEntity.status(HttpStatus.FOUND).location(Objects.requireNonNull(URI.create(redirectUrl))).build();
+            return ResponseEntity.status(HttpStatus.FOUND).location(Objects.requireNonNull(URI.create(redirectUrl)))
+                    .build();
         }
 
         if (state == null || !oAuthStateStore.validateAndRemoveState(state)) {
             logger.warn("OAuth state validation failed: missing, mismatched, expired, or reused state token.");
             String redirectUrl = properties.getFrontendAppUrl() + "/auth/callback?error="
-                    + URLEncoder.encode("Invalid or expired OAuth state session. Please try logging in again.", StandardCharsets.UTF_8);
-            return ResponseEntity.status(HttpStatus.FOUND).location(Objects.requireNonNull(URI.create(redirectUrl))).build();
+                    + URLEncoder.encode("Invalid or expired OAuth state session. Please try logging in again.",
+                            StandardCharsets.UTF_8);
+            return ResponseEntity.status(HttpStatus.FOUND).location(Objects.requireNonNull(URI.create(redirectUrl)))
+                    .build();
         }
 
         if (code == null || code.isBlank()) {
             String redirectUrl = properties.getFrontendAppUrl() + "/auth/callback?error="
                     + URLEncoder.encode("Missing GitHub authorization code.", StandardCharsets.UTF_8);
-            return ResponseEntity.status(HttpStatus.FOUND).location(Objects.requireNonNull(URI.create(redirectUrl))).build();
+            return ResponseEntity.status(HttpStatus.FOUND).location(Objects.requireNonNull(URI.create(redirectUrl)))
+                    .build();
         }
 
         try {
@@ -136,7 +147,8 @@ public class AuthController {
             String providerUserId = String.valueOf(numericId);
             String canonicalUserId = "github:" + providerUserId;
 
-            // 3. Atomically find or create user profile in MongoDB (or sample mode if offline)
+            // 3. Atomically find or create user profile in MongoDB (or sample mode if
+            // offline)
             boolean isNewUser = false;
             if (mongoConfig.isConnected()) {
                 Map<String, Object> existing = userRepository.findByProviderIdentity("github", providerUserId);
@@ -148,8 +160,7 @@ public class AuthController {
                         displayName,
                         avatarUrl,
                         profileUrl,
-                        email
-                );
+                        email);
             }
 
             // 4. Securely encrypt and store GitHub OAuth token in user_tokens collection
@@ -158,31 +169,32 @@ public class AuthController {
                     "github",
                     providerUserId,
                     githubAccessToken,
-                    "read:user"
-            );
+                    "read:user");
 
             // 5. Issue Issue Pilot Application Session JWT
             String applicationJwt = tokenService.issueToken(
                     canonicalUserId,
                     username,
                     List.of("ROLE_USER"),
-                    Map.of("provider", "github", "provider_user_id", providerUserId)
-            );
+                    Map.of("provider", "github", "provider_user_id", providerUserId));
 
-            // 5. Create short-lived single-use exchange code to hand off to frontend securely
+            // 5. Create short-lived single-use exchange code to hand off to frontend
+            // securely
             String exchangeCode = oAuthStateStore.createExchangeCode(applicationJwt, canonicalUserId);
 
             String redirectUrl = properties.getFrontendAppUrl() + "/auth/callback?exchange_code="
                     + URLEncoder.encode(exchangeCode, StandardCharsets.UTF_8)
                     + "&new_user=" + isNewUser;
 
-            return ResponseEntity.status(HttpStatus.FOUND).location(Objects.requireNonNull(URI.create(redirectUrl))).build();
+            return ResponseEntity.status(HttpStatus.FOUND).location(Objects.requireNonNull(URI.create(redirectUrl)))
+                    .build();
 
         } catch (Exception e) {
             logger.error("GitHub OAuth authentication failed: {}", e.getMessage());
             String redirectUrl = properties.getFrontendAppUrl() + "/auth/callback?error="
                     + URLEncoder.encode("Authentication failed: " + e.getMessage(), StandardCharsets.UTF_8);
-            return ResponseEntity.status(HttpStatus.FOUND).location(Objects.requireNonNull(URI.create(redirectUrl))).build();
+            return ResponseEntity.status(HttpStatus.FOUND).location(Objects.requireNonNull(URI.create(redirectUrl)))
+                    .build();
         }
     }
 
@@ -191,7 +203,8 @@ public class AuthController {
     }
 
     /**
-     * Redeems a short-lived authorization exchange code for the application session JWT.
+     * Redeems a short-lived authorization exchange code for the application session
+     * JWT.
      * Prevents tokens from ever being sent in URL parameters or browser history.
      */
     @PostMapping("/exchange")
@@ -202,7 +215,8 @@ public class AuthController {
 
         String applicationJwt = oAuthStateStore.redeemExchangeCode(req.exchange_code);
         if (applicationJwt == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid, expired, or already-redeemed exchange code.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "Invalid, expired, or already-redeemed exchange code.");
         }
 
         Map<String, Object> response = new LinkedHashMap<>();
@@ -242,20 +256,22 @@ public class AuthController {
             displayName = cleanEmail.split("@")[0];
         }
         String username = cleanEmail.split("@")[0].replaceAll("[^a-zA-Z0-9_-]", "");
-        if (username.isBlank()) username = "contributor";
+        if (username.isBlank())
+            username = "contributor";
 
         userRepository.provisionOrUpdateOAuthUser(
                 "local",
                 cleanEmail,
                 username,
                 displayName,
-                "https://api.dicebear.com/7.x/identicon/svg?seed=" + URLEncoder.encode(cleanEmail, StandardCharsets.UTF_8),
+                "https://api.dicebear.com/7.x/identicon/svg?seed="
+                        + URLEncoder.encode(cleanEmail, StandardCharsets.UTF_8),
                 "",
-                cleanEmail
-        );
+                cleanEmail);
 
         String canonicalUserId = "local:" + cleanEmail;
-        String jwt = tokenService.issueToken(canonicalUserId, username, List.of("ROLE_USER"), Map.of("email", cleanEmail, "display_name", displayName));
+        String jwt = tokenService.issueToken(canonicalUserId, username, List.of("ROLE_USER"),
+                Map.of("email", cleanEmail, "display_name", displayName));
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("status", "success");
@@ -285,21 +301,24 @@ public class AuthController {
         String username = cleanEmail.split("@")[0];
         String displayName = username;
         if (userDoc != null && userDoc.get("identity") instanceof Map<?, ?> identity) {
-            if (identity.get("username") != null) username = identity.get("username").toString();
-            if (identity.get("display_name") != null) displayName = identity.get("display_name").toString();
+            if (identity.get("username") != null)
+                username = identity.get("username").toString();
+            if (identity.get("display_name") != null)
+                displayName = identity.get("display_name").toString();
         } else {
             userRepository.provisionOrUpdateOAuthUser(
                     "local",
                     cleanEmail,
                     username,
                     displayName,
-                    "https://api.dicebear.com/7.x/identicon/svg?seed=" + URLEncoder.encode(cleanEmail, StandardCharsets.UTF_8),
+                    "https://api.dicebear.com/7.x/identicon/svg?seed="
+                            + URLEncoder.encode(cleanEmail, StandardCharsets.UTF_8),
                     "",
-                    cleanEmail
-            );
+                    cleanEmail);
         }
 
-        String jwt = tokenService.issueToken(canonicalUserId, username, List.of("ROLE_USER"), Map.of("email", cleanEmail, "display_name", displayName));
+        String jwt = tokenService.issueToken(canonicalUserId, username, List.of("ROLE_USER"),
+                Map.of("email", cleanEmail, "display_name", displayName));
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("status", "success");
@@ -311,7 +330,8 @@ public class AuthController {
     }
 
     /**
-     * Returns the authenticated user's Issue Pilot identity, profile, and onboarding status.
+     * Returns the authenticated user's Issue Pilot identity, profile, and
+     * onboarding status.
      * Requires valid Bearer application session token.
      */
     @GetMapping("/me")
@@ -331,13 +351,17 @@ public class AuthController {
             Object identityObj = userDoc.get("identity");
             response.put("identity", identityObj);
             if (identityObj instanceof Map<?, ?> identity) {
-                if (identity.get("username") != null) response.put("username", identity.get("username"));
-                if (identity.get("display_name") != null) response.put("display_name", identity.get("display_name"));
-                if (identity.get("avatar_url") != null) response.put("avatar_url", identity.get("avatar_url"));
+                if (identity.get("username") != null)
+                    response.put("username", identity.get("username"));
+                if (identity.get("display_name") != null)
+                    response.put("display_name", identity.get("display_name"));
+                if (identity.get("avatar_url") != null)
+                    response.put("avatar_url", identity.get("avatar_url"));
             }
             response.put("onboarding_completed", userDoc.getOrDefault("onboarding_completed", false));
             response.put("capability", userDoc.getOrDefault("capability", 70.0));
-            response.put("skills_count", userDoc.get("skills") instanceof Map ? ((Map<?, ?>) userDoc.get("skills")).size() : 0);
+            response.put("skills_count",
+                    userDoc.get("skills") instanceof Map ? ((Map<?, ?>) userDoc.get("skills")).size() : 0);
             response.put("created_at", userDoc.get("created_at"));
             response.put("updated_at", userDoc.get("updated_at"));
         } else {
@@ -345,7 +369,8 @@ public class AuthController {
             response.put("note", "Profile not yet persisted or running in memory mode.");
         }
 
-        if (!response.containsKey("username") && authentication != null && authentication.getPrincipal() instanceof org.springframework.security.oauth2.jwt.Jwt jwt) {
+        if (!response.containsKey("username") && authentication != null
+                && authentication.getPrincipal() instanceof org.springframework.security.oauth2.jwt.Jwt jwt) {
             String preferred = jwt.getClaimAsString("preferred_username");
             if (preferred != null && !preferred.isBlank()) {
                 response.put("username", preferred);
@@ -359,8 +384,10 @@ public class AuthController {
      * Logs out the user.
      *
      * Note on Stateless JWT Tokens:
-     * In a stateless Bearer token architecture, logging out is accomplished by the client
-     * discarding the stored token. The server does not maintain an active revocation blacklist
+     * In a stateless Bearer token architecture, logging out is accomplished by the
+     * client
+     * discarding the stored token. The server does not maintain an active
+     * revocation blacklist
      * in this phase, so client-side token disposal is required.
      */
     @PostMapping("/logout")
@@ -374,7 +401,8 @@ public class AuthController {
     }
 
     /**
-     * Disconnects the third-party OAuth account and securely revokes stored credentials.
+     * Disconnects the third-party OAuth account and securely revokes stored
+     * credentials.
      * Requires valid Bearer application session token.
      */
     @PostMapping("/github/disconnect")
@@ -389,8 +417,8 @@ public class AuthController {
         response.put("user_id", userId);
         response.put("provider", "github");
         response.put("disconnected", revoked);
-        response.put("message", revoked ? "GitHub credentials removed successfully." : "No active GitHub credentials found.");
+        response.put("message",
+                revoked ? "GitHub credentials removed successfully." : "No active GitHub credentials found.");
         return response;
     }
 }
-

@@ -322,6 +322,8 @@ export const liveApi: IssuePilotApi = {
             skills: skillsList,
             capability: profile.capability != null ? Math.round(profile.capability) : 70,
             capability_confidence: profile.capability_confidence ?? 0.85,
+            onboarding_completed: profile.onboarding_completed ?? profile.onboardingCompleted ?? (skillsList.length > 0),
+            preferences: profile.preferences ?? {},
             repos_analyzed: 12,
             contributions_analyzed: 34,
             extraction: {
