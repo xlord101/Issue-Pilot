@@ -1,6 +1,6 @@
 /** Live implementation — connects to the Spring Boot backend (`http://localhost:8000/api`). */
 import type { IssuePilotApi } from "./index";
-import { API_BASE_URL } from "./config";
+import { API_BASE_URL, USE_MOCK_API } from "./config";
 import { endpoints as e } from "./endpoints";
 import {
   ApiError,
@@ -240,14 +240,14 @@ export const liveApi: IssuePilotApi = {
             body: item.body ?? null,
             url: item.issue_url ?? item.url ?? "https://github.com",
             repo_key: item.repository_full_name ?? item.repo_key ?? "open-source/project",
-            is_open: true,
-            is_unassigned: true,
+            is_open: item.state === "open" || item.is_open === true,
+            is_unassigned: item.is_assigned !== true,
             labels: item.labels ?? ["good first issue"],
             evidence: null,
-            technologies: item.technologies ? item.technologies.map((t: any) => typeof t === "string" ? t : t.technology) : ["Python"],
-            verified_at: new Date().toISOString(),
+            technologies: item.detected_technologies ?? (item.technologies ? item.technologies.map((t: any) => typeof t === "string" ? t : t.technology) : ["General"]),
+            verified_at: item.verified_at ?? new Date().toISOString(),
           },
-          total_score: Math.round(item.final_score ?? item.scores?.final_score ?? 85),
+          total_score: Math.round(item.final_score ?? item.score ?? item.scores?.final_score ?? 85),
           breakdown: [
             { signal: "skill_match", score: 90, max: 100, confidence: 0.9, summary: "High synergy" },
             { signal: "difficulty_match", score: 85, max: 100, confidence: 0.85, summary: "Good fit" },
@@ -257,7 +257,7 @@ export const liveApi: IssuePilotApi = {
             { signal: "freshness", score: 85, max: 100, confidence: 0.85, summary: "Active" },
           ],
           why: item.why_recommended ?? "Highest-ranked match across your verified skill and difficulty profile.",
-          created_at: new Date().toISOString(),
+          created_at: item.created_at ?? new Date().toISOString(),
           decision: null,
         }));
 
@@ -266,8 +266,11 @@ export const liveApi: IssuePilotApi = {
           next_cursor: null,
           total: items.length,
         };
-      } catch {
-        return mockApi.recommendations.list(q);
+      } catch (err) {
+        if (USE_MOCK_API) {
+          return mockApi.recommendations.list(q);
+        }
+        throw err;
       }
     },
     async get(id) {

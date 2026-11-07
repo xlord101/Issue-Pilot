@@ -35,9 +35,9 @@ export function makeRecommendations(): Recommendation[] {
     {
       id: "rec_01",
       issue: {
-        source: "github", native_id: "5812", title: "Support async view functions in class-based MethodView",
-        body: "MethodView dispatch currently assumes sync handlers. Add support for `async def` methods and document the behaviour.",
-        url: "https://github.com/pallets/flask/issues/5812", repo_key: "pallets/flask", is_open: true, is_unassigned: true,
+        source: "github", native_id: "5120", title: "Refactor blueprint routing dispatcher to support regex URL parameters",
+        body: "Allow custom converters or regex patterns inside url_prefix to support dynamic subdomain multi-tenant routing.",
+        url: "https://github.com/pallets/flask/issues/5120", repo_key: "pallets/flask", is_open: true, is_unassigned: true,
         labels: ["good first issue", "feature"], technologies: ["Python", "asyncio"], verified_at: hoursAgo(1),
         evidence: [
           { signal: "skill_match", description: "You have 14 merged PRs in Python repos using asyncio.", url: null },
@@ -93,12 +93,13 @@ export function makeRecommendations(): Recommendation[] {
     {
       id: "rec_06",
       issue: {
-        source: "github", native_id: "2209", title: "CLI: `--json` output drops null fields",
-        body: null, url: "https://github.com/cli/cli/issues/2209", repo_key: "cli/cli", is_open: false, is_unassigned: true,
-        labels: ["bug"], technologies: ["Go"], verified_at: hoursAgo(30), evidence: null,
+        source: "github", native_id: "84129", title: "Missing diagnostic when LLVM vector intrinsic has invalid lane width",
+        body: "Clang parser emits silent fallback instead of an explicit error message on mismatched register width.",
+        url: "https://github.com/llvm/llvm-project/issues/84129", repo_key: "llvm/llvm-project", is_open: true, is_unassigned: true,
+        labels: ["bug", "diagnostics", "good first issue"], technologies: ["C++", "LLVM"], verified_at: hoursAgo(10), evidence: null,
       },
-      total_score: null, why: "Closed since last verification — kept for transparency.", created_at: hoursAgo(40), decision: null,
-      breakdown: bd([60, 40, 50, 85, 50, 10], [0.8, 0.4, 0.4, 0.8, 0.3, 0.3], ["Go", "Unclear scope", "Slow triage", "Healthy repo", "", "Closed"]),
+      total_score: null, why: "Active systems task in LLVM compiler core.", created_at: hoursAgo(15), decision: null,
+      breakdown: bd([82, 80, 85, 90, 75, 80], [0.85, 0.7, 0.8, 0.9, 0.7, 0.85], ["C++", "Scoped compiler diagnostic", "Fast triage", "Healthy repo", "Positive community", "Active"]),
     },
   ];
   return list.map((r) => ({ ...r, total_score: weightedTotal(r.breakdown) }));

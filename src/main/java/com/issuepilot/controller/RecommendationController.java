@@ -135,24 +135,18 @@ public class RecommendationController {
         } else if (req.user_id != null && !req.user_id.isBlank()) {
             profile = userRepository.getUser(req.user_id);
             if (profile == null) {
-                if (isLive) {
-                    throw new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "User profile '" + req.user_id + "' not found in MongoDB Atlas. Create the profile first or specify demo_mode=true."
-                    );
-                }
-                Map<String, Object> sample = simulatorController.getSampleProfiles().get(0);
-                profile = new LinkedHashMap<>(sample);
-                profile.put("user_id", req.user_id);
+                // If profile not yet persisted in Atlas, construct an initial uncalibrated profile
+                // instead of failing with 404 and forcing silent fallback to mock data
+                ContributorProfile starter = new ContributorProfile();
+                starter.setUserId(req.user_id);
+                starter.setOnboardingCompleted(false);
+                profile = objectMapper.convertValue(starter, new TypeReference<Map<String, Object>>() {});
             }
         } else {
-            if (isLive) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Either 'profile' or 'user_id' must be provided for live recommendation."
-                );
-            }
-            profile = simulatorController.getSampleProfiles().get(0);
+            ContributorProfile starter = new ContributorProfile();
+            starter.setUserId("guest");
+            starter.setOnboardingCompleted(false);
+            profile = objectMapper.convertValue(starter, new TypeReference<Map<String, Object>>() {});
         }
 
         // 2. Resolve Candidate Pool
@@ -186,10 +180,14 @@ public class RecommendationController {
             }
 
             if (candidates.isEmpty()) {
-                throw new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "No eligible open candidates found in MongoDB Atlas matching the specified criteria. Ingest candidates first or set demo_mode=true."
-                );
+                logger.info("No candidates matched strict user criteria; attempting fallback to recent open candidates from repository.");
+                candidates = issueRepository.queryIssues("open", false, null, null, null, null, null, 20, 0);
+                if (candidates.isEmpty()) {
+                    throw new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
+                            "No eligible open candidates found in MongoDB Atlas matching the specified criteria. Ingest candidates first or set demo_mode=true."
+                    );
+                }
             }
         }
 

@@ -31,6 +31,9 @@ public class MongoConfig {
     private MongoTemplate mongoTemplate;
     private boolean connected = false;
 
+    private volatile long lastSuccessfulPing = 0;
+    private static final long PING_CACHE_TTL_MS = 30000; // 30 seconds cache
+
     public MongoConfig(AppProperties properties) {
         this.properties = properties;
     }
@@ -76,6 +79,7 @@ public class MongoConfig {
             try {
                 this.mongoClient.getDatabase("admin").runCommand(new Document("ping", 1));
                 this.connected = true;
+                this.lastSuccessfulPing = System.currentTimeMillis();
                 logger.info("Successfully connected to MongoDB Atlas database '{}'", getEffectiveDatabaseName());
             } catch (Exception pingEx) {
                 logger.warn("Initial MongoDB ping failed: {}. Application will run in degraded/sample mode.", pingEx.getMessage());
@@ -141,10 +145,16 @@ public class MongoConfig {
         if (!connected || mongoClient == null) {
             return false;
         }
+        long now = System.currentTimeMillis();
+        if (now - lastSuccessfulPing < PING_CACHE_TTL_MS) {
+            return true;
+        }
         try {
             mongoClient.getDatabase("admin").runCommand(new Document("ping", 1));
+            lastSuccessfulPing = now;
             return true;
         } catch (Exception e) {
+            logger.warn("MongoDB Atlas heartbeat ping failed: {}", e.getMessage());
             return false;
         }
     }

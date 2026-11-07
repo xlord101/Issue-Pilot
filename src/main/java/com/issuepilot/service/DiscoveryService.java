@@ -125,6 +125,7 @@ public class DiscoveryService {
             summary.put("active_pool_size", currentActivePool);
             summary.put("target_pool_size", targetPoolSize);
             summary.put("creation_age_days", ageDays);
+            summary.put("per_source_summary", Collections.emptyMap());
             summary.put("note", "Candidate pool target reached; discovery halted.");
             if (mongoConfig.isConnected()) {
                 jobRepository.releaseJobLock(jobId, "completed", summary);
