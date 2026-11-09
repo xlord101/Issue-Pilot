@@ -27,17 +27,9 @@ export const liveApi: IssuePilotApi = {
         const identity = (data.identity as Record<string, any>) || {};
         const numericId = data.user_id ? String(data.user_id).replace("github:", "") : "";
         const login =
-          identity["username"] ||
-          identity["login"] ||
-          data.username ||
-          numericId ||
-          "contributor";
+          identity["username"] || identity["login"] || data.username || numericId || "contributor";
         const displayName =
-          identity["display_name"] ||
-          identity["name"] ||
-          data.display_name ||
-          data.name ||
-          login;
+          identity["display_name"] || identity["name"] || data.display_name || data.name || login;
         const avatarUrl =
           identity["avatar_url"] ||
           data.avatar_url ||
@@ -86,7 +78,12 @@ export const liveApi: IssuePilotApi = {
       }
       const s = await liveApi.auth.getSession();
       if (!s) {
-        throw new ApiError("Failed to retrieve authenticated session from server", 401, "/api/auth/me", "GET");
+        throw new ApiError(
+          "Failed to retrieve authenticated session from server",
+          401,
+          "/api/auth/me",
+          "GET",
+        );
       }
       return s;
     },
@@ -107,7 +104,12 @@ export const liveApi: IssuePilotApi = {
       }
       const s = await liveApi.auth.getSession();
       if (!s) {
-        throw new ApiError("Account created, but failed to retrieve session.", 500, "/api/auth/register", "POST");
+        throw new ApiError(
+          "Account created, but failed to retrieve session.",
+          500,
+          "/api/auth/register",
+          "POST",
+        );
       }
       return s;
     },
@@ -126,7 +128,12 @@ export const liveApi: IssuePilotApi = {
       }
       const s = await liveApi.auth.getSession();
       if (!s) {
-        throw new ApiError("Signed in, but failed to retrieve session.", 500, "/api/auth/login", "POST");
+        throw new ApiError(
+          "Signed in, but failed to retrieve session.",
+          500,
+          "/api/auth/login",
+          "POST",
+        );
       }
       return s;
     },
@@ -186,7 +193,12 @@ export const liveApi: IssuePilotApi = {
       await request<any>("onboarding.starterProfile", e.onboarding.starterProfile, {
         method: "POST",
         body: {
-          confirmed_skills: body.languages.map((l) => ({ technology: l, score: 75, level: "intermediate", category: "language" })),
+          confirmed_skills: body.languages.map((l) => ({
+            technology: l,
+            score: 75,
+            level: "intermediate",
+            category: "language",
+          })),
           dismissed_skills: [],
           preferences: {
             experience: body.experience,
@@ -221,17 +233,17 @@ export const liveApi: IssuePilotApi = {
           freshness: 0.05,
         },
       };
-      if (q.source && q.source !== "all") {
-        payload.source_filter = q.source;
+      if (q.source) {
+        payload["source_filter"] = q.source;
       }
       if (q.tech && q.tech.trim()) {
-        payload.technology_filter = q.tech.trim();
+        payload["technology_filter"] = q.tech.trim();
       }
       if (q.min_score != null && q.min_score > 0) {
-        payload.min_difficulty = q.min_score;
+        payload["min_difficulty"] = q.min_score;
       }
       if (q.max_score != null && q.max_score < 100) {
-        payload.max_difficulty = q.max_score;
+        payload["max_difficulty"] = q.max_score;
       }
 
       const res = await request<any>("recommendations.list", e.recommendations.list, {
@@ -253,19 +265,61 @@ export const liveApi: IssuePilotApi = {
           is_unassigned: item.is_assigned !== true,
           labels: item.labels ?? ["good first issue"],
           evidence: null,
-          technologies: item.detected_technologies ?? (item.technologies ? item.technologies.map((t: any) => typeof t === "string" ? t : t.technology) : ["General"]),
+          technologies:
+            item.detected_technologies ??
+            (item.technologies
+              ? item.technologies.map((t: any) => (typeof t === "string" ? t : t.technology))
+              : ["General"]),
           verified_at: item.verified_at ?? new Date().toISOString(),
         },
         total_score: Math.round(item.final_score ?? item.score ?? item.scores?.final_score ?? 85),
         breakdown: [
-          { signal: "skill_match", score: Math.round(item.scores?.skill_match ?? 90), max: 100, confidence: 0.9, summary: "High synergy" },
-          { signal: "difficulty_match", score: Math.round(item.scores?.difficulty_match ?? 85), max: 100, confidence: 0.85, summary: "Good fit" },
-          { signal: "responsiveness", score: Math.round(item.scores?.responsiveness ?? 88), max: 100, confidence: 0.88, summary: "Responsive" },
-          { signal: "repo_health", score: Math.round(item.scores?.repo_health ?? 92), max: 100, confidence: 0.95, summary: "Healthy" },
-          { signal: "feedback", score: Math.round(item.scores?.feedback ?? 80), max: 100, confidence: 0.8, summary: "Positive" },
-          { signal: "freshness", score: Math.round(item.scores?.freshness ?? 85), max: 100, confidence: 0.85, summary: "Active" },
+          {
+            signal: "skill_match",
+            score: Math.round(item.scores?.skill_match ?? 90),
+            max: 100,
+            confidence: 0.9,
+            summary: "High synergy",
+          },
+          {
+            signal: "difficulty_match",
+            score: Math.round(item.scores?.difficulty_match ?? 85),
+            max: 100,
+            confidence: 0.85,
+            summary: "Good fit",
+          },
+          {
+            signal: "responsiveness",
+            score: Math.round(item.scores?.responsiveness ?? 88),
+            max: 100,
+            confidence: 0.88,
+            summary: "Responsive",
+          },
+          {
+            signal: "repo_health",
+            score: Math.round(item.scores?.repo_health ?? 92),
+            max: 100,
+            confidence: 0.95,
+            summary: "Healthy",
+          },
+          {
+            signal: "feedback",
+            score: Math.round(item.scores?.feedback ?? 80),
+            max: 100,
+            confidence: 0.8,
+            summary: "Positive",
+          },
+          {
+            signal: "freshness",
+            score: Math.round(item.scores?.freshness ?? 85),
+            max: 100,
+            confidence: 0.85,
+            summary: "Active",
+          },
         ],
-        why: item.why_recommended ?? "Highest-ranked match across your verified skill and difficulty profile.",
+        why:
+          item.why_recommended ??
+          "Highest-ranked match across your verified skill and difficulty profile.",
         created_at: item.created_at ?? new Date().toISOString(),
         decision: null,
       }));
@@ -282,7 +336,12 @@ export const liveApi: IssuePilotApi = {
         params: { id },
       });
       if (!item) {
-        throw new ApiError(`Recommendation '${id}' not found.`, 404, `/api/recommendations/${id}`, "GET");
+        throw new ApiError(
+          `Recommendation '${id}' not found.`,
+          404,
+          `/api/recommendations/${id}`,
+          "GET",
+        );
       }
       return item;
     },
@@ -297,7 +356,8 @@ export const liveApi: IssuePilotApi = {
     },
 
     async submit(recommendationId, decision, reason) {
-      const mappedEventType = decision === "accepted" ? "accepted" : decision === "rejected" ? "rejected" : "completed";
+      const mappedEventType =
+        decision === "accepted" ? "accepted" : decision === "rejected" ? "rejected" : "completed";
       await request<any>("feedback.record", "/api/feedback", {
         method: "POST",
         body: {
@@ -331,7 +391,12 @@ export const liveApi: IssuePilotApi = {
     async me() {
       const profile = await request<any>("profile.me", e.profile.me);
       if (!profile) {
-        throw new ApiError("Failed to retrieve profile from server", 404, e.profile.me || "/api/profile/me", "GET");
+        throw new ApiError(
+          "Failed to retrieve profile from server",
+          404,
+          e.profile.me || "/api/profile/me",
+          "GET",
+        );
       }
 
       const skillsList: T.TechSkill[] = profile.skills
@@ -344,11 +409,15 @@ export const liveApi: IssuePilotApi = {
         : [];
 
       return {
-        login: (profile.identity as any)?.username || profile.username || (profile.user_id ? String(profile.user_id).replace("github:", "") : "contributor"),
+        login:
+          (profile.identity as any)?.username ||
+          profile.username ||
+          (profile.user_id ? String(profile.user_id).replace("github:", "") : "contributor"),
         skills: skillsList,
         capability: profile.capability != null ? Math.round(profile.capability) : 70,
         capability_confidence: profile.capability_confidence ?? 0.85,
-        onboarding_completed: profile.onboarding_completed ?? profile.onboardingCompleted ?? (skillsList.length > 0),
+        onboarding_completed:
+          profile.onboarding_completed ?? profile.onboardingCompleted ?? skillsList.length > 0,
         preferences: profile.preferences ?? {},
         repos_analyzed: 12,
         contributions_analyzed: 34,
@@ -379,13 +448,23 @@ export const liveApi: IssuePilotApi = {
       return [];
     },
     async registerRepo() {
-      throw new ApiError("Maintainer endpoint not implemented on live backend", 501, "/api/maintainer/repos", "POST");
+      throw new ApiError(
+        "Maintainer endpoint not implemented on live backend",
+        501,
+        "/api/maintainer/repos",
+        "POST",
+      );
     },
     async triage() {
       return [];
     },
     async decide() {
-      throw new ApiError("Maintainer triage endpoint not implemented on live backend", 501, "/api/maintainer/triage", "POST");
+      throw new ApiError(
+        "Maintainer triage endpoint not implemented on live backend",
+        501,
+        "/api/maintainer/triage",
+        "POST",
+      );
     },
     async history() {
       return { decisions: [], audit: [] };

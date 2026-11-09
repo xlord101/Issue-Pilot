@@ -1,11 +1,24 @@
 import type { ReactNode } from "react";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
 export function ConfirmDialog({
-  open, onOpenChange, title, description, confirmLabel = "Confirm", onConfirm, busy, children,
+  open,
+  onOpenChange,
+  title,
+  description,
+  confirmLabel = "Confirm",
+  onConfirm,
+  busy,
+  children,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -21,12 +34,20 @@ export function ConfirmDialog({
       <AlertDialogContent className="border bg-popover">
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription asChild><div className="text-sm text-muted-foreground">{description}</div></AlertDialogDescription>
+          <AlertDialogDescription asChild>
+            <div className="text-sm text-muted-foreground">{description}</div>
+          </AlertDialogDescription>
         </AlertDialogHeader>
         {children}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
-          <AlertDialogAction disabled={busy} onClick={(e) => { e.preventDefault(); onConfirm(); }}>
+          <AlertDialogAction
+            disabled={busy}
+            onClick={(e) => {
+              e.preventDefault();
+              onConfirm();
+            }}
+          >
             {busy ? "Working…" : confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>

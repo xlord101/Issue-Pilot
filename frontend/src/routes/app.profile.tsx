@@ -13,7 +13,7 @@ export const Route = createFileRoute("/app/profile")({
   head: () =>
     pageMeta(
       "Tech Profile & Calibrated Capability",
-      "Demonstrated developer skills and capability rating derived by Issue Pilot."
+      "Demonstrated developer skills and capability rating derived by Issue Pilot.",
     ),
   component: ProfilePage,
 });
@@ -37,7 +37,8 @@ function ProfilePage() {
             </h1>
           </div>
           <p className="mt-1.5 text-sm text-slate-600 max-w-2xl leading-relaxed">
-            Derived directly from your public contribution footprint and behavioral calibration deck. Reflects evidence-based affinity, not self-reported surveys.
+            Derived directly from your public contribution footprint and behavioral calibration
+            deck. Reflects evidence-based affinity, not self-reported surveys.
           </p>
         </div>
 
@@ -73,22 +74,36 @@ function ProfilePage() {
                       <StatusBadge tone="success">Active Contributor</StatusBadge>
                     </div>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Calibrated Capability Dial: <span className="font-mono text-blue-700 font-bold">{p.capability ?? 70} / 100</span> &bull; High Reliability
+                      Calibrated Capability Dial:{" "}
+                      <span className="font-mono text-blue-700 font-bold">
+                        {p.capability ?? 70} / 100
+                      </span>{" "}
+                      &bull; High Reliability
                     </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 font-mono text-xs text-slate-700">
                   <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
-                    <span className="text-[10px] text-slate-500 uppercase tracking-wider">Repos Scanned</span>
-                    <div className="text-lg font-bold text-slate-900 mt-0.5">{p.repos_analyzed ?? 12}</div>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider">
+                      Repos Scanned
+                    </span>
+                    <div className="text-lg font-bold text-slate-900 mt-0.5">
+                      {p.repos_analyzed ?? 12}
+                    </div>
                   </div>
                   <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
-                    <span className="text-[10px] text-slate-500 uppercase tracking-wider">PRs Evaluated</span>
-                    <div className="text-lg font-bold text-slate-900 mt-0.5">{p.contributions_analyzed ?? 34}</div>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider">
+                      PRs Evaluated
+                    </span>
+                    <div className="text-lg font-bold text-slate-900 mt-0.5">
+                      {p.contributions_analyzed ?? 34}
+                    </div>
                   </div>
                   <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5 col-span-2 sm:col-span-1">
-                    <span className="text-[10px] text-slate-500 uppercase tracking-wider">Extraction Age</span>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider">
+                      Extraction Age
+                    </span>
                     <div className="text-xs font-bold text-emerald-700 mt-1 truncate">
                       {relativeTime(p.extracted_at)}
                     </div>
@@ -112,7 +127,12 @@ function ProfilePage() {
                 title="No skills derived yet"
                 hint="Complete the 3-question calibration deck to initialize your profile."
                 action={
-                  <Button asChild variant="outline" size="sm" className="border-slate-200 bg-white hover:bg-slate-50">
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="border-slate-200 bg-white hover:bg-slate-50"
+                  >
                     <Link to="/onboarding">Open Calibration Deck</Link>
                   </Button>
                 }
@@ -140,7 +160,9 @@ function ProfilePage() {
                               <div className="flex items-center justify-between">
                                 <span className="font-bold text-slate-900">{s.name}</span>
                                 <span className="font-mono text-[11px] text-slate-500">
-                                  {s.evidence_count != null ? `${s.evidence_count} merged commits` : "calibrated"}
+                                  {s.evidence_count != null
+                                    ? `${s.evidence_count} merged commits`
+                                    : "calibrated"}
                                 </span>
                               </div>
                               <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 border border-slate-200/60">

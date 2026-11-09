@@ -2,12 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  GitHubMark,
-  GitLabMark,
-  CodebergMark,
-  BugzillaMark,
-} from "@/components/ip/badges";
+import { GitHubMark, GitLabMark, CodebergMark, BugzillaMark } from "@/components/ip/badges";
 import { Logo } from "@/components/ip/logo";
 import { NotConnectedState } from "@/components/ip/states";
 import { api, NotConnectedError } from "@/lib/api";
@@ -19,7 +14,7 @@ export const Route = createFileRoute("/login")({
   head: () =>
     pageMeta(
       "Sign In or Register — Issue Pilot",
-      "Connect your developer identity to find calibrated open-source issues."
+      "Connect your developer identity to find calibrated open-source issues.",
     ),
   component: AuthPage,
 });
@@ -82,9 +77,7 @@ function AuthPage() {
       }
     } catch (error) {
       setErr(error);
-      toast.error(
-        error instanceof Error ? error.message : "Authentication failed."
-      );
+      toast.error(error instanceof Error ? error.message : "Authentication failed.");
     } finally {
       setBusy(false);
     }
@@ -146,7 +139,14 @@ function AuthPage() {
               />
 
               <defs>
-                <linearGradient id="lightSkyGradient" x1="200" y1="0" x2="200" y2="600" gradientUnits="userSpaceOnUse">
+                <linearGradient
+                  id="lightSkyGradient"
+                  x1="200"
+                  y1="0"
+                  x2="200"
+                  y2="600"
+                  gradientUnits="userSpaceOnUse"
+                >
                   <stop stopColor="#f4f6fc" />
                   <stop offset="0.4" stopColor="#ebedf8" />
                   <stop offset="0.8" stopColor="#e4e8f4" />
@@ -263,9 +263,7 @@ function AuthPage() {
               )}
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                  Email
-                </label>
+                <label className="block text-xs font-medium text-slate-700 mb-1.5">Email</label>
                 <Input
                   type="email"
                   placeholder="fletcher@example.com"
@@ -278,9 +276,7 @@ function AuthPage() {
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-medium text-slate-700">
-                    Password
-                  </label>
+                  <label className="text-xs font-medium text-slate-700">Password</label>
                   {mode === "login" && (
                     <button
                       type="button"
@@ -311,11 +307,7 @@ function AuthPage() {
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
                     tabIndex={-1}
                   >
-                    {showPassword ? (
-                      <EyeOff className="size-4" />
-                    ) : (
-                      <Eye className="size-4" />
-                    )}
+                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </button>
                 </div>
               </div>
@@ -345,11 +337,7 @@ function AuthPage() {
                 disabled={busy}
                 className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all active:scale-[0.98] shadow-md shadow-blue-500/20 text-sm cursor-pointer"
               >
-                {busy
-                  ? "Processing..."
-                  : mode === "register"
-                  ? "Create account"
-                  : "Sign in"}
+                {busy ? "Processing..." : mode === "register" ? "Create account" : "Sign in"}
               </Button>
             </form>
 

@@ -17,7 +17,7 @@ export const Route = createFileRoute("/onboarding")({
   head: () =>
     pageMeta(
       "Behavioral Calibration Flow",
-      "Calibrate your developer capability rating and technology stack for personalized issue recommendations."
+      "Calibrate your developer capability rating and technology stack for personalized issue recommendations.",
     ),
   component: OnboardingPage,
 });
@@ -52,7 +52,14 @@ function OnboardingPage() {
       const confirmed_skills = Object.entries(data.stack).map(([tech, score]) => ({
         technology: tech,
         score,
-        level: score >= 85 ? "expert" : score >= 70 ? "advanced" : score >= 50 ? "intermediate" : "beginner",
+        level:
+          score >= 85
+            ? "expert"
+            : score >= 70
+              ? "advanced"
+              : score >= 50
+                ? "intermediate"
+                : "beginner",
         category: "language",
       }));
 
@@ -72,7 +79,7 @@ function OnboardingPage() {
       setCalibrated(data);
       toast.success("Calibration complete", {
         description: `Calibrated capability dial set to ${data.derivedCapability}/100 with ${Math.round(
-          data.confidenceScore * 100
+          data.confidenceScore * 100,
         )}% model confidence.`,
       });
       qc.invalidateQueries({ queryKey: ["profile"] });
@@ -126,7 +133,9 @@ function OnboardingPage() {
             <div className="grid grid-cols-2 gap-3 max-w-md mx-auto pt-2 text-left font-mono text-xs">
               <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
                 <div className="text-slate-500">Capability Dial</div>
-                <div className="text-xl font-bold text-slate-900 mt-0.5">{calibrated.derivedCapability} / 100</div>
+                <div className="text-xl font-bold text-slate-900 mt-0.5">
+                  {calibrated.derivedCapability} / 100
+                </div>
               </div>
               <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
                 <div className="text-slate-500">Confidence Metric</div>
@@ -167,7 +176,9 @@ function OnboardingPage() {
                 </h1>
               </div>
               <p className="mt-2 text-sm text-slate-600 leading-relaxed">
-                Calibrate your open-source profile in 3 questions. Issue Pilot calculates your capability dial and maps your technology affinity vectors to surface the highest-signal issues.
+                Calibrate your open-source profile in 3 questions. Issue Pilot calculates your
+                capability dial and maps your technology affinity vectors to surface the
+                highest-signal issues.
               </p>
             </div>
 

@@ -30,16 +30,16 @@ export function FeedbackActions({ rec }: { rec: Recommendation }) {
         decision === "accepted"
           ? "Recommendation accepted"
           : decision === "completed"
-          ? "Marked completed"
-          : reasonLabel
-          ? `Feedback saved: De-prioritizing ${reasonLabel.toLowerCase()}`
-          : "Recommendation dismissed",
+            ? "Marked completed"
+            : reasonLabel
+              ? `Feedback saved: De-prioritizing ${reasonLabel.toLowerCase()}`
+              : "Recommendation dismissed",
         {
           description:
             decision === "accepted"
               ? "Preferences adjusted. Real-world PRs happen on the native platform repository."
               : "Algorithm weights updated to de-prioritize similar candidate profiles.",
-        }
+        },
       );
       qc.invalidateQueries({ queryKey: ["recommendations"] });
       qc.invalidateQueries({ queryKey: ["feedback"] });
@@ -89,7 +89,7 @@ export function FeedbackActions({ rec }: { rec: Recommendation }) {
               "h-8 px-2.5 rounded-md border text-xs transition-all active:scale-[0.98]",
               vote === "like"
                 ? "border-emerald-300 bg-emerald-50 text-emerald-700 font-semibold shadow-xs"
-                : "border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                : "border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50",
             )}
           >
             <ThumbsUp className="size-3.5 mr-1" />
@@ -104,7 +104,7 @@ export function FeedbackActions({ rec }: { rec: Recommendation }) {
               "h-8 px-2.5 rounded-md border text-xs transition-all active:scale-[0.98]",
               vote === "dislike"
                 ? "border-rose-300 bg-rose-50 text-rose-700 font-semibold shadow-xs"
-                : "border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                : "border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50",
             )}
           >
             <ThumbsDown className="size-3.5 mr-1" />

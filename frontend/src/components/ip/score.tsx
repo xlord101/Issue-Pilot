@@ -8,9 +8,7 @@ export function ScoreTotal({ value }: { value: number | null }) {
       <div className="font-mono text-3xl font-bold tracking-tight text-slate-900 tabular-nums">
         {value ?? "—"}
       </div>
-      <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500">
-        / 100 PTS
-      </div>
+      <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500">/ 100 PTS</div>
     </div>
   );
 }
@@ -20,15 +18,23 @@ function ordered(b: SignalScore[] | null) {
   return [...b].sort((x, y) => SIGNAL_ORDER.indexOf(x.signal) - SIGNAL_ORDER.indexOf(y.signal));
 }
 
-export function ScoreBreakdown({ breakdown, detailed }: { breakdown: SignalScore[] | null; detailed?: boolean }) {
+export function ScoreBreakdown({
+  breakdown,
+  detailed,
+}: {
+  breakdown: SignalScore[] | null;
+  detailed?: boolean;
+}) {
   const rows = ordered(breakdown);
-  if (rows.length === 0) return <p className="text-xs text-slate-500">No score breakdown available.</p>;
+  if (rows.length === 0)
+    return <p className="text-xs text-slate-500">No score breakdown available.</p>;
 
   return (
     <ul className="space-y-2.5">
       {rows.map((s) => {
         const meta = SIGNAL_META[s.signal];
-        const pct = s.score === null || !s.max ? 0 : Math.max(0, Math.min(100, (s.score / s.max) * 100));
+        const pct =
+          s.score === null || !s.max ? 0 : Math.max(0, Math.min(100, (s.score / s.max) * 100));
         const weight = meta ? Math.round(meta.weight * 100) : null;
 
         return (
@@ -37,9 +43,7 @@ export function ScoreBreakdown({ breakdown, detailed }: { breakdown: SignalScore
               <span className="font-medium text-slate-800">
                 {meta?.label ?? s.signal}
                 {!detailed && meta && (
-                  <span className="ml-1 text-[10px] font-mono text-slate-500">
-                    ({weight}%)
-                  </span>
+                  <span className="ml-1 text-[10px] font-mono text-slate-500">({weight}%)</span>
                 )}
               </span>
               <span className="flex items-center gap-2">

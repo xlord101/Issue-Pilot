@@ -54,13 +54,7 @@ const CORE_NAV_ITEMS: NavItem[] = [
   },
 ];
 
-function Nav({
-  collapsed,
-  onNavigate,
-}: {
-  collapsed?: boolean;
-  onNavigate?: () => void;
-}) {
+function Nav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: () => void }) {
   return (
     <nav aria-label="Main Navigation" className="space-y-1">
       {!collapsed && (
@@ -80,7 +74,7 @@ function Nav({
                 "group flex rounded-lg border border-transparent transition-all duration-140 hover:border-slate-200 hover:bg-slate-100/70 active:scale-[0.98]",
                 collapsed
                   ? "size-10 items-center justify-center mx-auto"
-                  : "flex-col gap-0.5 px-3 py-2.5 text-slate-600"
+                  : "flex-col gap-0.5 px-3 py-2.5 text-slate-600",
               )}
               activeProps={{
                 className: "!border-blue-200 !bg-blue-50/80 !text-blue-700 font-semibold shadow-xs",
@@ -115,13 +109,7 @@ function Nav({
   );
 }
 
-export function AppShell({
-  session,
-  children,
-}: {
-  session: Session;
-  children: ReactNode;
-}) {
+export function AppShell({ session, children }: { session: Session; children: ReactNode }) {
   const pathname = useLocation({ select: (l) => l.pathname });
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -133,7 +121,8 @@ export function AppShell({
     queryFn: () => api.profile.me(),
     staleTime: 30000,
   });
-  const capabilityScore = profileQuery.data?.capability != null ? Math.round(profileQuery.data.capability) : 75;
+  const capabilityScore =
+    profileQuery.data?.capability != null ? Math.round(profileQuery.data.capability) : 75;
 
   // Load initial collapsed preference from localStorage
   useEffect(() => {
@@ -243,7 +232,7 @@ export function AppShell({
       <div
         className={cn(
           "flex h-16 items-center border-b border-slate-200/80",
-          isCollapsed ? "justify-center px-2 flex-col py-2" : "justify-between px-4"
+          isCollapsed ? "justify-center px-2 flex-col py-2" : "justify-between px-4",
         )}
       >
         <Logo compact={isCollapsed} />
@@ -300,7 +289,7 @@ export function AppShell({
       <aside
         className={cn(
           "fixed inset-y-0 left-0 hidden lg:block z-30 transition-all duration-200 ease-in-out",
-          isCollapsed ? "w-[72px]" : "w-64"
+          isCollapsed ? "w-[72px]" : "w-64",
         )}
       >
         {desktopSidebar}
@@ -318,7 +307,7 @@ export function AppShell({
       <div
         className={cn(
           "transition-all duration-200 ease-in-out",
-          isCollapsed ? "lg:pl-[72px]" : "lg:pl-64"
+          isCollapsed ? "lg:pl-[72px]" : "lg:pl-64",
         )}
       >
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200/90 bg-white/80 backdrop-blur-md px-4 sm:px-6">

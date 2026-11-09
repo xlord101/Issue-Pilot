@@ -9,7 +9,15 @@ import { EmptyState, ErrorState, LoadingState } from "./states";
  * UI-only gate. Real authorization is enforced by the backend on every request;
  * this just avoids showing screens the user can't use.
  */
-export function GatedLayout({ role, deniedTitle, deniedHint }: { role?: Role; deniedTitle?: string; deniedHint?: ReactNode }) {
+export function GatedLayout({
+  role,
+  deniedTitle,
+  deniedHint,
+}: {
+  role?: Role;
+  deniedTitle?: string;
+  deniedHint?: ReactNode;
+}) {
   const q = useSession();
   const navigate = useNavigate();
 
@@ -18,8 +26,17 @@ export function GatedLayout({ role, deniedTitle, deniedHint }: { role?: Role; de
   }, [q.isSuccess, q.data, navigate]);
 
   if (q.isPending || (q.isSuccess && !q.data))
-    return <div className="mx-auto max-w-3xl p-8"><LoadingState rows={2} label="Checking session" /></div>;
-  if (q.isError) return <div className="mx-auto max-w-3xl p-8"><ErrorState error={q.error} onRetry={() => q.refetch()} /></div>;
+    return (
+      <div className="mx-auto max-w-3xl p-8">
+        <LoadingState rows={2} label="Checking session" />
+      </div>
+    );
+  if (q.isError)
+    return (
+      <div className="mx-auto max-w-3xl p-8">
+        <ErrorState error={q.error} onRetry={() => q.refetch()} />
+      </div>
+    );
 
   const session = q.data!;
   return (

@@ -25,10 +25,12 @@ export function SourceBadge({ source, className }: { source: Source; className?:
     <span
       className={cn(
         "inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-100/90 px-2 py-0.5 text-xs text-slate-700 font-medium",
-        className
+        className,
       )}
     >
-      <span className="font-mono text-[10px] font-bold text-slate-900">{SOURCE_MARK[source] ?? "??"}</span>
+      <span className="font-mono text-[10px] font-bold text-slate-900">
+        {SOURCE_MARK[source] ?? "??"}
+      </span>
       {sourceLabel(source)}
     </span>
   );
@@ -43,13 +45,21 @@ const TONE: Record<Tone, string> = {
   accent: "border-blue-200 bg-blue-50 text-blue-700",
 };
 
-export function StatusBadge({ tone = "neutral", children, className }: { tone?: Tone; children: ReactNode; className?: string }) {
+export function StatusBadge({
+  tone = "neutral",
+  children,
+  className,
+}: {
+  tone?: Tone;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <span
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium",
         TONE[tone],
-        className
+        className,
       )}
     >
       <span aria-hidden className="size-1.5 rounded-full bg-current" />
@@ -59,7 +69,11 @@ export function StatusBadge({ tone = "neutral", children, className }: { tone?: 
 }
 
 /** Verification status is reported by the backend; the frontend never verifies. */
-export function VerificationBadge({ issue }: { issue: Pick<NormalizedIssue, "is_open" | "is_unassigned" | "verified_at"> }) {
+export function VerificationBadge({
+  issue,
+}: {
+  issue: Pick<NormalizedIssue, "is_open" | "is_unassigned" | "verified_at">;
+}) {
   let tone: Tone = "neutral";
   let label = "Unverified";
   if (issue.is_open === false) {
@@ -87,16 +101,24 @@ export function VerificationBadge({ issue }: { issue: Pick<NormalizedIssue, "is_
 
 /** labels:null = source has no label concept. labels:[] = none set. Kept distinct. */
 export function LabelList({ labels, source }: { labels: string[] | null; source: Source }) {
-  if (labels === null) return <span className="text-xs italic text-slate-500">{sourceLabel(source)} has no labels</span>;
+  if (labels === null)
+    return (
+      <span className="text-xs italic text-slate-500">{sourceLabel(source)} has no labels</span>
+    );
   if (labels.length === 0) return <span className="text-xs text-slate-500">No labels</span>;
   return (
     <ul className="flex flex-wrap gap-1.5" aria-label="Labels">
       {labels.map((l) => (
-        <li key={l} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-xs text-slate-700">
+        <li
+          key={l}
+          className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-xs text-slate-700"
+        >
           {l}
         </li>
       ))}
-      <li className="self-center text-[11px] text-slate-400">Supporting signal — not sole decision</li>
+      <li className="self-center text-[11px] text-slate-400">
+        Supporting signal — not sole decision
+      </li>
     </ul>
   );
 }
@@ -107,7 +129,7 @@ export function DemoDataBadge({ className }: { className?: string }) {
     <span
       className={cn(
         "inline-flex items-center rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-amber-700 font-medium",
-        className
+        className,
       )}
     >
       Demo data
@@ -115,7 +137,13 @@ export function DemoDataBadge({ className }: { className?: string }) {
   );
 }
 
-export function ConfidenceIndicator({ value, compact }: { value: number | null; compact?: boolean }) {
+export function ConfidenceIndicator({
+  value,
+  compact,
+}: {
+  value: number | null;
+  compact?: boolean;
+}) {
   if (value === null || value === undefined) {
     return <span className="text-xs text-slate-400">Confidence unknown</span>;
   }
@@ -123,13 +151,23 @@ export function ConfidenceIndicator({ value, compact }: { value: number | null; 
   const level = v >= 0.75 ? 3 : v >= 0.5 ? 2 : 1;
   const word = ["", "Low", "Medium", "High"][level];
   return (
-    <span className="inline-flex items-center gap-1.5" aria-label={`Confidence ${word}, ${Math.round(v * 100)} percent`}>
+    <span
+      className="inline-flex items-center gap-1.5"
+      aria-label={`Confidence ${word}, ${Math.round(v * 100)} percent`}
+    >
       <span className="flex gap-0.5" aria-hidden>
         {[1, 2, 3].map((i) => (
-          <span key={i} className={cn("h-2.5 w-1 rounded-[1px]", i <= level ? "bg-blue-600" : "bg-slate-200")} />
+          <span
+            key={i}
+            className={cn("h-2.5 w-1 rounded-[1px]", i <= level ? "bg-blue-600" : "bg-slate-200")}
+          />
         ))}
       </span>
-      {!compact && <span className="text-xs text-slate-500 font-mono">{word} · {Math.round(v * 100)}%</span>}
+      {!compact && (
+        <span className="text-xs text-slate-500 font-mono">
+          {word} · {Math.round(v * 100)}%
+        </span>
+      )}
     </span>
   );
 }
@@ -160,7 +198,11 @@ export function CodebergMark({ className }: { className?: string }) {
 
 export function BugzillaMark({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden className={cn("size-4 fill-none stroke-current stroke-2", className)}>
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden
+      className={cn("size-4 fill-none stroke-current stroke-2", className)}
+    >
       <rect width="8" height="12" x="8" y="8" rx="4" />
       <path d="m19 8-3 3" />
       <path d="m5 8 3 3" />

@@ -60,7 +60,10 @@ export function IssueCard({ rec }: { rec: Recommendation }) {
             <Sparkles className="size-4 text-blue-600 shrink-0 mt-0.5" />
             <div>
               <span className="font-semibold text-slate-900">Why recommended: </span>
-              <span className="text-slate-600">{rec.why ?? "High alignment with your verified skill profile and maintainer responsiveness."}</span>
+              <span className="text-slate-600">
+                {rec.why ??
+                  "High alignment with your verified skill profile and maintainer responsiveness."}
+              </span>
             </div>
           </div>
         </div>

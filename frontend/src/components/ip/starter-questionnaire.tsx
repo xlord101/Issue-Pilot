@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
-import type { StarterProfile } from "@/lib/api";
+import type { StarterProfile, TechProfile } from "@/lib/api";
 
 export interface CalibrationData {
   experience: "first_time" | "familiar" | "seasoned";
@@ -106,11 +106,7 @@ export function BehavioralCalibrationDeck({
   onComplete,
   pending,
 }: {
-  initialProfile?: {
-    skills?: { name: string; strength: number }[];
-    preferences?: Record<string, any>;
-    capability?: number | null;
-  } | null;
+  initialProfile?: TechProfile | null | undefined;
   onComplete: (data: CalibrationData) => void;
   pending?: boolean;
 }) {
@@ -125,15 +121,15 @@ export function BehavioralCalibrationDeck({
     };
 
     if (initialProfile) {
-      const pExp = initialProfile.preferences?.open_source_experience;
+      const pExp = initialProfile.preferences?.["open_source_experience"];
       if (pExp === "first_time" || pExp === "familiar" || pExp === "seasoned") {
         exp = pExp;
       }
-      const pNav = initialProfile.preferences?.codebase_navigation_comfort;
+      const pNav = initialProfile.preferences?.["codebase_navigation_comfort"];
       if (pNav === "surgical" || pNav === "modular" || pNav === "architectural") {
         nav = pNav;
       }
-      const pGoal = initialProfile.preferences?.target_challenge_goal;
+      const pGoal = initialProfile.preferences?.["target_challenge_goal"];
       if (pGoal === "quick_win" || pGoal === "deep_dive" || pGoal === "high_impact") {
         goal = pGoal;
       }
@@ -142,8 +138,13 @@ export function BehavioralCalibrationDeck({
         const loadedStack: Record<string, number> = {};
         for (const s of initialProfile.skills) {
           if (s.name) {
-            const score = s.strength > 1 ? Math.round(s.strength) : Math.round(s.strength * 100);
-            const canonical = TECH_OPTIONS.find((t) => t.toLowerCase() === s.name.toLowerCase()) || s.name;
+            const score = s.strength
+              ? s.strength > 1
+                ? Math.round(s.strength)
+                : Math.round(s.strength * 100)
+              : 75;
+            const canonical =
+              TECH_OPTIONS.find((t) => t.toLowerCase() === s.name.toLowerCase()) || s.name;
             loadedStack[canonical] = Math.max(30, Math.min(100, score || 75));
           }
         }
@@ -156,9 +157,15 @@ export function BehavioralCalibrationDeck({
   }, [initialProfile]);
 
   const [step, setStep] = useState<number>(1);
-  const [experience, setExperience] = useState<"first_time" | "familiar" | "seasoned">(initialData.exp);
-  const [navigation, setNavigation] = useState<"surgical" | "modular" | "architectural">(initialData.nav);
-  const [challengeGoal, setChallengeGoal] = useState<"quick_win" | "deep_dive" | "high_impact">(initialData.goal);
+  const [experience, setExperience] = useState<"first_time" | "familiar" | "seasoned">(
+    initialData.exp,
+  );
+  const [navigation, setNavigation] = useState<"surgical" | "modular" | "architectural">(
+    initialData.nav,
+  );
+  const [challengeGoal, setChallengeGoal] = useState<"quick_win" | "deep_dive" | "high_impact">(
+    initialData.goal,
+  );
   const [selectedTechs, setSelectedTechs] = useState<Record<string, number>>(initialData.stack);
 
   // Sync state when initialProfile loads or updates asynchronously
@@ -178,9 +185,7 @@ export function BehavioralCalibrationDeck({
 
     const techCount = Object.keys(selectedTechs).length;
     const avgTechScore =
-      techCount > 0
-        ? Object.values(selectedTechs).reduce((a, b) => a + b, 0) / techCount
-        : 50;
+      techCount > 0 ? Object.values(selectedTechs).reduce((a, b) => a + b, 0) / techCount : 50;
 
     const blended = Math.round(base * 0.65 + avgTechScore * 0.35);
     const clamped = Math.max(25, Math.min(98, blended));
@@ -237,7 +242,8 @@ export function BehavioralCalibrationDeck({
               <div className="text-sm font-medium text-slate-800 mt-0.5">
                 Target Score Range:{" "}
                 <span className="font-mono text-blue-700 font-bold">
-                  {Math.max(20, derivedCapability - 15)} – {Math.min(100, derivedCapability + 15)} pts
+                  {Math.max(20, derivedCapability - 15)} – {Math.min(100, derivedCapability + 15)}{" "}
+                  pts
                 </span>
               </div>
             </div>
@@ -246,12 +252,16 @@ export function BehavioralCalibrationDeck({
           <div className="flex items-center gap-4 text-xs font-mono text-slate-700">
             <div className="flex flex-col items-end">
               <span className="text-slate-500 uppercase text-[10px]">Model Confidence</span>
-              <span className="text-emerald-700 font-bold">{Math.round(confidenceScore * 100)}%</span>
+              <span className="text-emerald-700 font-bold">
+                {Math.round(confidenceScore * 100)}%
+              </span>
             </div>
             <div className="h-8 w-px bg-slate-200" />
             <div className="flex flex-col items-end">
               <span className="text-slate-500 uppercase text-[10px]">Active Stack</span>
-              <span className="text-blue-700 font-bold">{Object.keys(selectedTechs).length} technologies</span>
+              <span className="text-blue-700 font-bold">
+                {Object.keys(selectedTechs).length} technologies
+              </span>
             </div>
           </div>
         </div>
@@ -268,8 +278,8 @@ export function BehavioralCalibrationDeck({
                   step === s
                     ? "border border-blue-600 bg-blue-50 text-blue-700 font-semibold shadow-xs"
                     : s < step
-                    ? "border border-emerald-300 bg-emerald-50 text-emerald-700 font-medium"
-                    : "border border-slate-200 bg-slate-50 text-slate-500 hover:text-slate-800"
+                      ? "border border-emerald-300 bg-emerald-50 text-emerald-700 font-medium"
+                      : "border border-slate-200 bg-slate-50 text-slate-500 hover:text-slate-800",
                 )}
               >
                 <span>0{s}</span>
@@ -308,7 +318,7 @@ export function BehavioralCalibrationDeck({
                     "rounded-xl border p-4 text-left transition-all active:scale-[0.98]",
                     experience === opt.id
                       ? "border-2 border-blue-600 bg-blue-50/50 shadow-xs"
-                      : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60"
+                      : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60",
                   )}
                 >
                   <div className="flex items-center justify-between">
@@ -343,7 +353,7 @@ export function BehavioralCalibrationDeck({
                     "rounded-xl border p-4 text-left transition-all active:scale-[0.98]",
                     navigation === opt.id
                       ? "border-2 border-blue-600 bg-blue-50/50 shadow-xs"
-                      : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60"
+                      : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60",
                   )}
                 >
                   <div className="flex items-center justify-between">
@@ -378,7 +388,7 @@ export function BehavioralCalibrationDeck({
                     "rounded-xl border p-4 text-left transition-all active:scale-[0.98]",
                     challengeGoal === opt.id
                       ? "border-2 border-blue-600 bg-blue-50/50 shadow-xs"
-                      : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60"
+                      : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60",
                   )}
                 >
                   <div className="flex items-center justify-between">
@@ -426,7 +436,7 @@ export function BehavioralCalibrationDeck({
                       "rounded-lg border px-3 py-1.5 text-xs font-mono transition-all active:scale-[0.98]",
                       selected
                         ? "border-blue-600 bg-blue-50 text-blue-700 font-semibold shadow-xs"
-                        : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
                     )}
                   >
                     {selected ? `✓ ${t}` : `+ ${t}`}
@@ -444,7 +454,10 @@ export function BehavioralCalibrationDeck({
               </h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 {Object.entries(selectedTechs).map(([tech, score]) => (
-                  <div key={tech} className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 space-y-2.5">
+                  <div
+                    key={tech}
+                    className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 space-y-2.5"
+                  >
                     <div className="flex items-center justify-between text-xs font-mono">
                       <span className="font-semibold text-slate-900">{tech}</span>
                       <span className="text-blue-700 font-bold">{score}%</span>

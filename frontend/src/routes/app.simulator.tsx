@@ -22,12 +22,13 @@ export const Route = createFileRoute("/app/simulator")({
   head: () =>
     pageMeta(
       "Recommendation Preferences & Tuning",
-      "Calibrate ranking priorities to align recommendations with your goals."
+      "Calibrate ranking priorities to align recommendations with your goals.",
     ),
   component: SimulatorPage,
 });
 
-type WeightKey = "skill_match" | "difficulty_match" | "responsiveness" | "repo_health" | "feedback" | "freshness";
+type WeightKey =
+  "skill_match" | "difficulty_match" | "responsiveness" | "repo_health" | "feedback" | "freshness";
 type Weights = Record<WeightKey, number>;
 
 interface FactorConfig {
@@ -211,22 +212,50 @@ const SAMPLE_CANDIDATES: SimulationCandidate[] = [
 const PRESETS: { name: string; weights: Weights; desc: string }[] = [
   {
     name: "Balanced Default",
-    weights: { skill_match: 35, difficulty_match: 25, responsiveness: 15, repo_health: 10, feedback: 10, freshness: 5 },
+    weights: {
+      skill_match: 35,
+      difficulty_match: 25,
+      responsiveness: 15,
+      repo_health: 10,
+      feedback: 10,
+      freshness: 5,
+    },
     desc: "Standard calibrated baseline for general contributors",
   },
   {
     name: "Beginner Safe",
-    weights: { skill_match: 15, difficulty_match: 45, responsiveness: 20, repo_health: 10, feedback: 5, freshness: 5 },
+    weights: {
+      skill_match: 15,
+      difficulty_match: 45,
+      responsiveness: 20,
+      repo_health: 10,
+      feedback: 5,
+      freshness: 5,
+    },
     desc: "Heavily weights accessibility, gentle onboarding, and fast maintainers",
   },
   {
     name: "Skill Specialist",
-    weights: { skill_match: 55, difficulty_match: 15, responsiveness: 10, repo_health: 10, feedback: 5, freshness: 5 },
+    weights: {
+      skill_match: 55,
+      difficulty_match: 15,
+      responsiveness: 10,
+      repo_health: 10,
+      feedback: 5,
+      freshness: 5,
+    },
     desc: "Strict technology match regardless of issue difficulty",
   },
   {
     name: "Active Repos Only",
-    weights: { skill_match: 20, difficulty_match: 15, responsiveness: 35, repo_health: 20, feedback: 5, freshness: 5 },
+    weights: {
+      skill_match: 20,
+      difficulty_match: 15,
+      responsiveness: 35,
+      repo_health: 20,
+      feedback: 5,
+      freshness: 5,
+    },
     desc: "Guarantees swift turnaround from highly responsive maintainer teams",
   },
 ];
@@ -271,15 +300,14 @@ function SimulatorPage() {
       };
 
       const normFactor = totalWeight > 0 ? totalWeight : 1;
-      const finalScore = (
+      const finalScore =
         (scores.skill_match * weights.skill_match +
           scores.difficulty_match * weights.difficulty_match +
           scores.responsiveness * weights.responsiveness +
           scores.repo_health * weights.repo_health +
           scores.feedback * weights.feedback +
           scores.freshness * weights.freshness) /
-        normFactor
-      );
+        normFactor;
 
       return {
         ...c,
@@ -325,7 +353,14 @@ function SimulatorPage() {
   const normalizeWeights = () => {
     if (totalWeight === 0) return;
     const factor = 100 / totalWeight;
-    const keys: WeightKey[] = ["skill_match", "difficulty_match", "responsiveness", "repo_health", "feedback", "freshness"];
+    const keys: WeightKey[] = [
+      "skill_match",
+      "difficulty_match",
+      "responsiveness",
+      "repo_health",
+      "feedback",
+      "freshness",
+    ];
     const normalized: Partial<Weights> = {};
     let sum = 0;
     keys.forEach((k, idx) => {
@@ -355,16 +390,21 @@ function SimulatorPage() {
               </h1>
             </div>
             <p className="mt-1.5 text-sm text-slate-600 max-w-2xl leading-relaxed">
-              Fine-tune matching priorities to align recommendations with your goals. The candidate pool dynamically updates in real time.
+              Fine-tune matching priorities to align recommendations with your goals. The candidate
+              pool dynamically updates in real time.
             </p>
           </div>
         </div>
 
         {/* Quick Presets */}
         <div className="mt-6 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold text-slate-500 mr-1 uppercase tracking-wider">Presets:</span>
+          <span className="text-xs font-semibold text-slate-500 mr-1 uppercase tracking-wider">
+            Presets:
+          </span>
           {PRESETS.map((p) => {
-            const isMatch = (Object.keys(p.weights) as WeightKey[]).every((k) => weights[k] === p.weights[k]);
+            const isMatch = (Object.keys(p.weights) as WeightKey[]).every(
+              (k) => weights[k] === p.weights[k],
+            );
             return (
               <button
                 key={p.name}
@@ -373,7 +413,7 @@ function SimulatorPage() {
                   "rounded-full border px-3 py-1 text-xs font-medium transition-all active:scale-[0.98]",
                   isMatch
                     ? "border-blue-600 bg-blue-50 text-blue-700 font-semibold shadow-xs"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
                 )}
                 title={p.desc}
               >
@@ -416,7 +456,7 @@ function SimulatorPage() {
                     "rounded-md border px-2 py-0.5 font-mono text-xs font-bold",
                     totalWeight === 100
                       ? "border-emerald-300 bg-emerald-50 text-emerald-700"
-                      : "border-amber-300 bg-amber-50 text-amber-700"
+                      : "border-amber-300 bg-amber-50 text-amber-700",
                   )}
                 >
                   Sum: {totalWeight}%
@@ -450,7 +490,7 @@ function SimulatorPage() {
                       "rounded-lg border p-2 text-left transition-all active:scale-[0.98]",
                       selectedPersona === p.id
                         ? "border-2 border-blue-600 bg-blue-50/60 shadow-xs"
-                        : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
                     )}
                   >
                     <div className="text-xs font-semibold text-slate-900 truncate">{p.name}</div>
@@ -489,9 +529,7 @@ function SimulatorPage() {
                       className="cursor-pointer py-1"
                     />
 
-                    <p className="text-[11px] text-slate-500 leading-tight">
-                      {f.description}
-                    </p>
+                    <p className="text-[11px] text-slate-500 leading-tight">{f.description}</p>
                   </div>
                 );
               })}
@@ -548,7 +586,9 @@ function SimulatorPage() {
                       {/* Issue Details */}
                       <div>
                         <div className="flex items-center gap-2 text-xs text-slate-500">
-                          <span className="font-mono text-slate-900 font-bold">{candidate.repo}</span>
+                          <span className="font-mono text-slate-900 font-bold">
+                            {candidate.repo}
+                          </span>
                           <span className="font-mono text-slate-500">#{candidate.number}</span>
                         </div>
                         <h3 className="mt-1 text-sm font-bold text-slate-900 leading-snug line-clamp-1">
@@ -562,7 +602,7 @@ function SimulatorPage() {
                                 "rounded px-1.5 py-0.5 font-mono text-[10px]",
                                 activePersona.skills.includes(t)
                                   ? "border border-emerald-300 bg-emerald-50 text-emerald-800 font-semibold"
-                                  : "border border-slate-200 bg-slate-50 text-slate-600 font-medium"
+                                  : "border border-slate-200 bg-slate-50 text-slate-600 font-medium",
                               )}
                             >
                               {t}
@@ -595,27 +635,43 @@ function SimulatorPage() {
                   <div className="mt-3 grid grid-cols-6 gap-1 pt-3 border-t border-slate-100 text-[10px] font-mono text-slate-600 text-center">
                     <div>
                       <div className="text-slate-400 font-medium">S ({weights.skill_match}%)</div>
-                      <div className="text-slate-900 font-bold">{candidate.computedScores.skill_match}</div>
+                      <div className="text-slate-900 font-bold">
+                        {candidate.computedScores.skill_match}
+                      </div>
                     </div>
                     <div>
-                      <div className="text-slate-400 font-medium">D ({weights.difficulty_match}%)</div>
-                      <div className="text-slate-900 font-bold">{candidate.computedScores.difficulty_match}</div>
+                      <div className="text-slate-400 font-medium">
+                        D ({weights.difficulty_match}%)
+                      </div>
+                      <div className="text-slate-900 font-bold">
+                        {candidate.computedScores.difficulty_match}
+                      </div>
                     </div>
                     <div>
-                      <div className="text-slate-400 font-medium">R ({weights.responsiveness}%)</div>
-                      <div className="text-slate-900 font-bold">{candidate.computedScores.responsiveness}</div>
+                      <div className="text-slate-400 font-medium">
+                        R ({weights.responsiveness}%)
+                      </div>
+                      <div className="text-slate-900 font-bold">
+                        {candidate.computedScores.responsiveness}
+                      </div>
                     </div>
                     <div>
                       <div className="text-slate-400 font-medium">H ({weights.repo_health}%)</div>
-                      <div className="text-slate-900 font-bold">{candidate.computedScores.repo_health}</div>
+                      <div className="text-slate-900 font-bold">
+                        {candidate.computedScores.repo_health}
+                      </div>
                     </div>
                     <div>
                       <div className="text-slate-400 font-medium">F ({weights.feedback}%)</div>
-                      <div className="text-slate-900 font-bold">{candidate.computedScores.feedback}</div>
+                      <div className="text-slate-900 font-bold">
+                        {candidate.computedScores.feedback}
+                      </div>
                     </div>
                     <div>
                       <div className="text-slate-400 font-medium">N ({weights.freshness}%)</div>
-                      <div className="text-slate-900 font-bold">{candidate.computedScores.freshness}</div>
+                      <div className="text-slate-900 font-bold">
+                        {candidate.computedScores.freshness}
+                      </div>
                     </div>
                   </div>
                 </div>

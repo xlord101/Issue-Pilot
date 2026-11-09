@@ -1,14 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Compass,
-  Search,
-  ExternalLink,
-  CheckCircle2,
-  Layers,
-  RotateCw,
-} from "lucide-react";
+import { Compass, Search, ExternalLink, CheckCircle2, Layers, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SourceBadge, sourceLabel } from "@/components/ip/badges";
@@ -22,7 +15,7 @@ export const Route = createFileRoute("/app/explore")({
   head: () =>
     pageMeta(
       "Multi-Platform Issue Explorer",
-      "Unified open source intelligence across GitHub, GitLab, Codeberg, and Bugzilla."
+      "Unified open source intelligence across GitHub, GitLab, Codeberg, and Bugzilla.",
     ),
   component: ExplorePage,
 });
@@ -51,7 +44,17 @@ const PLATFORMS: { id: "all" | Source; label: string }[] = [
   { id: "bugzilla", label: "Bugzilla" },
 ];
 
-const TECH_TAGS = ["All", "Python", "TypeScript", "React", "Go", "C++", "Rust", "FastAPI", "MongoDB"];
+const TECH_TAGS = [
+  "All",
+  "Python",
+  "TypeScript",
+  "React",
+  "Go",
+  "C++",
+  "Rust",
+  "FastAPI",
+  "MongoDB",
+];
 
 function ExplorePage() {
   const [platform, setPlatform] = useState<"all" | Source>("all");
@@ -66,17 +69,17 @@ function ExplorePage() {
         state: "open",
         limit: 50,
       };
-      if (platform !== "all") queryParams.source = platform;
-      if (tech !== "All") queryParams.technology = tech;
-      if (search.trim()) queryParams.search = search.trim();
+      if (platform !== "all") queryParams["source"] = platform;
+      if (tech !== "All") queryParams["technology"] = tech;
+      if (search.trim()) queryParams["search"] = search.trim();
       if (difficulty !== "all") {
         if (difficulty === "beginner") {
-          queryParams.max_difficulty = 45;
+          queryParams["max_difficulty"] = 45;
         } else if (difficulty === "intermediate") {
-          queryParams.min_difficulty = 40;
-          queryParams.max_difficulty = 70;
+          queryParams["min_difficulty"] = 40;
+          queryParams["max_difficulty"] = 70;
         } else if (difficulty === "advanced") {
-          queryParams.min_difficulty = 65;
+          queryParams["min_difficulty"] = 65;
         }
       }
 
@@ -89,13 +92,22 @@ function ExplorePage() {
 
       const items: MonitoredIssue[] = rawIssues.map((item, idx) => {
         const src: Source = (item.source as Source) || "github";
-        const repo = item.repository_full_name || item.repo_key || (item.repository_owner ? `${item.repository_owner}/${item.repository_name}` : "open-source/project");
+        const repo =
+          item.repository_full_name ||
+          item.repo_key ||
+          (item.repository_owner
+            ? `${item.repository_owner}/${item.repository_name}`
+            : "open-source/project");
         const nativeId = String(item.issue_number ?? item.native_id ?? idx + 1);
         const diffScore = item.difficulty_score ?? 50;
         const diffCategory: "beginner" | "intermediate" | "advanced" =
           diffScore < 45 ? "beginner" : diffScore < 70 ? "intermediate" : "advanced";
 
-        const rawTechs = item.detected_technologies ?? (item.technologies ? item.technologies.map((t: any) => typeof t === "string" ? t : t.technology) : []);
+        const rawTechs =
+          item.detected_technologies ??
+          (item.technologies
+            ? item.technologies.map((t: any) => (typeof t === "string" ? t : t.technology))
+            : []);
         const rawLabels = item.labels ? (Array.isArray(item.labels) ? item.labels : []) : [];
 
         return {
@@ -138,14 +150,18 @@ function ExplorePage() {
               </h1>
             </div>
             <p className="mt-1.5 text-sm text-slate-600 max-w-2xl leading-relaxed">
-              Inspect vetted issues across GitHub, GitLab, Codeberg, and Bugzilla. Every record is continuously verified for live unassigned status.
+              Inspect vetted issues across GitHub, GitLab, Codeberg, and Bugzilla. Every record is
+              continuously verified for live unassigned status.
             </p>
           </div>
 
           <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-xs">
             <div className="flex items-center gap-1.5 px-3 py-1 text-xs font-mono text-slate-700 font-semibold">
               <Layers className="size-3.5 text-blue-600" />
-              <span>Pool: 4 Supported Platforms &bull; {q.isPending ? "Scanning..." : `${totalInPool} Live Candidates`}</span>
+              <span>
+                Pool: 4 Supported Platforms &bull;{" "}
+                {q.isPending ? "Scanning..." : `${totalInPool} Live Candidates`}
+              </span>
             </div>
           </div>
         </div>
@@ -172,7 +188,7 @@ function ExplorePage() {
                     "rounded-lg border px-3 py-2 text-xs font-medium whitespace-nowrap transition-all active:scale-[0.98]",
                     platform === p.id
                       ? "border-blue-600 bg-blue-50 text-blue-700 font-semibold shadow-xs"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
                   )}
                 >
                   {p.label}
@@ -193,7 +209,7 @@ function ExplorePage() {
                     "rounded-md border px-2.5 py-1 text-xs font-mono transition-all active:scale-[0.98]",
                     tech === t
                       ? "border-slate-800 bg-slate-900 text-white font-semibold shadow-xs"
-                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50",
                   )}
                 >
                   {t}
@@ -211,7 +227,7 @@ function ExplorePage() {
                     "rounded px-2.5 py-1 capitalize transition-all active:scale-[0.98]",
                     difficulty === d
                       ? "bg-blue-50 text-blue-700 font-semibold border border-blue-200"
-                      : "text-slate-600 hover:text-slate-900"
+                      : "text-slate-600 hover:text-slate-900",
                   )}
                 >
                   {d}
@@ -229,8 +245,12 @@ function ExplorePage() {
         <ErrorState error={q.error} onRetry={() => q.refetch()} />
       ) : issues.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-200 bg-white p-12 text-center shadow-xs">
-          <p className="text-sm text-slate-900 font-bold">No candidate issues match these criteria</p>
-          <p className="mt-1 text-xs text-slate-500">Try broadening your search query or selecting All Platforms.</p>
+          <p className="text-sm text-slate-900 font-bold">
+            No candidate issues match these criteria
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            Try broadening your search query or selecting All Platforms.
+          </p>
           <Button
             variant="outline"
             size="sm"
@@ -249,7 +269,8 @@ function ExplorePage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between text-xs text-slate-500">
             <span>
-              Showing <span className="font-bold text-slate-900">{issues.length}</span> verified issues
+              Showing <span className="font-bold text-slate-900">{issues.length}</span> verified
+              issues
             </span>
             <span className="flex items-center gap-1.5 text-slate-700 font-medium">
               <CheckCircle2 className="size-3.5 text-emerald-600" />
@@ -278,7 +299,12 @@ function ExplorePage() {
                     </div>
 
                     <h2 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-snug">
-                      <a href={issue.url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5">
+                      <a
+                        href={issue.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1.5"
+                      >
                         {issue.title}
                         <ExternalLink className="size-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </a>
@@ -318,8 +344,8 @@ function ExplorePage() {
                         issue.difficulty === "beginner"
                           ? "border-emerald-300 bg-emerald-50 text-emerald-800"
                           : issue.difficulty === "intermediate"
-                          ? "border-blue-300 bg-blue-50 text-blue-800"
-                          : "border-slate-300 bg-slate-100 text-slate-800"
+                            ? "border-blue-300 bg-blue-50 text-blue-800"
+                            : "border-slate-300 bg-slate-100 text-slate-800",
                       )}
                     >
                       {issue.difficulty}

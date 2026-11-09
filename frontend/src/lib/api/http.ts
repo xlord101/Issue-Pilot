@@ -15,7 +15,7 @@ export class ApiError extends Error {
     public status: number,
     public endpoint?: string,
     public method?: string,
-    public details?: unknown
+    public details?: unknown,
   ) {
     super(message);
     this.name = "ApiError";
@@ -96,7 +96,7 @@ export async function request<T>(
     query?: Query;
     body?: unknown;
     headers?: Record<string, string>;
-  } = {}
+  } = {},
 ): Promise<T> {
   if (!path || !API_BASE_URL) throw new NotConnectedError(name);
 
@@ -138,7 +138,7 @@ export async function request<T>(
       `Cannot connect to backend server at ${API_BASE_URL}. Ensure the Spring Boot backend is running on port 8000. (${err?.message || "Failed to fetch"})`,
       0,
       path,
-      method
+      method,
     );
   }
 
@@ -149,7 +149,12 @@ export async function request<T>(
     let payload: any = null;
     try {
       payload = await res.json();
-      detail = typeof payload?.message === "string" ? payload.message : typeof payload?.detail === "string" ? payload.detail : detail;
+      detail =
+        typeof payload?.message === "string"
+          ? payload.message
+          : typeof payload?.detail === "string"
+            ? payload.detail
+            : detail;
     } catch {
       /* ignore non-JSON error response */
     }
@@ -164,7 +169,7 @@ export async function request<T>(
       res.status,
       path,
       method,
-      payload
+      payload,
     );
   }
 

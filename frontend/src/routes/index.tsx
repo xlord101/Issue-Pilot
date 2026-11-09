@@ -6,19 +6,13 @@ import { GitHubMark, GitLabMark, CodebergMark, BugzillaMark } from "@/components
 import { Logo } from "@/components/ip/logo";
 import { AuroraBackground } from "@/components/ip/aurora-background";
 import { pageMeta } from "@/lib/format";
-import {
-  ArrowRight,
-  CheckCircle2,
-  SlidersHorizontal,
-  Check,
-  Search,
-} from "lucide-react";
+import { ArrowRight, CheckCircle2, SlidersHorizontal, Check, Search } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () =>
     pageMeta(
       "Issue Pilot — Precision Open-Source Matching Engine",
-      "Intelligent recommendation engine and live unclaimed verification across GitHub, GitLab, Codeberg, and Bugzilla."
+      "Intelligent recommendation engine and live unclaimed verification across GitHub, GitLab, Codeberg, and Bugzilla.",
     ),
   component: LandingPage,
 });
@@ -86,7 +80,6 @@ const STEPS = [
   },
 ];
 
-
 const TELEMETRY_FEED = [
   {
     action: "142 unclaimed issues verified",
@@ -142,10 +135,7 @@ function LandingPage() {
   return (
     <div className="min-h-screen bg-white text-slate-900 antialiased selection:bg-blue-600 selection:text-white font-sans">
       {/* 1. HERO SECTION (Animated 3-Color Pastel Aura Mesh Background) */}
-      <AuroraBackground
-        intensity="vibrant"
-        className="text-slate-900"
-      >
+      <AuroraBackground intensity="vibrant" className="text-slate-900">
         {/* Navigation Bar inside Hero Header */}
         <header className="border-b border-slate-200/70 relative z-30">
           <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
@@ -154,34 +144,20 @@ function LandingPage() {
                 <div className="size-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-sm">
                   <div className="size-3.5 rounded-sm bg-white" />
                 </div>
-                <span className="font-bold text-lg tracking-tight text-slate-900">
-                  issue pilot
-                </span>
+                <span className="font-bold text-lg tracking-tight text-slate-900">issue pilot</span>
               </Link>
 
               <nav className="hidden md:flex items-center gap-6 text-sm text-slate-600 font-medium">
-                <Link
-                  to="/app/simulator"
-                  className="hover:text-slate-900 transition-colors"
-                >
+                <Link to="/app/simulator" className="hover:text-slate-900 transition-colors">
                   Preferences
                 </Link>
-                <Link
-                  to="/app/explore"
-                  className="hover:text-slate-900 transition-colors"
-                >
+                <Link to="/app/explore" className="hover:text-slate-900 transition-colors">
                   Issue Explorer
                 </Link>
-                <a
-                  href="#pipeline"
-                  className="hover:text-slate-900 transition-colors"
-                >
+                <a href="#pipeline" className="hover:text-slate-900 transition-colors">
                   Architecture
                 </a>
-                <a
-                  href="#numbers"
-                  className="hover:text-slate-900 transition-colors"
-                >
+                <a href="#numbers" className="hover:text-slate-900 transition-colors">
                   Coverage
                 </a>
               </nav>
@@ -231,9 +207,8 @@ function LandingPage() {
 
           {/* Clean Subtitle */}
           <p className="mx-auto max-w-2xl text-base sm:text-lg text-slate-600 leading-relaxed font-normal">
-            Issue Pilot continuously indexes unclaimed issues across GitHub,
-            GitLab, Codeberg, and Bugzilla, matching them to your verified
-            stack proficiency and capability target.
+            Issue Pilot continuously indexes unclaimed issues across GitHub, GitLab, Codeberg, and
+            Bugzilla, matching them to your verified stack proficiency and capability target.
           </p>
 
           {/* MindCloud Exact White Floating CTA Prompt Bar */}
@@ -293,12 +268,8 @@ function LandingPage() {
                 >
                   <Icon className="size-6 text-slate-800 shrink-0" />
                   <div className="min-w-0">
-                    <div className="text-sm font-bold text-slate-900">
-                      {p.name}
-                    </div>
-                    <div className="text-[11px] text-slate-500 font-mono">
-                      {p.protocol}
-                    </div>
+                    <div className="text-sm font-bold text-slate-900">{p.name}</div>
+                    <div className="text-[11px] text-slate-500 font-mono">{p.protocol}</div>
                   </div>
                 </div>
               );
@@ -319,7 +290,8 @@ function LandingPage() {
               Find issues you can actually ship.
             </h2>
             <p className="text-base text-slate-600 leading-relaxed">
-              Three simple steps to move from browsing open source to having your pull request reviewed and merged.
+              Three simple steps to move from browsing open source to having your pull request
+              reviewed and merged.
             </p>
           </div>
 
@@ -339,12 +311,8 @@ function LandingPage() {
                       {step.label}
                     </span>
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900">
-                    {step.title}
-                  </h3>
-                  <p className="text-sm text-slate-600 leading-relaxed">
-                    {step.description}
-                  </p>
+                  <h3 className="text-lg font-bold text-slate-900">{step.title}</h3>
+                  <p className="text-sm text-slate-600 leading-relaxed">{step.description}</p>
                 </div>
                 <div className="pt-4 border-t border-slate-100 flex items-center text-xs font-medium text-slate-500">
                   <Check className="size-4 text-blue-600 mr-2 shrink-0" />
@@ -361,7 +329,8 @@ function LandingPage() {
                 Ready to find your next open-source contribution?
               </div>
               <div className="text-sm text-slate-600">
-                Calibrate your profile in under 2 minutes and explore personalized, unclaimed issues.
+                Calibrate your profile in under 2 minutes and explore personalized, unclaimed
+                issues.
               </div>
             </div>
             <div className="flex items-center gap-3 shrink-0">
@@ -395,9 +364,9 @@ function LandingPage() {
                 for themselves.
               </h2>
               <p className="text-base text-slate-600 leading-relaxed max-w-lg">
-                Behind each recommendation is a real production workflow, moving
-                data between federated code hosts, maintainer responsiveness
-                history, and continuous unclaimed verification running every minute.
+                Behind each recommendation is a real production workflow, moving data between
+                federated code hosts, maintainer responsiveness history, and continuous unclaimed
+                verification running every minute.
               </p>
 
               <div>
@@ -428,9 +397,7 @@ function LandingPage() {
                       {item.action}
                     </span>
                   </div>
-                  <span className="text-xs font-mono text-slate-400 shrink-0">
-                    {item.time}
-                  </span>
+                  <span className="text-xs font-mono text-slate-400 shrink-0">{item.time}</span>
                 </div>
               ))}
             </div>
@@ -495,8 +462,8 @@ function LandingPage() {
                 Ready to ship your next open-source PR?
               </h2>
               <p className="text-sm sm:text-base text-blue-100 leading-relaxed">
-                Calibrate your capability profile in 60 seconds and find verified
-                unclaimed tickets across GitHub, GitLab, Codeberg, and Bugzilla.
+                Calibrate your capability profile in 60 seconds and find verified unclaimed tickets
+                across GitHub, GitLab, Codeberg, and Bugzilla.
               </p>
             </div>
 
@@ -535,8 +502,8 @@ function LandingPage() {
                 </span>
               </div>
               <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
-                Precision open-source issue intelligence powered by a compiled
-                deterministic 6-factor ranking engine and real-time unclaimed verification.
+                Precision open-source issue intelligence powered by a compiled deterministic
+                6-factor ranking engine and real-time unclaimed verification.
               </p>
             </div>
 
@@ -584,10 +551,14 @@ function LandingPage() {
                   </a>
                 </li>
                 <li>
-                  <Link to="/app/feed" className="hover:text-slate-900">Live Recommendations</Link>
+                  <Link to="/app/feed" className="hover:text-slate-900">
+                    Live Recommendations
+                  </Link>
                 </li>
                 <li>
-                  <Link to="/app/simulator" className="hover:text-slate-900">Weight Calibration</Link>
+                  <Link to="/app/simulator" className="hover:text-slate-900">
+                    Weight Calibration
+                  </Link>
                 </li>
               </ul>
             </div>

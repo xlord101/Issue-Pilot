@@ -13,7 +13,7 @@ export const Route = createFileRoute("/app/feed")({
   head: () =>
     pageMeta(
       "Personalized Issue Feed",
-      "Continuously verified open-source issues ranked for your demonstrated skillset."
+      "Continuously verified open-source issues ranked for your demonstrated skillset.",
     ),
   component: Feed,
 });
@@ -56,7 +56,8 @@ function Feed() {
               </h1>
             </div>
             <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">
-              Personalized open-source issues matched to your skill profile and verified unclaimed in real-time.
+              Personalized open-source issues matched to your skill profile and verified unclaimed
+              in real-time.
             </p>
           </div>
 

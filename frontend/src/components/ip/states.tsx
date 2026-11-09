@@ -18,7 +18,13 @@ import { ApiError, NotConnectedError } from "@/lib/api";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
-export function LoadingState({ rows = 3, label = "Loading" }: { rows?: number | undefined; label?: string | undefined }) {
+export function LoadingState({
+  rows = 3,
+  label = "Loading",
+}: {
+  rows?: number | undefined;
+  label?: string | undefined;
+}) {
   return (
     <div role="status" aria-live="polite" className="space-y-3">
       <span className="sr-only">{label}…</span>
@@ -33,19 +39,43 @@ export function LoadingState({ rows = 3, label = "Loading" }: { rows?: number | 
   );
 }
 
-function Frame({ icon, title, children, action }: { icon: ReactNode; title: string; children?: ReactNode; action?: ReactNode }) {
+function Frame({
+  icon,
+  title,
+  children,
+  action,
+}: {
+  icon: ReactNode;
+  title: string;
+  children?: ReactNode;
+  action?: ReactNode;
+}) {
   return (
     <div className="flex flex-col items-center rounded-xl border border-dashed border-slate-200 bg-white px-6 py-12 text-center shadow-xs">
       <div className="mb-3 text-slate-400">{icon}</div>
       <h3 className="text-base font-bold text-slate-900">{title}</h3>
-      {children && <div className="mt-1 max-w-md text-sm text-slate-600 leading-relaxed">{children}</div>}
+      {children && (
+        <div className="mt-1 max-w-md text-sm text-slate-600 leading-relaxed">{children}</div>
+      )}
       {action && <div className="mt-5">{action}</div>}
     </div>
   );
 }
 
-export function EmptyState({ title, hint, action }: { title: string; hint?: ReactNode; action?: ReactNode }) {
-  return <Frame icon={<Inbox className="size-8" />} title={title} action={action}>{hint}</Frame>;
+export function EmptyState({
+  title,
+  hint,
+  action,
+}: {
+  title: string;
+  hint?: ReactNode;
+  action?: ReactNode;
+}) {
+  return (
+    <Frame icon={<Inbox className="size-8" />} title={title} action={action}>
+      {hint}
+    </Frame>
+  );
 }
 
 export function NotConnectedState({ name, contract }: { name: string; contract?: string }) {
@@ -59,7 +89,11 @@ export function NotConnectedState({ name, contract }: { name: string; contract?:
       </div>
       <h3 className="mt-3 text-lg font-bold text-slate-900">Endpoint Not Connected</h3>
       <p className="mt-1.5 max-w-md mx-auto text-sm text-slate-600 leading-relaxed">
-        The required backend contract for <code className="rounded bg-white px-1.5 py-0.5 font-mono text-xs text-amber-900 font-semibold border border-amber-200">{name}</code> is currently not routed.
+        The required backend contract for{" "}
+        <code className="rounded bg-white px-1.5 py-0.5 font-mono text-xs text-amber-900 font-semibold border border-amber-200">
+          {name}
+        </code>{" "}
+        is currently not routed.
       </p>
       {contract && (
         <div className="mt-4 inline-block rounded-lg border border-amber-200/80 bg-white px-3 py-1.5 font-mono text-xs text-slate-700">
@@ -92,7 +126,8 @@ export function ErrorState({
   const statusText = isApiError ? error.statusText : "APPLICATION ERROR";
   const endpoint = isApiError ? error.endpoint : undefined;
   const method = isApiError ? error.method : undefined;
-  const rawMessage = error instanceof Error ? error.message : "An unexpected system error occurred.";
+  const rawMessage =
+    error instanceof Error ? error.message : "An unexpected system error occurred.";
 
   // Classify failure category
   const isConnectionRefused = status === 0;
@@ -104,13 +139,16 @@ export function ErrorState({
 
   if (isConnectionRefused) {
     title = "Backend Service Offline";
-    hint = "Could not connect to the Issue Pilot Spring Boot backend on http://localhost:8000. Ensure the server process is started and listening.";
+    hint =
+      "Could not connect to the Issue Pilot Spring Boot backend on http://localhost:8000. Ensure the server process is started and listening.";
   } else if (isServerUnavailable) {
     title = "Backend Service Unavailable";
-    hint = "The server is running, but downstream database (MongoDB Atlas) or C++ ranking service is temporarily unreachable.";
+    hint =
+      "The server is running, but downstream database (MongoDB Atlas) or C++ ranking service is temporarily unreachable.";
   } else if (isAuthError) {
     title = status === 401 ? "Authentication Required or Expired" : "Access Denied";
-    hint = "Your session token has expired, is invalid, or lacks sufficient permissions for this operation.";
+    hint =
+      "Your session token has expired, is invalid, or lacks sufficient permissions for this operation.";
   } else if (status === 404) {
     title = "Resource Not Found";
     hint = "The requested backend resource or endpoint could not be found on the server.";
@@ -120,8 +158,8 @@ export function ErrorState({
     isConnectionRefused || status >= 500
       ? "bg-rose-50 text-rose-700 border-rose-200"
       : isAuthError
-      ? "bg-amber-50 text-amber-700 border-amber-200"
-      : "bg-slate-100 text-slate-700 border-slate-200";
+        ? "bg-amber-50 text-amber-700 border-amber-200"
+        : "bg-slate-100 text-slate-700 border-slate-200";
 
   const icon = isConnectionRefused ? (
     <WifiOff className="size-6 text-rose-600" />
@@ -138,7 +176,7 @@ export function ErrorState({
       role="alert"
       className={cn(
         "rounded-2xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-md shadow-slate-900/5 text-left",
-        compact ? "py-5" : ""
+        compact ? "py-5" : "",
       )}
     >
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -148,14 +186,20 @@ export function ErrorState({
           </div>
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className={cn("inline-flex items-center gap-1.5 rounded-full border px-3 py-0.5 font-mono text-xs font-bold", badgeColor)}>
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-0.5 font-mono text-xs font-bold",
+                  badgeColor,
+                )}
+              >
                 <span className="size-1.5 rounded-full bg-current animate-pulse" />
                 {statusText}
               </span>
               {endpoint && (
                 <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-700 border border-slate-200">
                   <Terminal className="size-3 text-slate-400" />
-                  {method ? `${method} ` : ""}{endpoint}
+                  {method ? `${method} ` : ""}
+                  {endpoint}
                 </span>
               )}
             </div>
@@ -202,12 +246,17 @@ export function ErrorState({
         </div>
         {isConnectionRefused && (
           <div className="pt-2 text-[11px] text-slate-500 border-t border-slate-200/70 leading-normal">
-            <strong>Troubleshooting:</strong> Run <code className="bg-slate-200 px-1 py-0.5 rounded text-slate-900 font-bold">mvn spring-boot:run</code> or check that port 8000 is listening.
+            <strong>Troubleshooting:</strong> Run{" "}
+            <code className="bg-slate-200 px-1 py-0.5 rounded text-slate-900 font-bold">
+              mvn spring-boot:run
+            </code>{" "}
+            or check that port 8000 is listening.
           </div>
         )}
         {isServerUnavailable && (
           <div className="pt-2 text-[11px] text-slate-500 border-t border-slate-200/70 leading-normal">
-            <strong>Troubleshooting:</strong> Verify MongoDB Atlas connection credentials, IP whitelist, and network reachability.
+            <strong>Troubleshooting:</strong> Verify MongoDB Atlas connection credentials, IP
+            whitelist, and network reachability.
           </div>
         )}
       </div>

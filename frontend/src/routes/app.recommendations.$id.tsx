@@ -1,6 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Sparkles, ExternalLink, ShieldCheck, FileText, CheckCircle2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Sparkles,
+  ExternalLink,
+  ShieldCheck,
+  FileText,
+  CheckCircle2,
+} from "lucide-react";
 import { DemoDataBadge, LabelList, SourceBadge, VerificationBadge } from "@/components/ip/badges";
 import { FeedbackActions } from "@/components/ip/feedback-actions";
 import { ScoreBreakdown, ScoreTotal } from "@/components/ip/score";
@@ -13,14 +20,17 @@ export const Route = createFileRoute("/app/recommendations/$id")({
   head: () =>
     pageMeta(
       "Recommendation Diagnostics & Evidence",
-      "Full 6-factor score decomposition, signal confidences, and repository evidence."
+      "Full 6-factor score decomposition, signal confidences, and repository evidence.",
     ),
   component: DetailPage,
 });
 
 function DetailPage() {
   const { id } = Route.useParams();
-  const q = useQuery({ queryKey: ["recommendations", "detail", id], queryFn: () => api.recommendations.get(id) });
+  const q = useQuery({
+    queryKey: ["recommendations", "detail", id],
+    queryFn: () => api.recommendations.get(id),
+  });
 
   return (
     <div className="space-y-6">
@@ -67,7 +77,8 @@ function DetailPage() {
                   Deterministic Ranking Justification
                 </h2>
                 <p className="mt-2 text-sm text-slate-700 leading-relaxed">
-                  {rec.why ?? "High alignment with your verified skill profile, recent activity in this language, and fast maintainer response time."}
+                  {rec.why ??
+                    "High alignment with your verified skill profile, recent activity in this language, and fast maintainer response time."}
                 </p>
               </section>
 
@@ -107,9 +118,15 @@ function DetailPage() {
                   Signal Evidence Trail
                 </h2>
                 {rec.issue.evidence === null ? (
-                  <EmptyState title="No raw evidence trace" hint="The backend returned aggregate metrics." />
+                  <EmptyState
+                    title="No raw evidence trace"
+                    hint="The backend returned aggregate metrics."
+                  />
                 ) : rec.issue.evidence.length === 0 ? (
-                  <EmptyState title="No individual evidence items" hint="This ranking is based on aggregate repository statistics." />
+                  <EmptyState
+                    title="No individual evidence items"
+                    hint="This ranking is based on aggregate repository statistics."
+                  />
                 ) : (
                   <div className="space-y-2.5">
                     {rec.issue.evidence.map((ev, i) => (
@@ -155,7 +172,8 @@ function DetailPage() {
               <ScoreBreakdown breakdown={rec.breakdown} detailed />
 
               <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 text-[11px] font-mono text-slate-600 leading-relaxed">
-                <span className="text-emerald-700 font-bold">Score</span> = 0.35S + 0.25D + 0.15R + 0.10H + 0.10F + 0.05N. Each factor normalized $0–100$.
+                <span className="text-emerald-700 font-bold">Score</span> = 0.35S + 0.25D + 0.15R +
+                0.10H + 0.10F + 0.05N. Each factor normalized $0–100$.
               </div>
 
               <Button

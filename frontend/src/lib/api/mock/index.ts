@@ -1,6 +1,12 @@
 /** Mock implementation of the API surface. In-memory only; resets on reload. */
 import type { IssuePilotApi } from "../index";
-import type { ExtractionStatus, FeedbackDecision, Recommendation, StarterProfile, TriageSuggestion } from "../types";
+import type {
+  ExtractionStatus,
+  FeedbackDecision,
+  Recommendation,
+  StarterProfile,
+  TriageSuggestion,
+} from "../types";
 import { ApiError, NotConnectedError } from "../http";
 import * as f from "./fixtures";
 
@@ -53,7 +59,8 @@ function personalize(target: Recommendation, decision: FeedbackDecision) {
   }
 }
 
-const signedIn = () => typeof window !== "undefined" && window.sessionStorage.getItem(DEMO_FLAG) === "1";
+const signedIn = () =>
+  typeof window !== "undefined" && window.sessionStorage.getItem(DEMO_FLAG) === "1";
 
 const session = {
   user: { id: "demo", login: "demo-contributor", name: "Demo Contributor", avatar_url: null },
@@ -73,7 +80,11 @@ function extraction(): ExtractionStatus {
   if (evidenceInsufficient) {
     steps[1] = { key: "prs", label: "Analyzing merged pull requests — none found", done: p > 0.55 };
     steps[2] = { key: "langs", label: "Deriving languages — too little evidence", done: p > 0.8 };
-    steps[3] = { key: "profile", label: starter ? "Starter profile built from questionnaire" : "Waiting for starter profile", done: !!starter };
+    steps[3] = {
+      key: "profile",
+      label: starter ? "Starter profile built from questionnaire" : "Waiting for starter profile",
+      done: !!starter,
+    };
   }
   return {
     state: p >= 1 ? "ready" : "running",
@@ -97,15 +108,24 @@ export const mockApi: IssuePilotApi = {
     },
     async completeCallback(search) {
       await wait(900);
-      if (search.status !== "success") throw new ApiError(search.error ?? "Sign-in was cancelled or failed.", 401);
+      if (search.status !== "success")
+        throw new ApiError(search.error ?? "Sign-in was cancelled or failed.", 401);
       window.sessionStorage.setItem(DEMO_FLAG, "1");
       return session;
     },
     async register(payload) {
       await wait(500);
-      const name = `${payload.firstName} ${payload.lastName}`.trim() || payload.email.split("@")[0] || "Contributor";
+      const name =
+        `${payload.firstName} ${payload.lastName}`.trim() ||
+        payload.email.split("@")[0] ||
+        "Contributor";
       const userSession = {
-        user: { id: "user_" + Date.now(), login: payload.email.split("@")[0] || "user", name, avatar_url: null },
+        user: {
+          id: "user_" + Date.now(),
+          login: payload.email.split("@")[0] || "user",
+          name,
+          avatar_url: null,
+        },
         roles: ["contributor"] as ("contributor" | "maintainer" | "admin")[],
         is_demo: true,
       };
@@ -160,7 +180,9 @@ export const mockApi: IssuePilotApi = {
       if (q.source) items = items.filter((r) => r.issue.source === q.source);
       if (q.tech) {
         const t = q.tech.toLowerCase();
-        items = items.filter((r) => (r.issue.technologies ?? []).some((x) => x.toLowerCase().includes(t)));
+        items = items.filter((r) =>
+          (r.issue.technologies ?? []).some((x) => x.toLowerCase().includes(t)),
+        );
       }
       if (q.min_score != null) items = items.filter((r) => (r.total_score ?? 0) >= q.min_score!);
       if (q.max_score != null) items = items.filter((r) => (r.total_score ?? 0) <= q.max_score!);
@@ -174,7 +196,11 @@ export const mockApi: IssuePilotApi = {
       const start = q.cursor ? Number(q.cursor) : 0;
       const limit = q.limit ?? 4;
       const page = sorted.slice(start, start + limit);
-      return { items: page, next_cursor: start + limit < sorted.length ? String(start + limit) : null, total: sorted.length };
+      return {
+        items: page,
+        next_cursor: start + limit < sorted.length ? String(start + limit) : null,
+        total: sorted.length,
+      };
     },
     async get(id) {
       await wait();
@@ -195,52 +221,121 @@ export const mockApi: IssuePilotApi = {
         r.decision = decision;
         personalize(r, decision);
       }
-      const entry = { id: `fb_${Date.now()}`, recommendation_id: recommendationId, issue_title: r?.issue.title ?? recommendationId, repo_key: r?.issue.repo_key ?? "", source: r?.issue.source ?? "github", decision, reason, decided_at: new Date().toISOString() };
+      const entry = {
+        id: `fb_${Date.now()}`,
+        recommendation_id: recommendationId,
+        issue_title: r?.issue.title ?? recommendationId,
+        repo_key: r?.issue.repo_key ?? "",
+        source: r?.issue.source ?? "github",
+        decision,
+        reason,
+        decided_at: new Date().toISOString(),
+      };
       feedback = [entry, ...feedback];
       return entry;
     },
   },
-  portfolio: { async list() { await wait(); return f.portfolioFixture; } },
+  portfolio: {
+    async list() {
+      await wait();
+      return f.portfolioFixture;
+    },
+  },
   profile: {
     async me() {
       await wait();
       if (!evidenceInsufficient) return f.profileFixture;
       const skills = starter
         ? [
-            ...starter.languages.map((name) => ({ name, kind: "language" as const, strength: null, evidence_count: null })),
-            ...starter.technologies.map((name) => ({ name, kind: "framework" as const, strength: null, evidence_count: null })),
+            ...starter.languages.map((name) => ({
+              name,
+              kind: "language" as const,
+              strength: null,
+              evidence_count: null,
+            })),
+            ...starter.technologies.map((name) => ({
+              name,
+              kind: "framework" as const,
+              strength: null,
+              evidence_count: null,
+            })),
           ]
         : [];
-      return { ...f.profileFixture, skills, repos_analyzed: 0, contributions_analyzed: 0, profile_source: starter ? "questionnaire" : null, starter, extraction: extraction() };
+      return {
+        ...f.profileFixture,
+        skills,
+        repos_analyzed: 0,
+        contributions_analyzed: 0,
+        profile_source: starter ? "questionnaire" : null,
+        starter,
+        extraction: extraction(),
+      };
     },
   },
-  notifications: { async status() { await wait(); return f.notificationsFixture; } },
+  notifications: {
+    async status() {
+      await wait();
+      return f.notificationsFixture;
+    },
+  },
   maintainer: {
-    async repos() { await wait(); return repos; },
+    async repos() {
+      await wait();
+      return repos;
+    },
     async registerRepo(source, repo_key) {
       await wait(600);
-      const existing = repos.find((r) => r.repo_key.toLowerCase() === repo_key.toLowerCase() && r.source === source);
+      const existing = repos.find(
+        (r) => r.repo_key.toLowerCase() === repo_key.toLowerCase() && r.source === source,
+      );
       if (existing) {
         existing.status = "registered";
         existing.registered_at = new Date().toISOString();
         return { repo: existing, upgraded_existing: true };
       }
-      const repo = { repo_key, source, status: "pending" as const, open_issues: null, pending_suggestions: null, registered_at: new Date().toISOString() };
+      const repo = {
+        repo_key,
+        source,
+        status: "pending" as const,
+        open_issues: null,
+        pending_suggestions: null,
+        registered_at: new Date().toISOString(),
+      };
       repos = [...repos, repo];
       return { repo, upgraded_existing: false };
     },
-    async triage() { await wait(); return triage; },
+    async triage() {
+      await wait();
+      return triage;
+    },
     async decide(id, decision) {
       await wait(500);
       const t = triage.find((x) => x.id === id);
       if (!t) throw new ApiError("Suggestion not found.", 404);
-      const done = { ...t, status: decision, decided_at: new Date().toISOString(), decided_by: "demo-contributor" };
+      const done = {
+        ...t,
+        status: decision,
+        decided_at: new Date().toISOString(),
+        decided_by: "demo-contributor",
+      };
       triage = triage.filter((x) => x.id !== id);
       decided = [done, ...decided];
-      audit = [{ id: `au_${Date.now()}`, actor: "demo-contributor", action: `triage.${decision}`, target: `${t.issue.repo_key}#${t.issue.native_id}`, at: done.decided_at }, ...audit];
+      audit = [
+        {
+          id: `au_${Date.now()}`,
+          actor: "demo-contributor",
+          action: `triage.${decision}`,
+          target: `${t.issue.repo_key}#${t.issue.native_id}`,
+          at: done.decided_at,
+        },
+        ...audit,
+      ];
       return done;
     },
-    async history() { await wait(); return { decisions: decided, audit }; },
+    async history() {
+      await wait();
+      return { decisions: decided, audit };
+    },
   },
   admin: {
     // Never fabricate operational metrics — admin stays "not connected" in mock mode.

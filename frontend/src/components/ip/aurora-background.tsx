@@ -25,7 +25,7 @@ export function AuroraBackground({
     <div
       className={cn(
         "relative overflow-hidden bg-gradient-to-b from-[#f0f2f8] via-[#eef2f9] to-white text-slate-900 transition-colors",
-        className
+        className,
       )}
       {...props}
     >
@@ -38,9 +38,7 @@ export function AuroraBackground({
         <div
           className={cn(
             "animate-aura-1 absolute -bottom-[10%] -left-[8%] h-[640px] w-[640px] rounded-full blur-[110px] transform-gpu transition-opacity duration-700",
-            intensity === "vibrant"
-              ? "bg-[#cbb3e8] opacity-90"
-              : "bg-[#cfbee5] opacity-75"
+            intensity === "vibrant" ? "bg-[#cbb3e8] opacity-90" : "bg-[#cfbee5] opacity-75",
           )}
         />
 
@@ -48,9 +46,7 @@ export function AuroraBackground({
         <div
           className={cn(
             "animate-aura-2 absolute -bottom-[12%] left-[26%] h-[700px] w-[700px] rounded-full blur-[120px] transform-gpu transition-opacity duration-700",
-            intensity === "vibrant"
-              ? "bg-[#9ec0f5] opacity-90"
-              : "bg-[#abc0ef] opacity-80"
+            intensity === "vibrant" ? "bg-[#9ec0f5] opacity-90" : "bg-[#abc0ef] opacity-80",
           )}
         />
 
@@ -58,9 +54,7 @@ export function AuroraBackground({
         <div
           className={cn(
             "animate-aura-3 absolute -bottom-[10%] -right-[8%] h-[640px] w-[640px] rounded-full blur-[110px] transform-gpu transition-opacity duration-700",
-            intensity === "vibrant"
-              ? "bg-[#93d0f5] opacity-90"
-              : "bg-[#a2d3f4] opacity-80"
+            intensity === "vibrant" ? "bg-[#93d0f5] opacity-90" : "bg-[#a2d3f4] opacity-80",
           )}
         />
 

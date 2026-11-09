@@ -6,21 +6,58 @@
 export type Source = "github" | "gitlab" | "gitea" | "bugzilla";
 export const SOURCES: Source[] = ["github", "gitlab", "gitea", "bugzilla"];
 
-export type SignalKey = "skill_match" | "difficulty_match" | "responsiveness" | "repo_health" | "feedback" | "freshness";
+export type SignalKey =
+  "skill_match" | "difficulty_match" | "responsiveness" | "repo_health" | "feedback" | "freshness";
 
 /**
  * Display metadata only (final SRS model). Each signal is normalised to 0–100 by the backend and
  * Score(u,i) = 0.35S + 0.25D + 0.15R + 0.10H + 0.10F + 0.05N. The UI never computes scores.
  */
-export const SIGNAL_META: Record<SignalKey, { label: string; weight: number; description: string }> = {
-  skill_match: { label: "Skill Match", weight: 0.35, description: "Overlap between the issue's technologies and your demonstrated (or starter) skills." },
-  difficulty_match: { label: "Difficulty Match", weight: 0.25, description: "Difficulty is evaluated relative to repository evidence and contributor capability." },
-  responsiveness: { label: "Responsiveness", weight: 0.15, description: "How quickly maintainers of this repository respond to issues and pull requests." },
-  repo_health: { label: "Repo Health", weight: 0.1, description: "Recent commits, CI status, contributing docs and release activity." },
-  feedback: { label: "Feedback", weight: 0.1, description: "Adjusted from your past accept / reject / complete decisions." },
-  freshness: { label: "Freshness", weight: 0.05, description: "Recent activity on the issue itself." },
+export const SIGNAL_META: Record<
+  SignalKey,
+  { label: string; weight: number; description: string }
+> = {
+  skill_match: {
+    label: "Skill Match",
+    weight: 0.35,
+    description:
+      "Overlap between the issue's technologies and your demonstrated (or starter) skills.",
+  },
+  difficulty_match: {
+    label: "Difficulty Match",
+    weight: 0.25,
+    description:
+      "Difficulty is evaluated relative to repository evidence and contributor capability.",
+  },
+  responsiveness: {
+    label: "Responsiveness",
+    weight: 0.15,
+    description: "How quickly maintainers of this repository respond to issues and pull requests.",
+  },
+  repo_health: {
+    label: "Repo Health",
+    weight: 0.1,
+    description: "Recent commits, CI status, contributing docs and release activity.",
+  },
+  feedback: {
+    label: "Feedback",
+    weight: 0.1,
+    description: "Adjusted from your past accept / reject / complete decisions.",
+  },
+  freshness: {
+    label: "Freshness",
+    weight: 0.05,
+    description: "Recent activity on the issue itself.",
+  },
 };
-export const SIGNAL_ORDER: SignalKey[] = ["skill_match", "difficulty_match", "responsiveness", "repo_health", "feedback", "freshness"];
+export const SIGNAL_ORDER: SignalKey[] = [
+  "skill_match",
+  "difficulty_match",
+  "responsiveness",
+  "repo_health",
+  "feedback",
+  "freshness",
+];
 
 export interface Evidence {
   signal: SignalKey | null;

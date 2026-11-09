@@ -17,7 +17,12 @@ export interface IssuePilotApi {
       error?: string | undefined;
       exchange_code?: string | undefined;
     }): Promise<T.Session>;
-    register(payload: { firstName: string; lastName: string; email: string; password: string }): Promise<T.Session>;
+    register(payload: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      password: string;
+    }): Promise<T.Session>;
     signInWithPassword(payload: { email: string; password: string }): Promise<T.Session>;
     signOut(): Promise<void>;
   };
@@ -41,14 +46,21 @@ export interface IssuePilotApi {
   };
   feedback: {
     list(): Promise<T.FeedbackEntry[]>;
-    submit(recommendationId: string, decision: T.FeedbackDecision, reason?: string): Promise<T.FeedbackEntry>;
+    submit(
+      recommendationId: string,
+      decision: T.FeedbackDecision,
+      reason?: string,
+    ): Promise<T.FeedbackEntry>;
   };
   portfolio: { list(): Promise<T.PortfolioItem[]> };
   profile: { me(): Promise<T.TechProfile> };
   notifications: { status(): Promise<T.NotificationChannel[]> };
   maintainer: {
     repos(): Promise<T.MaintainedRepo[]>;
-    registerRepo(source: T.Source, repoKey: string): Promise<{ repo: T.MaintainedRepo; upgraded_existing: boolean }>;
+    registerRepo(
+      source: T.Source,
+      repoKey: string,
+    ): Promise<{ repo: T.MaintainedRepo; upgraded_existing: boolean }>;
     triage(): Promise<T.TriageSuggestion[]>;
     decide(id: string, decision: "approved" | "rejected"): Promise<T.TriageSuggestion>;
     history(): Promise<{ decisions: T.TriageSuggestion[]; audit: T.AuditEntry[] }>;
