@@ -48,6 +48,8 @@ frontend/.output/
 frontend/.agents/
 frontend/dist/
 frontend/dist-ssr/
+frontend/.vercel/
+.vercel/
 frontend/.nitro/
 frontend/.wrangler/
 

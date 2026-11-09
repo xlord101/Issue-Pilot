@@ -1,0 +1,13 @@
+.git
+.github
+.vscode
+.idea
+*.env
+*.env.*
+!.env.example
+target/
+ranking_engine/build/
+ranking_engine/.cache/
+frontend/
+*.md
+*.log
