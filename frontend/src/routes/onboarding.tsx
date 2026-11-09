@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Logo } from "@/components/ip/logo";
+import { ErrorState } from "@/components/ip/states";
 import { api, USE_MOCK_API, type StarterProfile } from "@/lib/api";
 import {
   BehavioralCalibrationDeck,
@@ -101,7 +102,9 @@ function OnboardingPage() {
 
       {/* Main Body */}
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:py-14">
-        {calibrated ? (
+        {profileQuery.isError ? (
+          <ErrorState error={profileQuery.error} onRetry={() => profileQuery.refetch()} />
+        ) : calibrated ? (
           <div className="rounded-2xl border border-slate-200/90 bg-white p-8 sm:p-10 shadow-lg shadow-slate-900/5 text-center space-y-6">
             <div className="mx-auto flex size-16 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-600">
               <ShieldCheck className="size-8" />

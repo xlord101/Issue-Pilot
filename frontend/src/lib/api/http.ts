@@ -10,9 +10,46 @@ export class NotConnectedError extends Error {
 }
 
 export class ApiError extends Error {
-  constructor(message: string, public status: number) {
+  constructor(
+    message: string,
+    public status: number,
+    public endpoint?: string,
+    public method?: string,
+    public details?: unknown
+  ) {
     super(message);
     this.name = "ApiError";
+  }
+
+  get statusText(): string {
+    switch (this.status) {
+      case 0:
+        return "CONNECTION REFUSED / BACKEND OFFLINE";
+      case 400:
+        return "400 BAD REQUEST";
+      case 401:
+        return "401 UNAUTHORIZED";
+      case 403:
+        return "403 FORBIDDEN";
+      case 404:
+        return "404 NOT FOUND";
+      case 409:
+        return "409 CONFLICT";
+      case 422:
+        return "422 UNPROCESSABLE ENTITY";
+      case 429:
+        return "429 RATE LIMIT EXCEEDED";
+      case 500:
+        return "500 INTERNAL SERVER ERROR";
+      case 502:
+        return "502 BAD GATEWAY";
+      case 503:
+        return "503 SERVICE UNAVAILABLE";
+      case 504:
+        return "504 GATEWAY TIMEOUT";
+      default:
+        return `HTTP ${this.status}`;
+    }
   }
 }
 
@@ -85,21 +122,36 @@ export async function request<T>(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(buildUrl(path, opts.params, opts.query), {
-    method: opts.method ?? "GET",
-    headers,
-    body: opts.body !== undefined ? JSON.stringify(opts.body) : null,
-  });
+  const method = opts.method ?? "GET";
+  const url = buildUrl(path, opts.params, opts.query);
+  let res: Response;
+
+  try {
+    res = await fetch(url, {
+      method,
+      headers,
+      body: opts.body !== undefined ? JSON.stringify(opts.body) : null,
+    });
+  } catch (err: any) {
+    // Network error: Spring Boot backend is down, connection refused, or DNS failure
+    throw new ApiError(
+      `Cannot connect to backend server at ${API_BASE_URL}. Ensure the Spring Boot backend is running on port 8000. (${err?.message || "Failed to fetch"})`,
+      0,
+      path,
+      method
+    );
+  }
 
   if (res.status === 404 || res.status === 501) throw new NotConnectedError(name);
 
   if (!res.ok) {
     let detail = res.statusText;
+    let payload: any = null;
     try {
-      const j = await res.json();
-      detail = typeof j?.message === "string" ? j.message : typeof j?.detail === "string" ? j.detail : detail;
+      payload = await res.json();
+      detail = typeof payload?.message === "string" ? payload.message : typeof payload?.detail === "string" ? payload.detail : detail;
     } catch {
-      /* ignore */
+      /* ignore non-JSON error response */
     }
 
     if (res.status === 401) {
@@ -107,7 +159,13 @@ export async function request<T>(
       setStoredAuthToken(null);
     }
 
-    throw new ApiError(detail || `Request failed (${res.status})`, res.status);
+    throw new ApiError(
+      detail || `Request failed (${res.status})`,
+      res.status,
+      path,
+      method,
+      payload
+    );
   }
 
   if (res.status === 204) return undefined as T;

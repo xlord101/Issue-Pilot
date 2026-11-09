@@ -11,6 +11,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
 
+import { ErrorState } from "@/components/ip/states";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -42,26 +43,22 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   }, [error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-lg">
-        <h1 className="text-xl font-bold tracking-tight text-slate-900">This page didn't load</h1>
-        <p className="mt-2 text-sm text-slate-600">An unexpected application error occurred. You can retry or head back home.</p>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
-            className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 active:scale-[0.98] transition-all"
+    <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 py-12">
+      <div className="w-full max-w-2xl">
+        <ErrorState
+          error={error}
+          onRetry={() => {
+            router.invalidate();
+            reset();
+          }}
+        />
+        <div className="mt-4 text-center">
+          <Link
+            to="/"
+            className="text-xs font-medium text-slate-500 hover:text-blue-600 hover:underline"
           >
-            Try again
-          </button>
-          <a
-            href="/"
-            className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 active:scale-[0.98] transition-all"
-          >
-            Go home
-          </a>
+            &larr; Return to Issue Pilot Home
+          </Link>
         </div>
       </div>
     </div>

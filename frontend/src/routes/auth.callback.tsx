@@ -5,7 +5,7 @@ import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ip/logo";
-import { NotConnectedState } from "@/components/ip/states";
+import { ErrorState, NotConnectedState } from "@/components/ip/states";
 import { api, NotConnectedError } from "@/lib/api";
 import { setStoredAuthToken } from "@/lib/api/http";
 import { pageMeta } from "@/lib/format";
@@ -95,22 +95,7 @@ function Callback() {
             </div>
           )}
           {q.isError && (
-            <div>
-              {q.error instanceof NotConnectedError ? (
-                <NotConnectedState name={q.error.endpointName} contract="GET /auth/me -> Session" />
-              ) : (
-                <>
-                  <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-rose-50 text-rose-600 border border-rose-200">
-                    <XCircle className="size-6" />
-                  </div>
-                  <h1 className="mt-4 text-xl font-bold tracking-tight text-slate-900">Sign-in didn't complete</h1>
-                  <p className="mt-1 text-sm text-slate-600">{q.error.message}</p>
-                  <Button asChild className="mt-5 bg-blue-600 hover:bg-blue-700 text-white font-medium active:scale-[0.98]">
-                    <Link to="/login">Try again</Link>
-                  </Button>
-                </>
-              )}
-            </div>
+            <ErrorState error={q.error} onRetry={() => q.refetch()} />
           )}
         </div>
       </main>

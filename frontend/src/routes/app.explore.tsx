@@ -1,22 +1,21 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
   Compass,
   Search,
   ExternalLink,
-  Filter,
   CheckCircle2,
-  Clock,
   Layers,
-  Sparkles,
-  GitPullRequest,
-  Check,
+  RotateCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SourceBadge, sourceLabel } from "@/components/ip/badges";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ip/states";
 import { pageMeta } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { request } from "@/lib/api/http";
 import type { Source } from "@/lib/api";
 
 export const Route = createFileRoute("/app/explore")({
@@ -44,129 +43,6 @@ interface MonitoredIssue {
   url: string;
 }
 
-const MONITORED_POOL: MonitoredIssue[] = [
-  {
-    id: "exp-1",
-    source: "github",
-    repo: "tiangolo/fastapi",
-    native_id: "4821",
-    title: "Fix MongoDB async connection pooling and reconnect timeouts in backend driver",
-    body: "When high concurrency requests hit the async database handler, MongoDB connection pool limits can cause socket disconnects without automatic reconnect.",
-    labels: ["bug", "async", "database"],
-    technologies: ["FastAPI", "Python", "MongoDB"],
-    difficulty: "advanced",
-    isOpen: true,
-    isUnassigned: true,
-    verifiedAt: "2 min ago",
-    url: "https://github.com/tiangolo/fastapi/issues/4821",
-  },
-  {
-    id: "exp-2",
-    source: "github",
-    repo: "facebook/react",
-    native_id: "29810",
-    title: "TypeScript typing error for useEffect cleanup return signature in strict mode",
-    body: "Type definition for useEffect returns undefined instead of Destructor function under strict null check flags in compiler v5.8.",
-    labels: ["typescript", "typing", "good first issue"],
-    technologies: ["TypeScript", "React"],
-    difficulty: "beginner",
-    isOpen: true,
-    isUnassigned: true,
-    verifiedAt: "5 min ago",
-    url: "https://github.com/facebook/react/issues/29810",
-  },
-  {
-    id: "exp-3",
-    source: "gitlab",
-    repo: "gitlab-org/gitlab-runner",
-    native_id: "3892",
-    title: "Kubernetes executor fails to pull secrets when token refresh coincides with pod startup",
-    body: "Race condition in k8s executor authentication credentials provider when auto-rotating service account tokens.",
-    labels: ["executor::kubernetes", "security", "help wanted"],
-    technologies: ["Go", "Kubernetes", "Docker"],
-    difficulty: "advanced",
-    isOpen: true,
-    isUnassigned: true,
-    verifiedAt: "12 min ago",
-    url: "https://gitlab.com/gitlab-org/gitlab-runner/-/issues/3892",
-  },
-  {
-    id: "exp-4",
-    source: "gitea",
-    repo: "forgejo/forgejo",
-    native_id: "1482",
-    title: "Implement OIDC federated discovery cache header validation for identity providers",
-    body: "Follow RFC 8414 Section 3 to ensure discovery document cache-control headers are honored during intermittent offline periods.",
-    labels: ["kind/enhancement", "area/auth"],
-    technologies: ["Go", "OAuth", "SQLite"],
-    difficulty: "intermediate",
-    isOpen: true,
-    isUnassigned: true,
-    verifiedAt: "18 min ago",
-    url: "https://codeberg.org/forgejo/forgejo/issues/1482",
-  },
-  {
-    id: "exp-5",
-    source: "bugzilla",
-    repo: "mozilla/gecko-dev",
-    native_id: "1890214",
-    title: "CSS subgrid gap calculations fail when grandparent container has fractional rem unit",
-    body: "Subgrid tracks inherit computed values incorrectly when parent grid computes fractions less than 0.5px on high-DPI displays.",
-    labels: ["Core", "Layout: Grid", "CSS"],
-    technologies: ["C++", "Rust", "CSS"],
-    difficulty: "advanced",
-    isOpen: true,
-    isUnassigned: true,
-    verifiedAt: "30 min ago",
-    url: "https://bugzilla.mozilla.org/show_bug.cgi?id=1890214",
-  },
-  {
-    id: "exp-6",
-    source: "github",
-    repo: "pallets/flask",
-    native_id: "5120",
-    title: "Refactor blueprint routing dispatcher to support regex URL parameters",
-    body: "Allow custom converters or regex patterns inside url_prefix to support dynamic subdomain multi-tenant routing.",
-    labels: ["enhancement", "routing", "core"],
-    technologies: ["Python", "HTTP"],
-    difficulty: "intermediate",
-    isOpen: true,
-    isUnassigned: true,
-    verifiedAt: "1 hr ago",
-    url: "https://github.com/pallets/flask/issues/5120",
-  },
-  {
-    id: "exp-7",
-    source: "github",
-    repo: "llvm/llvm-project",
-    native_id: "84129",
-    title: "Add CMake module support for MinGW GCC C++14 abi compatibility",
-    body: "Fix linking issues with std::string copy-on-write ABI under older mingw runtime configurations.",
-    labels: ["cmake", "build", "mingw"],
-    technologies: ["C++", "CMake"],
-    difficulty: "advanced",
-    isOpen: true,
-    isUnassigned: true,
-    verifiedAt: "2 hr ago",
-    url: "https://github.com/llvm/llvm-project/issues/84129",
-  },
-  {
-    id: "exp-8",
-    source: "github",
-    repo: "psf/requests",
-    native_id: "6390",
-    title: "Clarify proxy authentication header documentation and SSL adapter examples",
-    body: "The tutorial documentation lacks examples showing how to pass custom SSLContext to HTTPAdapter when authenticating through corporate proxy.",
-    labels: ["docs", "good first issue"],
-    technologies: ["Python", "Documentation"],
-    difficulty: "beginner",
-    isOpen: true,
-    isUnassigned: true,
-    verifiedAt: "3 hr ago",
-    url: "https://github.com/psf/requests/issues/6390",
-  },
-];
-
 const PLATFORMS: { id: "all" | Source; label: string }[] = [
   { id: "all", label: "All Platforms" },
   { id: "github", label: "GitHub" },
@@ -183,23 +59,69 @@ function ExplorePage() {
   const [search, setSearch] = useState<string>("");
   const [difficulty, setDifficulty] = useState<string>("all");
 
-  const filteredIssues = useMemo(() => {
-    return MONITORED_POOL.filter((item) => {
-      if (platform !== "all" && item.source !== platform) return false;
-      if (tech !== "All" && !item.technologies.includes(tech)) return false;
-      if (difficulty !== "all" && item.difficulty !== difficulty) return false;
-      if (search.trim()) {
-        const q = search.toLowerCase();
-        const matchesText =
-          item.title.toLowerCase().includes(q) ||
-          item.repo.toLowerCase().includes(q) ||
-          item.body.toLowerCase().includes(q) ||
-          item.technologies.some((t) => t.toLowerCase().includes(q));
-        if (!matchesText) return false;
+  const q = useQuery({
+    queryKey: ["explore-issues", platform, tech, search, difficulty],
+    queryFn: async () => {
+      const queryParams: Record<string, any> = {
+        state: "open",
+        limit: 50,
+      };
+      if (platform !== "all") queryParams.source = platform;
+      if (tech !== "All") queryParams.technology = tech;
+      if (search.trim()) queryParams.search = search.trim();
+      if (difficulty !== "all") {
+        if (difficulty === "beginner") {
+          queryParams.max_difficulty = 45;
+        } else if (difficulty === "intermediate") {
+          queryParams.min_difficulty = 40;
+          queryParams.max_difficulty = 70;
+        } else if (difficulty === "advanced") {
+          queryParams.min_difficulty = 65;
+        }
       }
-      return true;
-    });
-  }, [platform, tech, difficulty, search]);
+
+      const res = await request<any>("issues.query", "/api/issues", {
+        query: queryParams,
+      });
+
+      const rawIssues: any[] = res?.issues || [];
+      const totalInPool: number = res?.total_in_pool ?? rawIssues.length;
+
+      const items: MonitoredIssue[] = rawIssues.map((item, idx) => {
+        const src: Source = (item.source as Source) || "github";
+        const repo = item.repository_full_name || item.repo_key || (item.repository_owner ? `${item.repository_owner}/${item.repository_name}` : "open-source/project");
+        const nativeId = String(item.issue_number ?? item.native_id ?? idx + 1);
+        const diffScore = item.difficulty_score ?? 50;
+        const diffCategory: "beginner" | "intermediate" | "advanced" =
+          diffScore < 45 ? "beginner" : diffScore < 70 ? "intermediate" : "advanced";
+
+        const rawTechs = item.detected_technologies ?? (item.technologies ? item.technologies.map((t: any) => typeof t === "string" ? t : t.technology) : []);
+        const rawLabels = item.labels ? (Array.isArray(item.labels) ? item.labels : []) : [];
+
+        return {
+          id: item.id || item._id || `exp-${idx + 1}`,
+          source: src,
+          repo,
+          native_id: nativeId,
+          title: item.title || "Untitled Issue",
+          body: item.body || "",
+          labels: rawLabels,
+          technologies: rawTechs.length > 0 ? rawTechs : ["General"],
+          difficulty: diffCategory,
+          isOpen: item.state === "open",
+          isUnassigned: item.is_assigned !== true,
+          verifiedAt: item.updated_at ? new Date(item.updated_at).toLocaleDateString() : "recently",
+          url: item.issue_url || `https://github.com/${repo}/issues/${nativeId}`,
+        };
+      });
+
+      return { items, totalInPool };
+    },
+    staleTime: 30000,
+  });
+
+  const issues = q.data?.items ?? [];
+  const totalInPool = q.data?.totalInPool ?? issues.length;
 
   return (
     <div className="space-y-8">
@@ -223,7 +145,7 @@ function ExplorePage() {
           <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-xs">
             <div className="flex items-center gap-1.5 px-3 py-1 text-xs font-mono text-slate-700 font-semibold">
               <Layers className="size-3.5 text-blue-600" />
-              <span>Pool: 4 Supported Platforms &bull; {MONITORED_POOL.length} Verified</span>
+              <span>Pool: 4 Supported Platforms &bull; {q.isPending ? "Scanning..." : `${totalInPool} Live Candidates`}</span>
             </div>
           </div>
         </div>
@@ -300,39 +222,43 @@ function ExplorePage() {
         </div>
       </div>
 
-      {/* Issues Stream */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between text-xs text-slate-500">
-          <span>
-            Showing <span className="font-bold text-slate-900">{filteredIssues.length}</span> verified issues
-          </span>
-          <span className="flex items-center gap-1.5 text-slate-700 font-medium">
-            <CheckCircle2 className="size-3.5 text-emerald-600" />
-            Live verified unclaimed
-          </span>
+      {/* Issues Stream or Error Screen */}
+      {q.isPending ? (
+        <LoadingState rows={4} label="Loading candidate issues" />
+      ) : q.isError ? (
+        <ErrorState error={q.error} onRetry={() => q.refetch()} />
+      ) : issues.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-slate-200 bg-white p-12 text-center shadow-xs">
+          <p className="text-sm text-slate-900 font-bold">No candidate issues match these criteria</p>
+          <p className="mt-1 text-xs text-slate-500">Try broadening your search query or selecting All Platforms.</p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setPlatform("all");
+              setTech("All");
+              setDifficulty("all");
+              setSearch("");
+            }}
+            className="mt-4 border-slate-200 bg-white hover:bg-slate-50 text-slate-700 active:scale-[0.98]"
+          >
+            Reset Filters
+          </Button>
         </div>
-
-        {filteredIssues.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 bg-white p-12 text-center shadow-xs">
-            <p className="text-sm text-slate-900 font-bold">No monitored issues match these filters</p>
-            <p className="mt-1 text-xs text-slate-500">Try clearing your search query or selecting All Platforms.</p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setPlatform("all");
-                setTech("All");
-                setDifficulty("all");
-                setSearch("");
-              }}
-              className="mt-4 border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
-            >
-              Reset Filters
-            </Button>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between text-xs text-slate-500">
+            <span>
+              Showing <span className="font-bold text-slate-900">{issues.length}</span> verified issues
+            </span>
+            <span className="flex items-center gap-1.5 text-slate-700 font-medium">
+              <CheckCircle2 className="size-3.5 text-emerald-600" />
+              Live verified unclaimed
+            </span>
           </div>
-        ) : (
+
           <div className="grid gap-4">
-            {filteredIssues.map((issue) => (
+            {issues.map((issue) => (
               <div
                 key={issue.id}
                 className="group rounded-xl border border-slate-200/90 bg-white p-5 transition-all duration-180 hover:border-slate-300 hover:shadow-md shadow-xs"
@@ -358,9 +284,11 @@ function ExplorePage() {
                       </a>
                     </h2>
 
-                    <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">
-                      {issue.body}
-                    </p>
+                    {issue.body && (
+                      <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">
+                        {issue.body}
+                      </p>
+                    )}
 
                     <div className="flex flex-wrap items-center gap-1.5 pt-1">
                       {issue.technologies.map((t) => (
@@ -413,8 +341,8 @@ function ExplorePage() {
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
