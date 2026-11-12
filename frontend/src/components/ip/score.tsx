@@ -35,17 +35,11 @@ export function ScoreBreakdown({
         const meta = SIGNAL_META[s.signal];
         const pct =
           s.score === null || !s.max ? 0 : Math.max(0, Math.min(100, (s.score / s.max) * 100));
-        const weight = meta ? Math.round(meta.weight * 100) : null;
 
         return (
           <li key={s.signal} className="text-xs">
             <div className="flex items-center justify-between gap-2">
-              <span className="font-medium text-slate-800">
-                {meta?.label ?? s.signal}
-                {!detailed && meta && (
-                  <span className="ml-1 text-[10px] font-mono text-slate-500">({weight}%)</span>
-                )}
-              </span>
+              <span className="font-medium text-slate-800">{meta?.label ?? s.signal}</span>
               <span className="flex items-center gap-2">
                 <ConfidenceIndicator value={s.confidence} compact={!detailed} />
                 <span className="font-mono text-[11px] text-slate-700 font-semibold tabular-nums">
@@ -64,11 +58,6 @@ export function ScoreBreakdown({
             {detailed && (
               <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
                 {s.summary || meta?.description}
-                {s.score !== null && meta && (
-                  <span className="ml-1 font-mono text-blue-700 font-semibold">
-                    (+{(s.score * meta.weight).toFixed(1)} pts)
-                  </span>
-                )}
               </p>
             )}
           </li>

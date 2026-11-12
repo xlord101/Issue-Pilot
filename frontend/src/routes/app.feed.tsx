@@ -68,9 +68,9 @@ function Feed() {
               size="sm"
               className="border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs h-9 active:scale-[0.98]"
             >
-              <Link to="/app/simulator">
+              <Link to="/onboarding">
                 <SlidersHorizontal className="size-3.5 mr-1.5 text-blue-600" />
-                Tune Weights in Simulator
+                Recalibrate Profile
               </Link>
             </Button>
           </div>

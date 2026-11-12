@@ -609,7 +609,10 @@ public class RecommendationController {
             }
         }
 
-        double fbWeight = extractDouble(weightsMap.get("feedback"), 0.10);
+        double fbWeight = extractDouble(
+                weightsMap.getOrDefault("feedback_weight", weightsMap.get("feedback")),
+                0.10
+        );
         if (fbWeight <= 0.0) fbWeight = 0.10;
 
         for (Map<String, Object> item : rankedCandidates) {

@@ -3,7 +3,6 @@ import { Link, useNavigate, useLocation, type LinkProps } from "@tanstack/react-
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import {
   Compass,
-  Gauge,
   LayoutList,
   LogOut,
   Menu,
@@ -33,12 +32,6 @@ const CORE_NAV_ITEMS: NavItem[] = [
     label: "Recommendations",
     icon: LayoutList,
     description: "Personalized issue feed",
-  },
-  {
-    to: "/app/simulator",
-    label: "What-If Simulator",
-    icon: Gauge,
-    description: "Tune weights in real-time",
   },
   {
     to: "/app/explore",

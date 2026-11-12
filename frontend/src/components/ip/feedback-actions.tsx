@@ -174,7 +174,7 @@ export function FeedbackActions({ rec }: { rec: Recommendation }) {
       action: "set",
       voteVal: type === "like" ? 1 : -1,
       reason: reasonId,
-      decisionAlso: type === "dislike" ? "rejected" : undefined,
+      ...(type === "dislike" ? { decisionAlso: "rejected" as const } : {}),
     });
     if (type === "dislike") {
       setLocalDecision("rejected");

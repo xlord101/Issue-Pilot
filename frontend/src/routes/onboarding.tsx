@@ -160,7 +160,7 @@ function OnboardingPage() {
                 asChild
                 className="w-full sm:w-auto border-slate-200 bg-white hover:bg-slate-50 text-slate-700 active:scale-[0.98]"
               >
-                <Link to="/app/simulator">Open What-If Simulator</Link>
+                <Link to="/app/explore">Explore Live Issues</Link>
               </Button>
             </div>
           </div>

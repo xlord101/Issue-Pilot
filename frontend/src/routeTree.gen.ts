@@ -17,7 +17,6 @@ import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppExploreRouteImport } from './routes/app.explore'
 import { Route as AppFeedRouteImport } from './routes/app.feed'
 import { Route as AppProfileRouteImport } from './routes/app.profile'
-import { Route as AppSimulatorRouteImport } from './routes/app.simulator'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AppRecommendationsIdRouteImport } from './routes/app.recommendations.$id'
 
@@ -61,11 +60,6 @@ const AppProfileRoute = AppProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AppRoute,
 } as any)
-const AppSimulatorRoute = AppSimulatorRouteImport.update({
-  id: '/simulator',
-  path: '/simulator',
-  getParentRoute: () => AppRoute,
-} as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
@@ -85,7 +79,6 @@ export interface FileRoutesByFullPath {
   '/app/explore': typeof AppExploreRoute
   '/app/feed': typeof AppFeedRoute
   '/app/profile': typeof AppProfileRoute
-  '/app/simulator': typeof AppSimulatorRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/app/': typeof AppIndexRoute
   '/app/recommendations/$id': typeof AppRecommendationsIdRoute
@@ -97,7 +90,6 @@ export interface FileRoutesByTo {
   '/app/explore': typeof AppExploreRoute
   '/app/feed': typeof AppFeedRoute
   '/app/profile': typeof AppProfileRoute
-  '/app/simulator': typeof AppSimulatorRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/app': typeof AppIndexRoute
   '/app/recommendations/$id': typeof AppRecommendationsIdRoute
@@ -111,7 +103,6 @@ export interface FileRoutesById {
   '/app/explore': typeof AppExploreRoute
   '/app/feed': typeof AppFeedRoute
   '/app/profile': typeof AppProfileRoute
-  '/app/simulator': typeof AppSimulatorRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/app/': typeof AppIndexRoute
   '/app/recommendations/$id': typeof AppRecommendationsIdRoute
@@ -126,7 +117,6 @@ export interface FileRouteTypes {
     | '/app/explore'
     | '/app/feed'
     | '/app/profile'
-    | '/app/simulator'
     | '/auth/callback'
     | '/app/'
     | '/app/recommendations/$id'
@@ -138,7 +128,6 @@ export interface FileRouteTypes {
     | '/app/explore'
     | '/app/feed'
     | '/app/profile'
-    | '/app/simulator'
     | '/auth/callback'
     | '/app'
     | '/app/recommendations/$id'
@@ -151,7 +140,6 @@ export interface FileRouteTypes {
     | '/app/explore'
     | '/app/feed'
     | '/app/profile'
-    | '/app/simulator'
     | '/auth/callback'
     | '/app/'
     | '/app/recommendations/$id'
@@ -223,13 +211,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProfileRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/simulator': {
-      id: '/app/simulator'
-      path: '/simulator'
-      fullPath: '/app/simulator'
-      preLoaderRoute: typeof AppSimulatorRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/auth/callback': {
       id: '/auth/callback'
       path: '/auth/callback'
@@ -251,7 +232,6 @@ interface AppRouteChildren {
   AppExploreRoute: typeof AppExploreRoute
   AppFeedRoute: typeof AppFeedRoute
   AppProfileRoute: typeof AppProfileRoute
-  AppSimulatorRoute: typeof AppSimulatorRoute
   AppIndexRoute: typeof AppIndexRoute
   AppRecommendationsIdRoute: typeof AppRecommendationsIdRoute
 }
@@ -260,7 +240,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppExploreRoute: AppExploreRoute,
   AppFeedRoute: AppFeedRoute,
   AppProfileRoute: AppProfileRoute,
-  AppSimulatorRoute: AppSimulatorRoute,
   AppIndexRoute: AppIndexRoute,
   AppRecommendationsIdRoute: AppRecommendationsIdRoute,
 }

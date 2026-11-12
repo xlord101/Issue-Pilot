@@ -51,14 +51,6 @@ export const endpoints = {
     /** GET /api/votes/:userId */
     getUserVotes: "/api/votes/:userId" as Endpoint,
   },
-  simulator: {
-    /** GET /api/simulator/sample-data */
-    sampleData: "/api/simulator/sample-data" as Endpoint,
-    /** POST /api/simulator/rank */
-    rank: "/api/simulator/rank" as Endpoint,
-    /** GET /api/simulator/experiments */
-    experiments: "/api/simulator/experiments" as Endpoint,
-  },
   issues: {
     /** GET /api/issues */
     list: "/api/issues" as Endpoint,

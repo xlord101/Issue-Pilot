@@ -72,19 +72,6 @@ export interface IssuePilotApi {
     }): Promise<unknown>;
     remove(payload: { source: T.Source; platform_issue_id: string }): Promise<unknown>;
   };
-  simulator: {
-    sampleData(): Promise<{
-      profiles: any[];
-      issues: any[];
-      default_weights: Record<T.SignalKey, number>;
-    }>;
-    rank(payload: {
-      profile?: any;
-      profileId?: string;
-      weights: Record<T.SignalKey, number>;
-      candidates?: any[];
-    }): Promise<any>;
-  };
   portfolio: { list(): Promise<T.PortfolioItem[]> };
   profile: { me(): Promise<T.TechProfile> };
   notifications: { status(): Promise<T.NotificationChannel[]> };

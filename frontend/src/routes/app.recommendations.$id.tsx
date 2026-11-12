@@ -160,10 +160,10 @@ function DetailPage() {
               <div className="flex items-start justify-between border-b border-slate-100 pb-4">
                 <div>
                   <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
-                    6-Factor Breakdown
+                    Compatibility Signals
                   </h2>
                   <p className="text-[11px] text-slate-500 mt-0.5">
-                    Authoritative 6-factor engine output
+                    Evaluated across verified skill, complexity, and repository health metrics
                   </p>
                 </div>
                 <ScoreTotal value={rec.total_score} />
@@ -171,9 +171,9 @@ function DetailPage() {
 
               <ScoreBreakdown breakdown={rec.breakdown} detailed />
 
-              <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 text-[11px] font-mono text-slate-600 leading-relaxed">
-                <span className="text-emerald-700 font-bold">Score</span> = 0.35S + 0.25D + 0.15R +
-                0.10H + 0.10F + 0.05N. Each factor normalized $0–100$.
+              <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 text-[11px] text-slate-600 leading-relaxed">
+                Match score is normalized 0–100 from live repository signals, maintainer velocity,
+                and your personal feedback history.
               </div>
 
               <Button

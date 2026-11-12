@@ -6,7 +6,7 @@ import { GitHubMark, GitLabMark, CodebergMark, BugzillaMark } from "@/components
 import { Logo } from "@/components/ip/logo";
 import { AuroraBackground } from "@/components/ip/aurora-background";
 import { pageMeta } from "@/lib/format";
-import { ArrowRight, CheckCircle2, SlidersHorizontal, Check, Search } from "lucide-react";
+import { ArrowRight, CheckCircle2, Compass, Check, Search } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () =>
@@ -148,14 +148,14 @@ function LandingPage() {
               </Link>
 
               <nav className="hidden md:flex items-center gap-6 text-sm text-slate-600 font-medium">
-                <Link to="/app/simulator" className="hover:text-slate-900 transition-colors">
-                  Preferences
+                <Link to="/app/feed" className="hover:text-slate-900 transition-colors">
+                  Recommendations
                 </Link>
                 <Link to="/app/explore" className="hover:text-slate-900 transition-colors">
                   Issue Explorer
                 </Link>
                 <a href="#pipeline" className="hover:text-slate-900 transition-colors">
-                  Architecture
+                  How It Works
                 </a>
                 <a href="#numbers" className="hover:text-slate-900 transition-colors">
                   Coverage
@@ -376,9 +376,9 @@ function LandingPage() {
                   size="default"
                   className="border-slate-300 text-slate-700 hover:text-slate-900 hover:bg-slate-50 active:scale-[0.98]"
                 >
-                  <Link to="/app/simulator">
-                    <SlidersHorizontal className="size-4 mr-2 text-blue-600" />
-                    Open What-If Simulator
+                  <Link to="/app/explore">
+                    <Compass className="size-4 mr-2 text-blue-600" />
+                    Explore Live Issues
                   </Link>
                 </Button>
               </div>
@@ -481,7 +481,7 @@ function LandingPage() {
                 size="lg"
                 className="border-white/30 bg-blue-700/50 text-white hover:bg-blue-700 font-medium active:scale-[0.98]"
               >
-                <Link to="/app/simulator">Try Simulator</Link>
+                <Link to="/app/explore">Explore Issues</Link>
               </Button>
             </div>
           </div>
@@ -502,8 +502,8 @@ function LandingPage() {
                 </span>
               </div>
               <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
-                Precision open-source issue intelligence powered by a compiled deterministic
-                6-factor ranking engine and real-time unclaimed verification.
+                Precision open-source issue intelligence powered by our matching engine and
+                real-time unclaimed verification.
               </p>
             </div>
 
@@ -518,13 +518,13 @@ function LandingPage() {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/app/simulator" className="hover:text-slate-900">
-                    What-If Simulator
+                  <Link to="/app/explore" className="hover:text-slate-900">
+                    Multi-Platform Explorer
                   </Link>
                 </li>
                 <li>
-                  <Link to="/app/explore" className="hover:text-slate-900">
-                    Multi-Platform Explorer
+                  <Link to="/app/profile" className="hover:text-slate-900">
+                    Tech Profile &amp; Skills
                   </Link>
                 </li>
                 <li>
@@ -537,12 +537,12 @@ function LandingPage() {
 
             <div className="space-y-2">
               <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Architecture
+                Platform
               </div>
               <ul className="space-y-2 text-xs text-slate-600">
                 <li>
                   <a href="#pipeline" className="hover:text-slate-900">
-                    6-Factor Scoring Model
+                    Developer Matching
                   </a>
                 </li>
                 <li>
@@ -556,8 +556,8 @@ function LandingPage() {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/app/simulator" className="hover:text-slate-900">
-                    Weight Calibration
+                  <Link to="/onboarding" className="hover:text-slate-900">
+                    Behavioral Calibration
                   </Link>
                 </li>
               </ul>

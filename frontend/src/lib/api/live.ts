@@ -275,14 +275,6 @@ export const liveApi: IssuePilotApi = {
         prefer_live_atlas: true,
         target_count: limit,
         offset,
-        weights: {
-          skill_match: 0.35,
-          difficulty_match: 0.25,
-          responsiveness: 0.15,
-          repo_health: 0.1,
-          feedback: 0.1,
-          freshness: 0.05,
-        },
       };
       if (q.source) {
         payload["source_filter"] = q.source;
@@ -390,22 +382,6 @@ export const liveApi: IssuePilotApi = {
           source: payload.source,
           platform_issue_id: payload.platform_issue_id,
         },
-      });
-    },
-  },
-
-  simulator: {
-    async sampleData() {
-      return await request<{
-        profiles: any[];
-        issues: any[];
-        default_weights: Record<T.SignalKey, number>;
-      }>("simulator.sampleData", e.simulator.sampleData);
-    },
-    async rank(payload) {
-      return await request<any>("simulator.rank", e.simulator.rank, {
-        method: "POST",
-        body: payload,
       });
     },
   },
