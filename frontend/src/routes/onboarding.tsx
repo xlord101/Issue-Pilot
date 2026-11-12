@@ -4,13 +4,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Logo } from "@/components/ip/logo";
 import { ErrorState } from "@/components/ip/states";
-import { api, type StarterProfile } from "@/lib/api";
+import { api } from "@/lib/api";
 import {
   BehavioralCalibrationDeck,
   type CalibrationData,
 } from "@/components/ip/starter-questionnaire";
 import { pageMeta } from "@/lib/format";
-import { Sparkles, ArrowRight, ShieldCheck, Cpu } from "lucide-react";
+import { Sparkles, ArrowRight, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/onboarding")({

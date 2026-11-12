@@ -436,7 +436,7 @@ public class SecurityAuthorizationTest {
     public void testPublicEndpointsRemainAccessible() throws Exception {
         mockMvc.perform(get("/api/health"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(org.hamcrest.Matchers.isOneOf("healthy", "degraded")));
+                .andExpect(jsonPath("$.status").value(org.hamcrest.Matchers.oneOf("healthy", "degraded")));
 
         mockMvc.perform(get("/api/issues"))
                 .andExpect(status().isOk());

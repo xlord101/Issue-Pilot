@@ -136,10 +136,11 @@ export async function request<T>(
       headers,
       body: opts.body !== undefined ? JSON.stringify(opts.body) : null,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     // Network error: Spring Boot backend is down, connection refused, or DNS failure
+    const errMsg = err instanceof Error ? err.message : "Failed to fetch";
     throw new ApiError(
-      `Cannot connect to backend server at ${API_BASE_URL}. Ensure the Spring Boot backend is running on port 8000. (${err?.message || "Failed to fetch"})`,
+      `Cannot connect to backend server at ${API_BASE_URL}. Ensure the Spring Boot backend is running on port 8000. (${errMsg})`,
       0,
       path,
       method,
@@ -150,14 +151,17 @@ export async function request<T>(
 
   if (!res.ok) {
     let detail = res.statusText;
-    let payload: any = null;
+    let payload: Record<string, unknown> | null = null;
     try {
-      payload = await res.json();
+      const parsed: unknown = await res.json();
+      if (parsed && typeof parsed === "object") {
+        payload = parsed as Record<string, unknown>;
+      }
       detail =
-        typeof payload?.message === "string"
-          ? payload.message
-          : typeof payload?.detail === "string"
-            ? payload.detail
+        typeof payload?.["message"] === "string"
+          ? payload["message"]
+          : typeof payload?.["detail"] === "string"
+            ? payload["detail"]
             : detail;
     } catch {
       /* ignore non-JSON error response */

@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { User, Cpu, Sparkles, RefreshCw, GitPullRequest, Code2, ShieldCheck } from "lucide-react";
+import { User, RefreshCw, Code2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ip/badges";
-import { EmptyState, PageHeader, QueryState } from "@/components/ip/states";
+import { EmptyState, QueryState } from "@/components/ip/states";
 import { api, type TechSkill } from "@/lib/api";
 import { relativeTime } from "@/lib/format";
 import { StarterSummary } from "@/components/ip/starter-questionnaire";

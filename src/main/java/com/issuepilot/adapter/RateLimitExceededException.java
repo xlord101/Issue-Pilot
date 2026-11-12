@@ -1,6 +1,7 @@
 package com.issuepilot.adapter;
 
 public class RateLimitExceededException extends SourceAPIException {
+    private static final long serialVersionUID = 1L;
     private final Long resetTimestamp;
     private final int remaining;
 

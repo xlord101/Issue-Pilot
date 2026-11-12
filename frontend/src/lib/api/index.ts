@@ -45,7 +45,7 @@ export interface IssuePilotApi {
       open_source_experience: string;
       codebase_navigation_comfort: string;
       target_challenge_goal: string;
-    }): Promise<any>;
+    }): Promise<unknown>;
   };
   recommendations: {
     list(q: T.RecommendationQuery): Promise<T.Page<T.Recommendation>>;

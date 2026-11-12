@@ -193,7 +193,7 @@ export interface TechProfile {
   capability?: number | null;
   capability_confidence?: number | null;
   onboarding_completed?: boolean;
-  preferences?: Record<string, any>;
+  preferences?: Record<string, unknown>;
   accepted_count?: number | null;
   rejected_count?: number | null;
   completed_count?: number | null;

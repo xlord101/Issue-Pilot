@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ip/logo";
-import { ErrorState, NotConnectedState } from "@/components/ip/states";
-import { api, NotConnectedError } from "@/lib/api";
+import { ErrorState } from "@/components/ip/states";
+import { api } from "@/lib/api";
 import { setStoredAuthToken } from "@/lib/api/http";
 import { pageMeta } from "@/lib/format";
 

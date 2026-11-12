@@ -52,6 +52,7 @@ public class LocalAuthService {
     private final SecureRandom secureRandom = new SecureRandom();
 
     public static class EmailNotVerifiedException extends RuntimeException {
+        private static final long serialVersionUID = 1L;
         private final String email;
 
         public EmailNotVerifiedException(String email, String message) {

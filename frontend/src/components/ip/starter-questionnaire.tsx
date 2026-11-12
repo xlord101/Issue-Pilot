@@ -1,16 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import {
-  Compass,
-  Check,
-  ChevronRight,
-  ChevronLeft,
-  Sparkles,
-  Zap,
-  Target,
-  Sliders,
-  ShieldCheck,
-  Layers,
-} from "lucide-react";
+import { Check, ChevronRight, ChevronLeft, Sparkles, Zap, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";

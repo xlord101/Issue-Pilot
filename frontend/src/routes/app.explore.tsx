@@ -1,17 +1,23 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Compass, Search, ExternalLink, CheckCircle2, Layers, RotateCw } from "lucide-react";
+import { z } from "zod";
+import { Compass, Search, ExternalLink, CheckCircle2, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SourceBadge, sourceLabel } from "@/components/ip/badges";
-import { EmptyState, ErrorState, LoadingState } from "@/components/ip/states";
+import { ErrorState, LoadingState } from "@/components/ip/states";
 import { pageMeta } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { request } from "@/lib/api/http";
 import type { Source } from "@/lib/api";
 
+const exploreSearchSchema = z.object({
+  q: z.coerce.string().optional(),
+});
+
 export const Route = createFileRoute("/app/explore")({
+  validateSearch: (s) => exploreSearchSchema.parse(s),
   head: () =>
     pageMeta(
       "Multi-Platform Issue Explorer",
@@ -56,16 +62,46 @@ const TECH_TAGS = [
   "MongoDB",
 ];
 
+interface RawIssueDoc {
+  id?: string;
+  _id?: string;
+  source?: Source;
+  repository_full_name?: string;
+  repo_key?: string;
+  repository_owner?: string;
+  repository_name?: string;
+  issue_number?: string | number;
+  native_id?: string | number;
+  title?: string;
+  body?: string;
+  labels?: string[];
+  detected_technologies?: string[];
+  technologies?: Array<string | { technology?: string }>;
+  difficulty_score?: number;
+  state?: string;
+  is_assigned?: boolean;
+  last_seen_at?: string;
+  updated_at?: string;
+  issue_url?: string;
+  url?: string;
+}
+
+interface IssuesQueryResponse {
+  issues?: RawIssueDoc[];
+  total_in_pool?: number;
+}
+
 function ExplorePage() {
+  const initialSearch = Route.useSearch();
   const [platform, setPlatform] = useState<"all" | Source>("all");
   const [tech, setTech] = useState<string>("All");
-  const [search, setSearch] = useState<string>("");
+  const [search, setSearch] = useState<string>(initialSearch.q ?? "");
   const [difficulty, setDifficulty] = useState<string>("all");
 
   const q = useQuery({
     queryKey: ["explore-issues", platform, tech, search, difficulty],
     queryFn: async () => {
-      const queryParams: Record<string, any> = {
+      const queryParams: Record<string, string | number | boolean> = {
         state: "open",
         limit: 50,
       };
@@ -83,20 +119,20 @@ function ExplorePage() {
         }
       }
 
-      const res = await request<any>("issues.query", "/api/issues", {
+      const res = await request<IssuesQueryResponse>("issues.query", "/api/issues", {
         query: queryParams,
       });
 
-      const rawIssues: any[] = res?.issues || [];
+      const rawIssues = res?.issues ?? [];
       const totalInPool: number = res?.total_in_pool ?? rawIssues.length;
 
       const items: MonitoredIssue[] = rawIssues.map((item, idx) => {
-        const src: Source = (item.source as Source) || "github";
+        const src: Source = item.source ?? "github";
         const repo =
           item.repository_full_name ||
           item.repo_key ||
           (item.repository_owner
-            ? `${item.repository_owner}/${item.repository_name}`
+            ? `${item.repository_owner}/${item.repository_name ?? ""}`
             : "open-source/project");
         const nativeId = String(item.issue_number ?? item.native_id ?? idx + 1);
         const diffScore = item.difficulty_score ?? 50;
@@ -106,9 +142,9 @@ function ExplorePage() {
         const rawTechs =
           item.detected_technologies ??
           (item.technologies
-            ? item.technologies.map((t: any) => (typeof t === "string" ? t : t.technology))
+            ? item.technologies.map((t) => (typeof t === "string" ? t : (t.technology ?? "")))
             : []);
-        const rawLabels = item.labels ? (Array.isArray(item.labels) ? item.labels : []) : [];
+        const rawLabels = Array.isArray(item.labels) ? item.labels : [];
 
         return {
           id: item.id || item._id || `exp-${idx + 1}`,

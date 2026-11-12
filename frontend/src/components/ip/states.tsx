@@ -9,7 +9,6 @@ import {
   WifiOff,
   ShieldAlert,
   Terminal,
-  ExternalLink,
   LogIn,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";

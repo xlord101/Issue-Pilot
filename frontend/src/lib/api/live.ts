@@ -1,6 +1,5 @@
 /** Live implementation — connects to the Spring Boot backend (`http://localhost:8000/api`). */
 import type { IssuePilotApi } from "./index";
-import { API_BASE_URL } from "./config";
 import { endpoints as e } from "./endpoints";
 import {
   ApiError,
@@ -12,6 +11,132 @@ import {
 } from "./http";
 import type * as T from "./types";
 
+interface BackendIdentity {
+  username?: string;
+  login?: string;
+  display_name?: string;
+  name?: string;
+  avatar_url?: string;
+}
+
+interface BackendAuthMeResponse {
+  authenticated?: boolean;
+  user_id?: string;
+  username?: string;
+  display_name?: string;
+  name?: string;
+  avatar_url?: string;
+  onboarding_completed?: boolean;
+  identity?: BackendIdentity;
+}
+
+interface BackendTokenResponse {
+  token?: string;
+  access_token?: string;
+  onboarding_completed?: boolean;
+}
+
+interface BackendSkillEntry {
+  technology?: string;
+  category?: string;
+  score?: number | null;
+  evidence_count?: number | null;
+}
+
+interface BackendProfileResponse {
+  user_id?: string;
+  username?: string;
+  identity?: BackendIdentity;
+  skills?: Record<string, BackendSkillEntry>;
+  inferred_skills?: BackendSkillEntry[];
+  preferences?: Record<string, unknown>;
+  capability?: number | null;
+  capability_confidence?: number | null;
+  onboarding_completed?: boolean;
+  onboardingCompleted?: boolean;
+  accepted_count?: number | null;
+  rejected_count?: number | null;
+  completed_count?: number | null;
+  updated_at?: string | null;
+}
+
+interface BackendRecommendationItem {
+  id?: string;
+  issue_id?: string;
+  run_id?: string;
+  source?: string;
+  platform_issue_id?: string;
+  source_issue_id?: string;
+  native_id?: string | number;
+  issue_number?: string | number;
+  title?: string;
+  body?: string | null;
+  issue_url?: string | null;
+  url?: string | null;
+  repository_full_name?: string | null;
+  repo_key?: string | null;
+  state?: string | null;
+  is_open?: boolean;
+  is_assigned?: boolean;
+  labels?: string[] | null;
+  detected_technologies?: string[];
+  technologies?: Array<string | { technology?: string }>;
+  verified_at?: string | null;
+  updated_at?: string | null;
+  generated_at?: string | null;
+  created_at?: string | null;
+  final_score?: number | string | null;
+  score?: number | string | null;
+  previous_score?: number | string | null;
+  why_recommended?: string | null;
+  explanation?: string | null;
+  match_reasons?: string[];
+  user_vote?: number | null;
+  user_vote_reason?: string | null;
+  scores?: Record<string, unknown>;
+  vote_affinity?: {
+    affinity_score?: number;
+    confidence?: number;
+    explanations?: string[];
+  };
+  responsiveness_evidence?: {
+    available?: boolean;
+    median_response_hours?: number;
+    response_time_score?: number;
+  };
+  health_evidence?: {
+    available?: boolean;
+  };
+  freshness_evidence?: {
+    available?: boolean;
+  };
+}
+
+interface BackendRecommendationsResponse {
+  run_id?: string;
+  next_cursor?: string | null;
+  total_available?: number;
+  recommendations?: BackendRecommendationItem[];
+  verified_recommendations?: BackendRecommendationItem[];
+}
+
+interface BackendFeedbackResponse {
+  events?: T.FeedbackEntry[];
+  feedback?: T.FeedbackEntry[];
+}
+
+function asTechKind(category: string | undefined): T.TechSkill["kind"] {
+  if (
+    category === "language" ||
+    category === "framework" ||
+    category === "tool" ||
+    category === "domain"
+  ) {
+    return category;
+  }
+  return "language";
+}
+
 export const liveApi: IssuePilotApi = {
   auth: {
     async getSession() {
@@ -21,19 +146,19 @@ export const liveApi: IssuePilotApi = {
       }
 
       try {
-        const data = await request<any>("auth.me", e.auth.me);
+        const data = await request<BackendAuthMeResponse>("auth.me", e.auth.me);
         if (!data || !data.authenticated) return null;
 
-        const identity = (data.identity as Record<string, any>) || {};
+        const identity = data.identity ?? {};
         const rawId = data.user_id ? String(data.user_id) : "";
         const isGithub = rawId.startsWith("github:");
         const numericId = isGithub ? rawId.replace("github:", "") : rawId;
         const login =
-          identity["username"] || identity["login"] || data.username || numericId || "contributor";
+          identity.username || identity.login || data.username || numericId || "contributor";
         const displayName =
-          identity["display_name"] || identity["name"] || data.display_name || data.name || login;
+          identity.display_name || identity.name || data.display_name || data.name || login;
         const avatarUrl =
-          identity["avatar_url"] ||
+          identity.avatar_url ||
           data.avatar_url ||
           (isGithub && numericId ? `https://avatars.githubusercontent.com/u/${numericId}` : null);
 
@@ -70,7 +195,7 @@ export const liveApi: IssuePilotApi = {
       }
       if (search.exchange_code) {
         setStoredAuthToken(null);
-        const res = await request<any>("auth.exchange", e.auth.exchange, {
+        const res = await request<BackendTokenResponse>("auth.exchange", e.auth.exchange, {
           method: "POST",
           body: { exchange_code: search.exchange_code },
         });
@@ -104,7 +229,7 @@ export const liveApi: IssuePilotApi = {
     },
 
     async verifyOtp(payload) {
-      const res = await request<any>("auth.verifyOtp", e.auth.verifyOtp, {
+      const res = await request<BackendTokenResponse>("auth.verifyOtp", e.auth.verifyOtp, {
         method: "POST",
         body: {
           email: payload.email,
@@ -135,7 +260,7 @@ export const liveApi: IssuePilotApi = {
     },
 
     async signInWithPassword(payload) {
-      const res = await request<any>("auth.login", e.auth.login, {
+      const res = await request<BackendTokenResponse>("auth.login", e.auth.login, {
         method: "POST",
         body: {
           email: payload.email,
@@ -199,19 +324,19 @@ export const liveApi: IssuePilotApi = {
 
   onboarding: {
     async status() {
-      const res = await request<any>("onboarding.status", e.onboarding.status);
-      const skills = (res.inferred_skills as any[]) || [];
-      const confirmedMap = (res.skills as Record<string, any>) || {};
+      const res = await request<BackendProfileResponse>("onboarding.status", e.onboarding.status);
+      const skills = res.inferred_skills ?? [];
+      const confirmedMap = res.skills ?? {};
       const allSkills = [
         ...skills.map((s) => ({
-          name: s.technology,
-          kind: (s.category || "language") as any,
+          name: s.technology ?? "Unknown",
+          kind: asTechKind(s.category),
           strength: (s.score ?? 50) / 100,
           evidence_count: s.evidence_count ?? 1,
         })),
-        ...Object.values(confirmedMap).map((s: any) => ({
-          name: s.technology,
-          kind: (s.category || "language") as any,
+        ...Object.values(confirmedMap).map((s) => ({
+          name: s.technology ?? "Unknown",
+          kind: asTechKind(s.category),
           strength: (s.score ?? 50) / 100,
           evidence_count: s.evidence_count ?? 5,
         })),
@@ -233,12 +358,12 @@ export const liveApi: IssuePilotApi = {
     },
 
     async retry() {
-      await request<any>("onboarding.retry", e.onboarding.retry, { method: "POST" });
+      await request<unknown>("onboarding.retry", e.onboarding.retry, { method: "POST" });
       return liveApi.onboarding.status();
     },
 
     async submitStarterProfile(body) {
-      await request<any>("onboarding.starterProfile", e.onboarding.starterProfile, {
+      await request<unknown>("onboarding.starterProfile", e.onboarding.starterProfile, {
         method: "POST",
         body: {
           confirmed_skills: body.languages.map((l) => ({
@@ -258,10 +383,14 @@ export const liveApi: IssuePilotApi = {
     },
 
     async confirmCalibration(input) {
-      const res = await request<any>("onboarding.confirmCalibration", e.onboarding.starterProfile, {
-        method: "POST",
-        body: input,
-      });
+      const res = await request<unknown>(
+        "onboarding.confirmCalibration",
+        e.onboarding.starterProfile,
+        {
+          method: "POST",
+          body: input,
+        },
+      );
       return res;
     },
   },
@@ -270,7 +399,7 @@ export const liveApi: IssuePilotApi = {
     async list(q) {
       const offset = q.cursor ? Math.max(0, Number(q.cursor) || 0) : 0;
       const limit = q.limit ?? 6;
-      const payload: Record<string, any> = {
+      const payload: Record<string, string | number | boolean> = {
         demo_mode: false,
         prefer_live_atlas: true,
         target_count: limit,
@@ -292,13 +421,17 @@ export const liveApi: IssuePilotApi = {
         payload["sort"] = q.sort;
       }
 
-      const res = await request<any>("recommendations.list", e.recommendations.list, {
-        method: "POST",
-        body: payload,
-      });
+      const res = await request<BackendRecommendationsResponse>(
+        "recommendations.list",
+        e.recommendations.list,
+        {
+          method: "POST",
+          body: payload,
+        },
+      );
 
       const runId: string | undefined = typeof res?.run_id === "string" ? res.run_id : undefined;
-      const rawList: any[] = res.recommendations ?? res.verified_recommendations ?? [];
+      const rawList = res.recommendations ?? res.verified_recommendations ?? [];
       const items: T.Recommendation[] = rawList.map((item, idx) =>
         mapRecommendationItem(item, idx, runId),
       );
@@ -311,9 +444,13 @@ export const liveApi: IssuePilotApi = {
     },
 
     async get(id) {
-      const item = await request<any>("recommendations.detail", e.recommendations.detail, {
-        params: { id },
-      });
+      const item = await request<BackendRecommendationItem>(
+        "recommendations.detail",
+        e.recommendations.detail,
+        {
+          params: { id },
+        },
+      );
       if (!item) {
         throw new ApiError(
           `Recommendation '${id}' not found.`,
@@ -322,7 +459,7 @@ export const liveApi: IssuePilotApi = {
           "GET",
         );
       }
-      return mapRecommendationItem(item, 0, item?.run_id);
+      return mapRecommendationItem(item, 0, item.run_id);
     },
   },
 
@@ -330,14 +467,17 @@ export const liveApi: IssuePilotApi = {
     async list() {
       const session = await liveApi.auth.getSession();
       if (!session) return [];
-      const res = await request<any>("feedback.list", `/api/feedback/${session.user.id}`);
-      return (res?.events as T.FeedbackEntry[]) ?? (res?.feedback as T.FeedbackEntry[]) ?? [];
+      const res = await request<BackendFeedbackResponse>(
+        "feedback.list",
+        `/api/feedback/${session.user.id}`,
+      );
+      return res?.events ?? res?.feedback ?? [];
     },
 
     async submit(recommendationId, decision, reason) {
       const mappedEventType =
         decision === "accepted" ? "accepted" : decision === "rejected" ? "rejected" : "completed";
-      await request<any>("feedback.record", "/api/feedback", {
+      await request<unknown>("feedback.record", "/api/feedback", {
         method: "POST",
         body: {
           issue_id: recommendationId,
@@ -359,7 +499,7 @@ export const liveApi: IssuePilotApi = {
 
   votes: {
     async record(payload) {
-      return await request<any>("votes.record", e.votes.record, {
+      return await request<unknown>("votes.record", e.votes.record, {
         method: "POST",
         body: {
           source: payload.source,
@@ -375,7 +515,7 @@ export const liveApi: IssuePilotApi = {
       if (!session) {
         throw new ApiError("Authentication required to clear votes.", 401, "/api/votes", "DELETE");
       }
-      return await request<any>("votes.remove", e.votes.record, {
+      return await request<unknown>("votes.remove", e.votes.record, {
         method: "DELETE",
         query: {
           user_id: session.user.id,
@@ -388,7 +528,7 @@ export const liveApi: IssuePilotApi = {
 
   profile: {
     async me() {
-      const profile = await request<any>("profile.me", e.profile.me);
+      const profile = await request<BackendProfileResponse>("profile.me", e.profile.me);
       if (!profile) {
         throw new ApiError(
           "Failed to retrieve profile from server",
@@ -399,7 +539,7 @@ export const liveApi: IssuePilotApi = {
       }
 
       const skillsList: T.TechSkill[] = profile.skills
-        ? Object.values(profile.skills).map((s: any) => ({
+        ? Object.values(profile.skills).map((s) => ({
             name: s.technology || "Unknown",
             kind: "language",
             strength: s.score != null ? Math.round(Number(s.score)) : null,
@@ -407,12 +547,12 @@ export const liveApi: IssuePilotApi = {
           }))
         : [];
 
-      const prefs = (profile.preferences as Record<string, any>) ?? {};
+      const prefs = profile.preferences ?? {};
       const isGithub = String(profile.user_id || "").startsWith("github:");
 
       return {
         login:
-          (profile.identity as any)?.username ||
+          profile.identity?.username ||
           profile.username ||
           (profile.user_id
             ? String(profile.user_id).replace(/^(github:|local:)/, "")
@@ -455,7 +595,10 @@ function roundOrNull(val: unknown): number | null {
   return null;
 }
 
-function buildSignalEvidence(item: any, issueUrl: string | null): T.Evidence[] | null {
+function buildSignalEvidence(
+  item: BackendRecommendationItem,
+  issueUrl: string | null,
+): T.Evidence[] | null {
   const trail: T.Evidence[] = [];
 
   const matchReasons = Array.isArray(item?.match_reasons) ? item.match_reasons : [];
@@ -480,10 +623,10 @@ function buildSignalEvidence(item: any, issueUrl: string | null): T.Evidence[] |
   }
 
   const sc = item?.scores || {};
-  if (sc.difficulty_available && sc.computed_issue_difficulty != null) {
+  if (sc["difficulty_available"] && sc["computed_issue_difficulty"] != null) {
     trail.push({
       signal: "difficulty_match",
-      description: `Computed issue difficulty: ${Math.round(Number(sc.computed_issue_difficulty))}/100 derived from repository complexity & scope.`,
+      description: `Computed issue difficulty: ${Math.round(Number(sc["computed_issue_difficulty"]))}/100 derived from repository complexity & scope.`,
       url: issueUrl,
     });
   }
@@ -494,7 +637,7 @@ function buildSignalEvidence(item: any, issueUrl: string | null): T.Evidence[] |
     const desc =
       typeof medianHours === "number" && Number.isFinite(medianHours)
         ? `Maintainer median first response: ${medianHours.toFixed(1)}h across recent issues.`
-        : `Maintainer responsiveness evidence recorded (response score ${Math.round(Number(resp.response_time_score ?? sc.responsiveness ?? 0))}/100).`;
+        : `Maintainer responsiveness evidence recorded (response score ${Math.round(Number(resp.response_time_score ?? sc["responsiveness"] ?? 0))}/100).`;
     trail.push({ signal: "responsiveness", description: desc, url: issueUrl });
   }
 
@@ -519,8 +662,12 @@ function buildSignalEvidence(item: any, issueUrl: string | null): T.Evidence[] |
   return trail.length > 0 ? trail : null;
 }
 
-function mapRecommendationItem(item: any, idx: number, runId?: string): T.Recommendation {
-  const sc = (item?.scores as Record<string, any>) || {};
+function mapRecommendationItem(
+  item: BackendRecommendationItem,
+  idx: number,
+  runId?: string,
+): T.Recommendation {
+  const sc = item?.scores ?? {};
   const src = ((item?.source as T.Source) || "github") as T.Source;
   const issueUrl = (item?.issue_url ?? item?.url ?? null) as string | null;
   const rawLabels = Array.isArray(item?.labels) ? item.labels : src === "bugzilla" ? null : [];
@@ -529,8 +676,8 @@ function mapRecommendationItem(item: any, idx: number, runId?: string): T.Recomm
     ? item.detected_technologies
     : Array.isArray(item?.technologies)
       ? item.technologies
-          .map((t: any) => (typeof t === "string" ? t : t?.technology))
-          .filter(Boolean)
+          .map((t) => (typeof t === "string" ? t : t?.technology))
+          .filter((t): t is string => Boolean(t))
       : null;
 
   const skillOk = sc["skill_available"] !== false && sc["skill_match"] != null;

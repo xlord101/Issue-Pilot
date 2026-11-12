@@ -4,8 +4,9 @@ import java.util.Collections;
 import java.util.Map;
 
 public class SourceAPIException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
     private final Integer statusCode;
-    private final Map<String, Object> details;
+    private final transient Map<String, Object> details;
 
     public SourceAPIException(String message) {
         this(message, null, Collections.emptyMap());

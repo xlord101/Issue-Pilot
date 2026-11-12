@@ -54,7 +54,7 @@ public class BugzillaAdapter implements BaseIssueSourceAdapter {
      * Validates the Bugzilla API base URL configuration at startup and on-demand.
      * Ensures it is a nonblank, absolute URI with http or https scheme and a valid host.
      */
-    public synchronized void validateConfiguration() {
+    private synchronized void validateConfiguration() {
         String base = properties.getBugzillaBaseUrl();
         if (base == null || base.isBlank()) {
             this.configured = false;

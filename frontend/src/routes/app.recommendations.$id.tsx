@@ -1,13 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import {
-  ArrowLeft,
-  Sparkles,
-  ExternalLink,
-  ShieldCheck,
-  FileText,
-  CheckCircle2,
-} from "lucide-react";
+import { ArrowLeft, Sparkles, ExternalLink, FileText } from "lucide-react";
 import { LabelList, SourceBadge, VerificationBadge } from "@/components/ip/badges";
 import { FeedbackActions } from "@/components/ip/feedback-actions";
 import { ScoreBreakdown, ScoreTotal } from "@/components/ip/score";

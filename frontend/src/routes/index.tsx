@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { GitHubMark, GitLabMark, CodebergMark, BugzillaMark } from "@/components/ip/badges";
-import { Logo } from "@/components/ip/logo";
 import { AuroraBackground } from "@/components/ip/aurora-background";
 import { pageMeta } from "@/lib/format";
 import { ArrowRight, CheckCircle2, Compass, Check, Search } from "lucide-react";
@@ -108,7 +106,7 @@ function LandingPage() {
     if (searchQuery.trim()) {
       navigate({
         to: "/app/explore",
-        search: { q: searchQuery.trim() } as any,
+        search: { q: searchQuery.trim() },
       });
     } else {
       navigate({ to: "/onboarding" });
@@ -119,7 +117,7 @@ function LandingPage() {
     setSearchQuery(tag);
     navigate({
       to: "/app/explore",
-      search: { q: tag } as any,
+      search: { q: tag },
     });
   };
 
