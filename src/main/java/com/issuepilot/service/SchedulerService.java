@@ -84,9 +84,9 @@ public class SchedulerService {
         long initialDelaySeconds = intervalMinutes * 60L;
         if (properties.isIngestionEnabled() && issueRepository != null) {
             try {
-                if (issueRepository.countEligibleOpenIssues() == 0) {
+                if (issueRepository.countEligibleOpenIssues() == 0 || issueRepository.countBySource("github") == 0) {
                     initialDelaySeconds = 10L;
-                    logger.info("Candidate pool is empty; scheduling initial ingestion cycle in {} seconds.", initialDelaySeconds);
+                    logger.info("Candidate pool empty or missing GitHub issues; scheduling initial ingestion cycle in {} seconds.", initialDelaySeconds);
                 }
             } catch (Exception e) {
                 logger.warn("Unable to check initial candidate pool size on scheduler start: {}", e.getMessage());

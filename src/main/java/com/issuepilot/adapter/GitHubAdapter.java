@@ -3,6 +3,8 @@ package com.issuepilot.adapter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.issuepilot.config.AppProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +21,8 @@ import java.util.*;
 
 @Component
 public class GitHubAdapter implements BaseIssueSourceAdapter {
+
+    private static final Logger logger = LoggerFactory.getLogger(GitHubAdapter.class);
 
     private final AppProperties properties;
     private final ObjectMapper objectMapper;
@@ -59,6 +63,10 @@ public class GitHubAdapter implements BaseIssueSourceAdapter {
     }
 
     private HttpRequest.Builder newRequestBuilder(String url) {
+        return newRequestBuilder(url, true);
+    }
+
+    private HttpRequest.Builder newRequestBuilder(String url, boolean includeToken) {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("Accept", "application/vnd.github.v3+json")
@@ -66,10 +74,27 @@ public class GitHubAdapter implements BaseIssueSourceAdapter {
                 .timeout(Duration.ofSeconds(properties.getGithubRequestTimeoutSeconds()));
 
         String token = properties.getGithubToken();
-        if (token != null && !token.isBlank()) {
+        if (includeToken && token != null && !token.isBlank()) {
             builder.header("Authorization", "Bearer " + token.trim());
         }
         return builder;
+    }
+
+    private HttpResponse<String> sendWith401Fallback(String url) throws Exception {
+        String token = properties.getGithubToken();
+        boolean hasToken = token != null && !token.isBlank();
+        HttpResponse<String> response = httpClient.send(
+                newRequestBuilder(url, hasToken).GET().build(),
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
+        );
+        if (response.statusCode() == 401 && hasToken) {
+            logger.warn("GitHub API returned 401 for configured GITHUB_TOKEN; retrying public request unauthenticated.");
+            response = httpClient.send(
+                    newRequestBuilder(url, false).GET().build(),
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
+            );
+        }
+        return response;
     }
 
     private void extractRateLimit(HttpResponse<?> response) {
@@ -163,8 +188,7 @@ public class GitHubAdapter implements BaseIssueSourceAdapter {
             String url = String.format("%s/search/issues?q=%s&page=%d&per_page=%d&sort=%s&order=%s",
                     properties.getGithubApiBaseUrl(), encodedQuery, page, perPage, sort, order);
 
-            HttpRequest request = newRequestBuilder(url).GET().build();
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            HttpResponse<String> response = sendWith401Fallback(url);
             extractRateLimit(response);
 
             if (response.statusCode() == 429 || (response.statusCode() == 403 && response.body().contains("rate limit"))) {
@@ -190,8 +214,7 @@ public class GitHubAdapter implements BaseIssueSourceAdapter {
             String url = String.format("%s/repos/%s/%s/issues/%d",
                     properties.getGithubApiBaseUrl(), owner, repo, issueNumber);
 
-            HttpRequest request = newRequestBuilder(url).GET().build();
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            HttpResponse<String> response = sendWith401Fallback(url);
             extractRateLimit(response);
 
             if (response.statusCode() == 404) {
@@ -304,6 +327,23 @@ public class GitHubAdapter implements BaseIssueSourceAdapter {
         List<String> detectedTechs = new ArrayList<>();
         for (Map<String, Object> t : technologies) {
             detectedTechs.add((String) t.get("technology"));
+        }
+
+        // Preserve GitHub repository search language context when issue text itself only yielded "General"
+        if (queryInfo != null && queryInfo.get("technology") != null) {
+            String queryTech = String.valueOf(queryInfo.get("technology")).trim();
+            if (!queryTech.isBlank() && !"react".equalsIgnoreCase(queryTech)
+                    && detectedTechs.size() == 1 && "General".equalsIgnoreCase(detectedTechs.get(0))) {
+                String canonicalTech = TechnologyDetectionHelper.normalizeTechnology(queryTech);
+                if (canonicalTech == null || canonicalTech.isBlank()) {
+                    canonicalTech = queryTech;
+                }
+                detectedTechs = new ArrayList<>(List.of(canonicalTech));
+                Map<String, Object> repoLangEntry = new LinkedHashMap<>();
+                repoLangEntry.put("technology", canonicalTech);
+                repoLangEntry.put("raw_relevance", 1.5);
+                technologies = new ArrayList<>(List.of(repoLangEntry));
+            }
         }
 
         Map<String, Object> diffEvidence = TechnologyDetectionHelper.estimateDifficulty(title, body, labels, comments);

@@ -7,7 +7,6 @@ import {
   LogOut,
   Menu,
   User,
-  PanelLeft,
   PanelLeftClose,
   PanelLeftOpen,
   RefreshCw,
@@ -321,19 +320,6 @@ export function AppShell({ session, children }: { session: Session; children: Re
             <div className="lg:hidden">
               <Logo />
             </div>
-
-            {/* Sidebar Expand toggle button if collapsed */}
-            {isCollapsed && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleCollapsed}
-                title="Expand sidebar"
-                className="hidden lg:flex size-8 text-slate-500 hover:text-slate-900 hover:bg-slate-100 active:scale-[0.98]"
-              >
-                <PanelLeft className="size-4" />
-              </Button>
-            )}
           </div>
 
           <div className="flex items-center gap-3">
