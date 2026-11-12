@@ -117,4 +117,25 @@ public class RecommendationRepository {
         }
         return results;
     }
+
+    public Map<String, Object> findByIssueId(String issueId, String userId) {
+        if (mongoTemplate == null || issueId == null || issueId.isBlank()) {
+            return null;
+        }
+        Document query = new Document("issue_id", issueId.trim());
+        if (userId != null && !userId.isBlank()) {
+            query.append("user_id", userId.trim());
+        }
+        Document doc = mongoTemplate.getCollection("recommendations")
+                .find(query)
+                .sort(new Document("generated_at", -1))
+                .first();
+        if (doc == null && userId != null && !userId.isBlank()) {
+            doc = mongoTemplate.getCollection("recommendations")
+                    .find(new Document("issue_id", issueId.trim()))
+                    .sort(new Document("generated_at", -1))
+                    .first();
+        }
+        return cleanDoc(doc);
+    }
 }

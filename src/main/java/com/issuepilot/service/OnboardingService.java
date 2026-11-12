@@ -434,13 +434,13 @@ public class OnboardingService {
             double confidence = 0.85;
             String normalizedExp = (expRaw != null) ? expRaw.trim().toLowerCase(Locale.ROOT) : "unspecified";
 
-            if (normalizedExp.contains("none") || normalizedExp.contains("beginner") || normalizedExp.contains("never") || normalizedExp.contains("zero")) {
+            if (normalizedExp.contains("first_time") || normalizedExp.contains("none") || normalizedExp.contains("beginner") || normalizedExp.contains("never") || normalizedExp.contains("zero")) {
                 baseAnchor = 30.0;
                 confidence = 0.85;
-            } else if (normalizedExp.contains("some") || normalizedExp.contains("intermediate") || normalizedExp.contains("pr") || normalizedExp.contains("occasional") || normalizedExp.contains("1-3")) {
+            } else if (normalizedExp.contains("familiar") || normalizedExp.contains("some") || normalizedExp.contains("intermediate") || normalizedExp.contains("pr") || normalizedExp.contains("occasional") || normalizedExp.contains("1-3")) {
                 baseAnchor = 55.0;
                 confidence = 0.90;
-            } else if (normalizedExp.contains("maintainer") || normalizedExp.contains("advanced") || normalizedExp.contains("active") || normalizedExp.contains("expert") || normalizedExp.contains("regular")) {
+            } else if (normalizedExp.contains("seasoned") || normalizedExp.contains("maintainer") || normalizedExp.contains("advanced") || normalizedExp.contains("active") || normalizedExp.contains("expert") || normalizedExp.contains("regular")) {
                 baseAnchor = 80.0;
                 confidence = 0.95;
             }
@@ -448,9 +448,9 @@ public class OnboardingService {
             // 2. Navigation Comfort Modifier
             double navModifier = 0.0;
             String normalizedNav = (navRaw != null) ? navRaw.trim().toLowerCase(Locale.ROOT) : "unspecified";
-            if (normalizedNav.contains("isolated") || normalizedNav.contains("single") || normalizedNav.contains("small")) {
+            if (normalizedNav.contains("surgical") || normalizedNav.contains("isolated") || normalizedNav.contains("single") || normalizedNav.contains("small")) {
                 navModifier = -5.0;
-            } else if (normalizedNav.contains("full") || normalizedNav.contains("modular") || normalizedNav.contains("multi") || normalizedNav.contains("large") || normalizedNav.contains("complex")) {
+            } else if (normalizedNav.contains("architectural") || normalizedNav.contains("full") || normalizedNav.contains("modular") || normalizedNav.contains("multi") || normalizedNav.contains("large") || normalizedNav.contains("complex")) {
                 navModifier = 10.0;
             }
 
@@ -458,13 +458,13 @@ public class OnboardingService {
             double minClamp = 0.0;
             double maxClamp = 100.0;
             String normalizedGoal = (goalRaw != null) ? goalRaw.trim().toLowerCase(Locale.ROOT) : "unspecified";
-            if (normalizedGoal.contains("good_first") || normalizedGoal.contains("starter") || normalizedGoal.contains("doc") || normalizedGoal.contains("typo")) {
+            if (normalizedGoal.contains("quick_win") || normalizedGoal.contains("good_first") || normalizedGoal.contains("starter") || normalizedGoal.contains("doc") || normalizedGoal.contains("typo")) {
                 minClamp = 25.0;
                 maxClamp = 45.0;
-            } else if (normalizedGoal.contains("bug") || normalizedGoal.contains("reproducible") || normalizedGoal.contains("normal")) {
+            } else if (normalizedGoal.contains("deep_dive") || normalizedGoal.contains("bug") || normalizedGoal.contains("reproducible") || normalizedGoal.contains("normal")) {
                 minClamp = 40.0;
                 maxClamp = 65.0;
-            } else if (normalizedGoal.contains("feature") || normalizedGoal.contains("architect") || normalizedGoal.contains("refactor") || normalizedGoal.contains("advanced")) {
+            } else if (normalizedGoal.contains("high_impact") || normalizedGoal.contains("feature") || normalizedGoal.contains("architect") || normalizedGoal.contains("refactor") || normalizedGoal.contains("advanced")) {
                 minClamp = 65.0;
                 maxClamp = 90.0;
             }

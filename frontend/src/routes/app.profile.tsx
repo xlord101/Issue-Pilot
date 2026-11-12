@@ -66,19 +66,28 @@ function ProfilePage() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
                   <div className="flex size-14 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 text-blue-700 font-mono text-2xl font-bold shadow-xs">
-                    {p.capability ?? 70}
+                    {p.capability ?? "—"}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <h2 className="text-lg font-bold text-slate-900">{p.login}</h2>
-                      <StatusBadge tone="success">Active Contributor</StatusBadge>
+                      <StatusBadge tone={p.onboarding_completed ? "success" : "warning"}>
+                        {p.onboarding_completed ? "Calibrated" : "Uncalibrated"}
+                      </StatusBadge>
                     </div>
                     <p className="text-xs text-slate-500 mt-0.5">
                       Calibrated Capability Dial:{" "}
                       <span className="font-mono text-blue-700 font-bold">
-                        {p.capability ?? 70} / 100
+                        {p.capability != null ? `${p.capability} / 100` : "Not calibrated"}
                       </span>{" "}
-                      &bull; High Reliability
+                      {p.capability_confidence != null && (
+                        <>
+                          &bull; Model Confidence:{" "}
+                          <span className="font-mono text-slate-700 font-semibold">
+                            {Math.round(p.capability_confidence * 100)}%
+                          </span>
+                        </>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -86,26 +95,24 @@ function ProfilePage() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 font-mono text-xs text-slate-700">
                   <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
                     <span className="text-[10px] text-slate-500 uppercase tracking-wider">
-                      Repos Scanned
+                      Confirmed Skills
                     </span>
-                    <div className="text-lg font-bold text-slate-900 mt-0.5">
-                      {p.repos_analyzed ?? 12}
-                    </div>
+                    <div className="text-lg font-bold text-slate-900 mt-0.5">{p.skills.length}</div>
                   </div>
                   <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
                     <span className="text-[10px] text-slate-500 uppercase tracking-wider">
-                      PRs Evaluated
+                      Accepted / Done
                     </span>
                     <div className="text-lg font-bold text-slate-900 mt-0.5">
-                      {p.contributions_analyzed ?? 34}
+                      {p.accepted_count ?? 0} / {p.completed_count ?? 0}
                     </div>
                   </div>
                   <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5 col-span-2 sm:col-span-1">
                     <span className="text-[10px] text-slate-500 uppercase tracking-wider">
-                      Extraction Age
+                      Last Calibrated
                     </span>
                     <div className="text-xs font-bold text-emerald-700 mt-1 truncate">
-                      {relativeTime(p.extracted_at)}
+                      {p.extracted_at ? relativeTime(p.extracted_at) : "Never"}
                     </div>
                   </div>
                 </div>
@@ -154,15 +161,23 @@ function ProfilePage() {
 
                       <ul className="mt-4 space-y-3.5">
                         {list.map((s) => {
-                          const strengthPct = Math.round((s.strength ?? 0.75) * 100);
+                          const rawStrength = s.strength ?? 0;
+                          const strengthPct = Math.max(
+                            0,
+                            Math.min(
+                              100,
+                              rawStrength <= 1 && rawStrength > 0
+                                ? Math.round(rawStrength * 100)
+                                : Math.round(rawStrength),
+                            ),
+                          );
                           return (
                             <li key={s.name} className="text-xs">
                               <div className="flex items-center justify-between">
                                 <span className="font-bold text-slate-900">{s.name}</span>
-                                <span className="font-mono text-[11px] text-slate-500">
-                                  {s.evidence_count != null
-                                    ? `${s.evidence_count} merged commits`
-                                    : "calibrated"}
+                                <span className="font-mono text-[11px] text-slate-600 font-semibold">
+                                  {strengthPct}%
+                                  {s.evidence_count != null ? ` · ${s.evidence_count} signals` : ""}
                                 </span>
                               </div>
                               <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 border border-slate-200/60">

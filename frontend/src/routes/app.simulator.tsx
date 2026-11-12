@@ -1,38 +1,38 @@
-import { useState, useMemo, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
   SlidersHorizontal,
   RotateCcw,
-  Sparkles,
   Cpu,
   ArrowUpRight,
   ArrowDownRight,
   Minus,
-  CheckCircle2,
   ExternalLink,
-  Layers,
   Zap,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { ErrorState, LoadingState } from "@/components/ip/states";
+import { api, type SignalKey } from "@/lib/api";
+import { request } from "@/lib/api/http";
 import { pageMeta } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app/simulator")({
   head: () =>
     pageMeta(
-      "Recommendation Preferences & Tuning",
-      "Calibrate ranking priorities to align recommendations with your goals.",
+      "What-If Algorithm Simulator",
+      "Real-time C++ ranking engine simulation across weight configurations and contributor profiles.",
     ),
   component: SimulatorPage,
 });
 
-type WeightKey =
-  "skill_match" | "difficulty_match" | "responsiveness" | "repo_health" | "feedback" | "freshness";
-type Weights = Record<WeightKey, number>;
+type Weights = Record<SignalKey, number>;
 
 interface FactorConfig {
-  key: WeightKey;
+  key: SignalKey;
   label: string;
   symbol: string;
   defaultVal: number;
@@ -45,14 +45,14 @@ const FACTORS: FactorConfig[] = [
     label: "Skill Match",
     symbol: "S",
     defaultVal: 35,
-    description: "Technology overlap between user demonstrated capability and issue requirements",
+    description: "Technology overlap between contributor skills and issue requirements",
   },
   {
     key: "difficulty_match",
     label: "Difficulty Alignment",
     symbol: "D",
     defaultVal: 25,
-    description: "Distance between issue architectural complexity and contributor rating",
+    description: "Distance between issue architectural complexity and contributor capability",
   },
   {
     key: "responsiveness",
@@ -73,139 +73,14 @@ const FACTORS: FactorConfig[] = [
     label: "Affinity / Feedback",
     symbol: "F",
     defaultVal: 10,
-    description: "Implicit contributor taste learned through thumbs up/down and accepted issues",
+    description: "Implicit taste learned through Like/Dislike votes, acceptances, and completions",
   },
   {
     key: "freshness",
     label: "Issue Freshness",
     symbol: "N",
     defaultVal: 5,
-    description: "Recency of original filing and ongoing maintainer comment activity",
-  },
-];
-
-interface Persona {
-  id: string;
-  name: string;
-  capability: number;
-  title: string;
-  skills: string[];
-}
-
-const PERSONAS: Persona[] = [
-  {
-    id: "contributor-fullstack",
-    name: "Alex Rivera",
-    capability: 76,
-    title: "Fullstack Engineer",
-    skills: ["Python", "FastAPI", "React", "TypeScript", "MongoDB"],
-  },
-  {
-    id: "contributor-beginner-coldstart",
-    name: "Jamie Chen",
-    capability: 45,
-    title: "First-Time Contributor",
-    skills: ["Python", "Documentation", "Git", "Markdown"],
-  },
-  {
-    id: "contributor-systems-cpp",
-    name: "Marcus Vance",
-    capability: 88,
-    title: "Systems Engineer",
-    skills: ["C++", "CMake", "Rust", "Linux Kernel", "Low-Level IO"],
-  },
-];
-
-interface SimulationCandidate {
-  id: string;
-  repo: string;
-  number: number;
-  title: string;
-  technologies: string[];
-  rawScores: Weights;
-  url: string;
-}
-
-const SAMPLE_CANDIDATES: SimulationCandidate[] = [
-  {
-    id: "cand-1",
-    repo: "tiangolo/fastapi",
-    number: 4821,
-    title: "Fix MongoDB async connection pooling and reconnect timeouts in backend driver",
-    technologies: ["FastAPI", "Python", "MongoDB"],
-    rawScores: {
-      skill_match: 94,
-      difficulty_match: 82,
-      responsiveness: 88,
-      repo_health: 92,
-      feedback: 85,
-      freshness: 78,
-    },
-    url: "https://github.com/tiangolo/fastapi/issues/4821",
-  },
-  {
-    id: "cand-2",
-    repo: "facebook/react",
-    number: 29810,
-    title: "TypeScript typing error for useEffect cleanup return signature in strict mode",
-    technologies: ["TypeScript", "React"],
-    rawScores: {
-      skill_match: 86,
-      difficulty_match: 90,
-      responsiveness: 92,
-      repo_health: 96,
-      feedback: 70,
-      freshness: 90,
-    },
-    url: "https://github.com/facebook/react/issues/29810",
-  },
-  {
-    id: "cand-3",
-    repo: "llvm/llvm-project",
-    number: 84129,
-    title: "Add CMake module support for MinGW GCC C++14 abi compatibility",
-    technologies: ["C++", "CMake"],
-    rawScores: {
-      skill_match: 40,
-      difficulty_match: 60,
-      responsiveness: 80,
-      repo_health: 98,
-      feedback: 50,
-      freshness: 85,
-    },
-    url: "https://github.com/llvm/llvm-project/issues/84129",
-  },
-  {
-    id: "cand-4",
-    repo: "pallets/flask",
-    number: 5120,
-    title: "Refactor blueprint routing dispatcher to support regex URL parameters",
-    technologies: ["Python"],
-    rawScores: {
-      skill_match: 75,
-      difficulty_match: 70,
-      responsiveness: 75,
-      repo_health: 80,
-      feedback: 65,
-      freshness: 60,
-    },
-    url: "https://github.com/pallets/flask/issues/5120",
-  },
-  {
-    id: "cand-5",
-    repo: "psf/requests",
-    number: 6390,
-    title: "Clarify proxy authentication header documentation and SSL adapter examples",
-    technologies: ["Python", "Documentation"],
-    rawScores: {
-      skill_match: 65,
-      difficulty_match: 95,
-      responsiveness: 88,
-      repo_health: 82,
-      feedback: 60,
-      freshness: 50,
-    },
-    url: "https://github.com/psf/requests/issues/6390",
+    description: "Recency of original filing and ongoing maintainer activity",
   },
 ];
 
@@ -260,6 +135,12 @@ const PRESETS: { name: string; weights: Weights; desc: string }[] = [
   },
 ];
 
+const PERSONA_META: Record<string, { name: string; title: string }> = {
+  "contributor-fullstack": { name: "Alex Rivera", title: "Fullstack Engineer" },
+  "contributor-beginner-coldstart": { name: "Jamie Chen", title: "First-Time Contributor" },
+  "contributor-systems-cpp": { name: "Marcus Vance", title: "Systems Engineer" },
+};
+
 function SimulatorPage() {
   const [weights, setWeights] = useState<Weights>({
     skill_match: 35,
@@ -270,90 +151,146 @@ function SimulatorPage() {
     freshness: 5,
   });
 
-  const [selectedPersona, setSelectedPersona] = useState<string>("contributor-fullstack");
+  const [debouncedWeights, setDebouncedWeights] = useState<Weights>(weights);
+  const [selectedPersonaId, setSelectedPersonaId] = useState<string>("my-profile");
+  const prevRanksRef = useRef<Record<string, number>>({});
   const [prevRanks, setPrevRanks] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedWeights(weights);
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [weights]);
+
+  // 1. Fetch simulator fixtures & default weights from backend
+  const sampleQuery = useQuery({
+    queryKey: ["simulator-sample-data"],
+    queryFn: () => api.simulator.sampleData(),
+    staleTime: 60000,
+  });
+
+  // 2. Fetch the signed-in user's real backend profile so they can test their own calibrated skills
+  const myRawProfileQuery = useQuery({
+    queryKey: ["raw-profile-me"],
+    queryFn: () => request<Record<string, any>>("profile.raw", "/api/profile/me"),
+    staleTime: 30000,
+    retry: false,
+  });
+
+  const profileChoices = useMemo(() => {
+    const list: { id: string; name: string; title: string; raw: Record<string, any> }[] = [];
+
+    if (myRawProfileQuery.data) {
+      const p = myRawProfileQuery.data;
+      const username =
+        (p["identity"] as Record<string, any>)?.["username"] ||
+        (typeof p["user_id"] === "string" ? p["user_id"].replace(/^(github:|local:)/, "") : "You");
+      list.push({
+        id: "my-profile",
+        name: String(username),
+        title: "My Calibrated Profile",
+        raw: p,
+      });
+    }
+
+    for (const sp of sampleQuery.data?.profiles ?? []) {
+      const uid = String(sp.user_id || "");
+      const meta = PERSONA_META[uid];
+      list.push({
+        id: uid,
+        name: meta?.name || uid,
+        title: meta?.title || "Sample Persona",
+        raw: sp,
+      });
+    }
+    return list;
+  }, [myRawProfileQuery.data, sampleQuery.data?.profiles]);
+
+  const activeChoice = useMemo(() => {
+    if (profileChoices.length === 0) return null;
+    return profileChoices.find((p) => p.id === selectedPersonaId) ?? profileChoices[0] ?? null;
+  }, [profileChoices, selectedPersonaId]);
 
   const totalWeight = useMemo(() => {
     return Object.values(weights).reduce((a, b) => a + b, 0);
   }, [weights]);
 
-  const activePersona: Persona = PERSONAS.find((p) => p.id === selectedPersona) ?? PERSONAS[0]!;
+  const normalizedDecimalWeights = useMemo(() => {
+    const sum = Object.values(debouncedWeights).reduce((a, b) => a + b, 0);
+    const divisor = sum > 0 ? sum : 100;
+    return {
+      skill_match: debouncedWeights.skill_match / divisor,
+      difficulty_match: debouncedWeights.difficulty_match / divisor,
+      responsiveness: debouncedWeights.responsiveness / divisor,
+      repo_health: debouncedWeights.repo_health / divisor,
+      feedback: debouncedWeights.feedback / divisor,
+      freshness: debouncedWeights.freshness / divisor,
+    };
+  }, [debouncedWeights]);
 
-  const rankedCandidates = useMemo(() => {
-    const list = SAMPLE_CANDIDATES.map((c) => {
-      let skillMultiplier = 0.5;
-      const matched = c.technologies.filter((t) => activePersona.skills.includes(t));
-      if (matched.length > 0) {
-        skillMultiplier = 0.8 + (matched.length / c.technologies.length) * 0.2;
-      }
+  // 3. Authoritative C++ Engine Ranking Call
+  const rankQuery = useQuery({
+    queryKey: [
+      "simulator-rank",
+      activeChoice?.id,
+      normalizedDecimalWeights,
+      sampleQuery.data?.issues?.length ?? 0,
+    ],
+    enabled: Boolean(activeChoice && sampleQuery.data?.issues?.length),
+    queryFn: async () => {
+      const res = await api.simulator.rank({
+        profile: activeChoice!.raw,
+        weights: normalizedDecimalWeights,
+        candidates: sampleQuery.data!.issues,
+      });
+      return res;
+    },
+    placeholderData: (prev) => prev,
+  });
 
-      const baseDiff = c.rawScores.difficulty_match;
-      const personaDiffBonus = 100 - Math.abs(activePersona.capability - (100 - baseDiff));
+  const rankedCandidates: any[] = useMemo(() => {
+    return Array.isArray(rankQuery.data?.results) ? rankQuery.data.results : [];
+  }, [rankQuery.data]);
 
-      const scores: Weights = {
-        skill_match: Math.round(c.rawScores.skill_match * skillMultiplier),
-        difficulty_match: Math.max(20, Math.min(100, Math.round(personaDiffBonus))),
-        responsiveness: c.rawScores.responsiveness,
-        repo_health: c.rawScores.repo_health,
-        feedback: c.rawScores.feedback,
-        freshness: c.rawScores.freshness,
-      };
-
-      const normFactor = totalWeight > 0 ? totalWeight : 1;
-      const finalScore =
-        (scores.skill_match * weights.skill_match +
-          scores.difficulty_match * weights.difficulty_match +
-          scores.responsiveness * weights.responsiveness +
-          scores.repo_health * weights.repo_health +
-          scores.feedback * weights.feedback +
-          scores.freshness * weights.freshness) /
-        normFactor;
-
-      return {
-        ...c,
-        computedScores: scores,
-        finalScore: Math.round(finalScore * 10) / 10,
-      };
-    });
-
-    list.sort((a, b) => b.finalScore - a.finalScore);
-    return list;
-  }, [weights, totalWeight, activePersona]);
-
+  // Track rank transitions across C++ engine updates
   useEffect(() => {
-    const newRanks: Record<string, number> = {};
+    if (rankedCandidates.length === 0) return;
+    const currentSnapshot: Record<string, number> = {};
     rankedCandidates.forEach((c, idx) => {
-      newRanks[c.id] = idx + 1;
+      if (c?.id) currentSnapshot[String(c.id)] = idx + 1;
     });
-    setPrevRanks((prev) => (Object.keys(prev).length === 0 ? newRanks : prev));
+    if (Object.keys(prevRanksRef.current).length > 0) {
+      setPrevRanks({ ...prevRanksRef.current });
+    } else {
+      setPrevRanks(currentSnapshot);
+    }
+    prevRanksRef.current = currentSnapshot;
   }, [rankedCandidates]);
 
-  const updateWeight = (key: WeightKey, val: number) => {
-    const snapshot: Record<string, number> = {};
-    rankedCandidates.forEach((c, idx) => {
-      snapshot[c.id] = idx + 1;
-    });
-    setPrevRanks(snapshot);
+  const issueLookup = useMemo(() => {
+    const map = new Map<string, any>();
+    for (const iss of sampleQuery.data?.issues ?? []) {
+      if (iss?.id) map.set(String(iss.id), iss);
+    }
+    return map;
+  }, [sampleQuery.data?.issues]);
 
-    setWeights((prev) => ({
-      ...prev,
-      [key]: val,
-    }));
-  };
-
-  const applyPreset = (presetWeights: Weights) => {
-    const snapshot: Record<string, number> = {};
-    rankedCandidates.forEach((c, idx) => {
-      snapshot[c.id] = idx + 1;
-    });
-    setPrevRanks(snapshot);
-    setWeights(presetWeights);
-  };
+  const activeSkillsSet = useMemo(() => {
+    const set = new Set<string>();
+    const skMap = activeChoice?.raw?.["skills"] as Record<string, any> | undefined;
+    if (skMap && typeof skMap === "object") {
+      for (const k of Object.keys(skMap)) {
+        set.add(k.toLowerCase());
+      }
+    }
+    return set;
+  }, [activeChoice]);
 
   const normalizeWeights = () => {
     if (totalWeight === 0) return;
     const factor = 100 / totalWeight;
-    const keys: WeightKey[] = [
+    const keys: SignalKey[] = [
       "skill_match",
       "difficulty_match",
       "responsiveness",
@@ -375,6 +312,19 @@ function SimulatorPage() {
     setWeights(normalized as Weights);
   };
 
+  if (sampleQuery.isPending) {
+    return <LoadingState rows={4} label="Connecting to C++ ranking simulator" />;
+  }
+
+  if (sampleQuery.isError) {
+    return <ErrorState error={sampleQuery.error} onRetry={() => sampleQuery.refetch()} />;
+  }
+
+  const activeCapability =
+    activeChoice?.raw?.["capability"] != null
+      ? Math.round(Number(activeChoice.raw["capability"]))
+      : "—";
+
   return (
     <div className="space-y-8">
       {/* Surface Header */}
@@ -386,14 +336,21 @@ function SimulatorPage() {
                 <SlidersHorizontal className="size-4" />
               </span>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                Recommendation Preferences
+                What-If Algorithm Simulator
               </h1>
             </div>
             <p className="mt-1.5 text-sm text-slate-600 max-w-2xl leading-relaxed">
-              Fine-tune matching priorities to align recommendations with your goals. The candidate
-              pool dynamically updates in real time.
+              Adjust factor weights and watch the native C++ ranking engine re-score candidates in
+              real time using the deterministic 6-factor model.
             </p>
           </div>
+
+          {rankQuery.data?.algorithm_version && (
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-mono text-xs text-slate-700 shadow-2xs">
+              <Cpu className="size-3.5 text-blue-600" />
+              <span>Engine: {rankQuery.data.algorithm_version}</span>
+            </div>
+          )}
         </div>
 
         {/* Quick Presets */}
@@ -402,15 +359,15 @@ function SimulatorPage() {
             Presets:
           </span>
           {PRESETS.map((p) => {
-            const isMatch = (Object.keys(p.weights) as WeightKey[]).every(
+            const isMatch = (Object.keys(p.weights) as SignalKey[]).every(
               (k) => weights[k] === p.weights[k],
             );
             return (
               <button
                 key={p.name}
-                onClick={() => applyPreset(p.weights)}
+                onClick={() => setWeights(p.weights)}
                 className={cn(
-                  "rounded-full border px-3 py-1 text-xs font-medium transition-all active:scale-[0.98]",
+                  "rounded-full border px-3 py-1 text-xs font-medium transition-all active:scale-[0.98] cursor-pointer",
                   isMatch
                     ? "border-blue-600 bg-blue-50 text-blue-700 font-semibold shadow-xs"
                     : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
@@ -427,7 +384,7 @@ function SimulatorPage() {
             variant="ghost"
             onClick={() => {
               const defaultPreset = PRESETS[0];
-              if (defaultPreset) applyPreset(defaultPreset.weights);
+              if (defaultPreset) setWeights(defaultPreset.weights);
             }}
             className="ml-auto h-7 text-xs text-slate-500 hover:text-slate-900"
           >
@@ -437,7 +394,7 @@ function SimulatorPage() {
         </div>
       </div>
 
-      {/* Main Grid: Fader Board (Left) & Live Ranked Stream (Right) */}
+      {/* Main Grid: Fader Board (Left) & Live C++ Ranked Stream (Right) */}
       <div className="grid gap-6 lg:grid-cols-12">
         {/* Left Column: Hardware Fader Sliders */}
         <div className="lg:col-span-5 space-y-5">
@@ -445,9 +402,9 @@ function SimulatorPage() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
-                  Matching Preferences
+                  Factor Weights
                 </h2>
-                <p className="text-xs text-slate-500">Relative influence on ranking order</p>
+                <p className="text-xs text-slate-500">Sent live to C++ ranking subprocess</p>
               </div>
 
               <div className="flex items-center gap-2">
@@ -464,7 +421,7 @@ function SimulatorPage() {
                 {totalWeight !== 100 && (
                   <button
                     onClick={normalizeWeights}
-                    className="text-[11px] text-blue-600 hover:underline font-mono font-medium"
+                    className="text-[11px] text-blue-600 hover:underline font-mono font-medium cursor-pointer"
                     title="Auto-normalize to sum to 100%"
                   >
                     Normalize
@@ -473,22 +430,22 @@ function SimulatorPage() {
               </div>
             </div>
 
-            {/* Persona Selector inside Fader Board */}
+            {/* Persona Selector */}
             <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/80 p-3.5 space-y-2">
               <label className="text-xs font-semibold text-slate-700 flex items-center justify-between">
-                <span>Active Contributor Persona</span>
+                <span>Active Contributor Profile</span>
                 <span className="font-mono text-blue-700 text-[11px] font-bold">
-                  Capability: {activePersona.capability}/100
+                  Capability: {activeCapability}/100
                 </span>
               </label>
-              <div className="grid grid-cols-3 gap-1.5">
-                {PERSONAS.map((p) => (
+              <div className="grid grid-cols-2 gap-1.5">
+                {profileChoices.map((p) => (
                   <button
                     key={p.id}
-                    onClick={() => setSelectedPersona(p.id)}
+                    onClick={() => setSelectedPersonaId(p.id)}
                     className={cn(
-                      "rounded-lg border p-2 text-left transition-all active:scale-[0.98]",
-                      selectedPersona === p.id
+                      "rounded-lg border p-2 text-left transition-all active:scale-[0.98] cursor-pointer",
+                      activeChoice?.id === p.id
                         ? "border-2 border-blue-600 bg-blue-50/60 shadow-xs"
                         : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
                     )}
@@ -524,7 +481,12 @@ function SimulatorPage() {
                       max={100}
                       step={5}
                       onValueChange={([v]) => {
-                        if (v != null) updateWeight(f.key, v);
+                        if (v != null) {
+                          setWeights((prev) => ({
+                            ...prev,
+                            [f.key]: v,
+                          }));
+                        }
                       }}
                       className="cursor-pointer py-1"
                     />
@@ -542,142 +504,199 @@ function SimulatorPage() {
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 flex items-center gap-2">
               <Zap className="size-4 text-amber-500" />
-              Dynamic Candidate Ranking ({rankedCandidates.length} evaluated)
+              C++ Engine Output ({rankedCandidates.length} evaluated)
             </h2>
-            <span className="text-xs text-slate-500 font-medium">
-              Sorted by recomputed match score
+            <span className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+              {rankQuery.isFetching && <Loader2 className="size-3 animate-spin text-blue-600" />}
+              {rankQuery.isFetching ? "Re-ranking in C++…" : "Live C++ engine ranking"}
             </span>
           </div>
 
-          <div className="space-y-3">
-            {rankedCandidates.map((candidate, index) => {
-              const currentRank = index + 1;
-              const prevRank = prevRanks[candidate.id] ?? currentRank;
-              const rankDelta = prevRank - currentRank;
+          {rankQuery.isError ? (
+            <ErrorState error={rankQuery.error} onRetry={() => rankQuery.refetch()} />
+          ) : rankQuery.isPending && rankedCandidates.length === 0 ? (
+            <LoadingState rows={4} label="Running C++ ranking engine" />
+          ) : (
+            <div className="space-y-3">
+              {rankedCandidates.map((candidate, index) => {
+                const cId = String(candidate.id);
+                const origIssue = issueLookup.get(cId) || {};
+                const sc = candidate.scores || {};
+                const ew = candidate.effective_weights || {};
 
-              return (
-                <div
-                  key={candidate.id}
-                  className="rounded-xl border border-slate-200/90 bg-white p-4.5 shadow-xs transition-all duration-200 hover:border-slate-300 hover:shadow-sm"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3">
-                      {/* Rank Badge with movement indicator */}
-                      <div className="flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 min-w-12 text-center">
-                        <span className="font-mono text-base font-bold text-slate-900">
-                          #{currentRank}
-                        </span>
-                        {rankDelta > 0 ? (
-                          <span className="flex items-center text-[10px] font-mono font-bold text-emerald-700">
-                            <ArrowUpRight className="size-3" />+{rankDelta}
-                          </span>
-                        ) : rankDelta < 0 ? (
-                          <span className="flex items-center text-[10px] font-mono font-bold text-rose-700">
-                            <ArrowDownRight className="size-3" />
-                            {rankDelta}
-                          </span>
-                        ) : (
-                          <span className="flex items-center text-[10px] font-mono text-slate-400">
-                            <Minus className="size-2.5" />
-                          </span>
-                        )}
-                      </div>
+                const currentRank = index + 1;
+                const prevRank = prevRanks[cId] ?? currentRank;
+                const rankDelta = prevRank - currentRank;
 
-                      {/* Issue Details */}
-                      <div>
-                        <div className="flex items-center gap-2 text-xs text-slate-500">
-                          <span className="font-mono text-slate-900 font-bold">
-                            {candidate.repo}
+                const techs: string[] = Array.isArray(origIssue.technologies)
+                  ? origIssue.technologies
+                      .map((t: any) => (typeof t === "string" ? t : t?.technology))
+                      .filter(Boolean)
+                  : [];
+
+                const repo = candidate.repository_full_name || origIssue.repository_full_name || "";
+                const num = candidate.issue_number || origIssue.issue_number || "";
+                const issueUrl = candidate.issue_url || origIssue.issue_url || "#";
+                const finalScore =
+                  typeof sc.final_score === "number" ? Math.round(sc.final_score * 10) / 10 : "—";
+
+                return (
+                  <div
+                    key={cId}
+                    className="rounded-xl border border-slate-200/90 bg-white p-4.5 shadow-xs transition-all duration-200 hover:border-slate-300 hover:shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        {/* Rank Badge with movement indicator */}
+                        <div className="flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 min-w-12 text-center">
+                          <span className="font-mono text-base font-bold text-slate-900">
+                            #{currentRank}
                           </span>
-                          <span className="font-mono text-slate-500">#{candidate.number}</span>
-                        </div>
-                        <h3 className="mt-1 text-sm font-bold text-slate-900 leading-snug line-clamp-1">
-                          {candidate.title}
-                        </h3>
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          {candidate.technologies.map((t) => (
-                            <span
-                              key={t}
-                              className={cn(
-                                "rounded px-1.5 py-0.5 font-mono text-[10px]",
-                                activePersona.skills.includes(t)
-                                  ? "border border-emerald-300 bg-emerald-50 text-emerald-800 font-semibold"
-                                  : "border border-slate-200 bg-slate-50 text-slate-600 font-medium",
-                              )}
-                            >
-                              {t}
+                          {rankDelta > 0 ? (
+                            <span className="flex items-center text-[10px] font-mono font-bold text-emerald-700">
+                              <ArrowUpRight className="size-3" />+{rankDelta}
                             </span>
-                          ))}
+                          ) : rankDelta < 0 ? (
+                            <span className="flex items-center text-[10px] font-mono font-bold text-rose-700">
+                              <ArrowDownRight className="size-3" />
+                              {rankDelta}
+                            </span>
+                          ) : (
+                            <span className="flex items-center text-[10px] font-mono text-slate-400">
+                              <Minus className="size-2.5" />
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Issue Details */}
+                        <div>
+                          <div className="flex items-center gap-2 text-xs text-slate-500">
+                            <span className="font-mono text-slate-900 font-bold">{repo}</span>
+                            {num && <span className="font-mono text-slate-500">#{num}</span>}
+                          </div>
+                          <h3 className="mt-1 text-sm font-bold text-slate-900 leading-snug line-clamp-1">
+                            {candidate.title || origIssue.title}
+                          </h3>
+                          {techs.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {techs.map((t) => (
+                                <span
+                                  key={t}
+                                  className={cn(
+                                    "rounded px-1.5 py-0.5 font-mono text-[10px]",
+                                    activeSkillsSet.has(t.toLowerCase())
+                                      ? "border border-emerald-300 bg-emerald-50 text-emerald-800 font-semibold"
+                                      : "border border-slate-200 bg-slate-50 text-slate-600 font-medium",
+                                  )}
+                                >
+                                  {t}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Final C++ Engine Score */}
+                      <div className="text-right shrink-0">
+                        <div className="font-mono text-2xl font-bold text-blue-700 tabular-nums">
+                          {finalScore}
+                        </div>
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500">
+                          C++ Engine Score
+                        </div>
+                        <a
+                          href={issueUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-blue-600"
+                        >
+                          Source <ExternalLink className="size-2.5" />
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* Component Factor Contributions (with real availability + effective weights) */}
+                    <div className="mt-3 grid grid-cols-6 gap-1 pt-3 border-t border-slate-100 text-[10px] font-mono text-slate-600 text-center">
+                      <div>
+                        <div className="text-slate-400 font-medium">
+                          S ({Math.round((ew.skill ?? normalizedDecimalWeights.skill_match) * 100)}
+                          %)
+                        </div>
+                        <div className="text-slate-900 font-bold">
+                          {sc.skill_available === false ? "—" : Math.round(sc.skill_match ?? 0)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-slate-400 font-medium">
+                          D (
+                          {Math.round(
+                            (ew.difficulty ?? normalizedDecimalWeights.difficulty_match) * 100,
+                          )}
+                          %)
+                        </div>
+                        <div className="text-slate-900 font-bold">
+                          {sc.difficulty_available === false
+                            ? "—"
+                            : Math.round(sc.difficulty_match ?? 0)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-slate-400 font-medium">
+                          R (
+                          {Math.round(
+                            (ew.responsiveness ?? normalizedDecimalWeights.responsiveness) * 100,
+                          )}
+                          %)
+                        </div>
+                        <div className="text-slate-900 font-bold">
+                          {sc.responsiveness_available === false
+                            ? "—"
+                            : Math.round(sc.responsiveness ?? 0)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-slate-400 font-medium">
+                          H ({Math.round((ew.health ?? normalizedDecimalWeights.repo_health) * 100)}
+                          %)
+                        </div>
+                        <div className="text-slate-900 font-bold">
+                          {sc.health_available === false
+                            ? "—"
+                            : Math.round(sc.repository_health ?? 0)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-slate-400 font-medium">
+                          F ({Math.round((ew.feedback ?? normalizedDecimalWeights.feedback) * 100)}
+                          %)
+                        </div>
+                        <div className="text-slate-900 font-bold">
+                          {sc.feedback_available === false ? "—" : Math.round(sc.feedback ?? 0)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-slate-400 font-medium">
+                          N (
+                          {Math.round((ew.freshness ?? normalizedDecimalWeights.freshness) * 100)}
+                          %)
+                        </div>
+                        <div className="text-slate-900 font-bold">
+                          {sc.freshness_available === false ? "—" : Math.round(sc.freshness ?? 0)}
                         </div>
                       </div>
                     </div>
 
-                    {/* Final Recomputed Score */}
-                    <div className="text-right shrink-0">
-                      <div className="font-mono text-2xl font-bold text-blue-700 tabular-nums">
-                        {candidate.finalScore}
+                    {candidate.explanation && (
+                      <div className="mt-2.5 text-[11px] font-mono text-slate-500 bg-slate-50 rounded-md px-2.5 py-1.5 border border-slate-100 leading-relaxed">
+                        {candidate.explanation}
                       </div>
-                      <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500">
-                        Re-Ranked Score
-                      </div>
-                      <a
-                        href={candidate.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-blue-600"
-                      >
-                        Source <ExternalLink className="size-2.5" />
-                      </a>
-                    </div>
+                    )}
                   </div>
-
-                  {/* Component Factor Contribution Bar */}
-                  <div className="mt-3 grid grid-cols-6 gap-1 pt-3 border-t border-slate-100 text-[10px] font-mono text-slate-600 text-center">
-                    <div>
-                      <div className="text-slate-400 font-medium">S ({weights.skill_match}%)</div>
-                      <div className="text-slate-900 font-bold">
-                        {candidate.computedScores.skill_match}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-slate-400 font-medium">
-                        D ({weights.difficulty_match}%)
-                      </div>
-                      <div className="text-slate-900 font-bold">
-                        {candidate.computedScores.difficulty_match}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-slate-400 font-medium">
-                        R ({weights.responsiveness}%)
-                      </div>
-                      <div className="text-slate-900 font-bold">
-                        {candidate.computedScores.responsiveness}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-slate-400 font-medium">H ({weights.repo_health}%)</div>
-                      <div className="text-slate-900 font-bold">
-                        {candidate.computedScores.repo_health}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-slate-400 font-medium">F ({weights.feedback}%)</div>
-                      <div className="text-slate-900 font-bold">
-                        {candidate.computedScores.feedback}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-slate-400 font-medium">N ({weights.freshness}%)</div>
-                      <div className="text-slate-900 font-bold">
-                        {candidate.computedScores.freshness}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>

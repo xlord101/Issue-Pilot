@@ -258,6 +258,37 @@ export const mockApi: IssuePilotApi = {
       return entry;
     },
   },
+  votes: {
+    async record() {
+      await wait(150);
+      return { status: "success" };
+    },
+    async remove() {
+      await wait(150);
+      return { status: "success" };
+    },
+  },
+  simulator: {
+    async sampleData() {
+      await wait(150);
+      return {
+        profiles: [],
+        issues: [],
+        default_weights: {
+          skill_match: 0.35,
+          difficulty_match: 0.25,
+          responsiveness: 0.15,
+          repo_health: 0.1,
+          feedback: 0.1,
+          freshness: 0.05,
+        },
+      };
+    },
+    async rank() {
+      await wait(150);
+      return { results: [] };
+    },
+  },
   portfolio: {
     async list() {
       await wait();

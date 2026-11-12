@@ -69,6 +69,7 @@ export interface Evidence {
 export interface NormalizedIssue {
   source: Source;
   native_id: string;
+  platform_issue_id?: string | undefined;
   title: string;
   body: string | null;
   /** Real issue URL on the source platform. */
@@ -108,8 +109,13 @@ export interface Recommendation {
   why: string | null;
   created_at: string | null;
   decision: FeedbackDecision | null;
-  /** Demo personalization only: score before the latest feedback adjustment. */
+  /** Score before VoteAffinity personalization delta. */
   previous_score?: number | null;
+  run_id?: string | undefined;
+  user_vote?: 1 | -1 | null | undefined;
+  user_vote_reason?: string | null | undefined;
+  affinity_score?: number | null | undefined;
+  affinity_confidence?: number | null | undefined;
 }
 
 export interface Page<T> {
@@ -188,6 +194,9 @@ export interface TechProfile {
   capability_confidence?: number | null;
   onboarding_completed?: boolean;
   preferences?: Record<string, any>;
+  accepted_count?: number | null;
+  rejected_count?: number | null;
+  completed_count?: number | null;
   repos_analyzed: number | null;
   contributions_analyzed: number | null;
   extraction: ExtractionStatus;

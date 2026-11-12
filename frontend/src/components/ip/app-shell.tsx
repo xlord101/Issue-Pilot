@@ -121,8 +121,11 @@ export function AppShell({ session, children }: { session: Session; children: Re
     queryFn: () => api.profile.me(),
     staleTime: 30000,
   });
-  const capabilityScore =
-    profileQuery.data?.capability != null ? Math.round(profileQuery.data.capability) : 75;
+  const capabilityDisplay = profileQuery.isPending
+    ? "…"
+    : profileQuery.data?.capability != null
+      ? Math.round(profileQuery.data.capability)
+      : "—";
 
   // Load initial collapsed preference from localStorage
   useEffect(() => {
@@ -343,7 +346,7 @@ export function AppShell({ session, children }: { session: Session; children: Re
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100/80 px-3 py-1 text-xs text-slate-700">
               <span className="font-medium text-slate-500">Capability:</span>
-              <span className="font-mono font-bold text-blue-700">{capabilityScore}/100</span>
+              <span className="font-mono font-bold text-blue-700">{capabilityDisplay}/100</span>
               <Link
                 to="/onboarding"
                 className="ml-1 text-[11px] text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-0.5"

@@ -61,8 +61,7 @@ export function IssueCard({ rec }: { rec: Recommendation }) {
             <div>
               <span className="font-semibold text-slate-900">Why recommended: </span>
               <span className="text-slate-600">
-                {rec.why ??
-                  "High alignment with your verified skill profile and maintainer responsiveness."}
+                {rec.why || "6-factor ranking computed from verified repository and skill signals."}
               </span>
             </div>
           </div>

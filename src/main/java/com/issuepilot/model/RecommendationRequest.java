@@ -19,6 +19,10 @@ public class RecommendationRequest {
     public String source_filter;
     public Double min_difficulty;
     public Double max_difficulty;
+    public Double min_score;
+    public Double max_score;
+    public String sort;
+    public Integer offset;
     public String run_id;
     public Integer timeout_seconds;
     public Integer max_retries;

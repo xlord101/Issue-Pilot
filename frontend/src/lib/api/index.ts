@@ -62,6 +62,29 @@ export interface IssuePilotApi {
       reason?: string,
     ): Promise<T.FeedbackEntry>;
   };
+  votes: {
+    record(payload: {
+      source: T.Source;
+      platform_issue_id: string;
+      vote: 1 | -1;
+      reason?: string;
+      recommendation_run_id?: string;
+    }): Promise<unknown>;
+    remove(payload: { source: T.Source; platform_issue_id: string }): Promise<unknown>;
+  };
+  simulator: {
+    sampleData(): Promise<{
+      profiles: any[];
+      issues: any[];
+      default_weights: Record<T.SignalKey, number>;
+    }>;
+    rank(payload: {
+      profile?: any;
+      profileId?: string;
+      weights: Record<T.SignalKey, number>;
+      candidates?: any[];
+    }): Promise<any>;
+  };
   portfolio: { list(): Promise<T.PortfolioItem[]> };
   profile: { me(): Promise<T.TechProfile> };
   notifications: { status(): Promise<T.NotificationChannel[]> };

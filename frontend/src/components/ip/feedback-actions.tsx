@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Check, CheckCheck, ExternalLink, ThumbsDown, ThumbsUp, X } from "lucide-react";
 import { toast } from "sonner";
@@ -6,6 +6,14 @@ import { Button } from "@/components/ui/button";
 import { api, type FeedbackDecision, type Recommendation } from "@/lib/api";
 import { StatusBadge } from "./badges";
 import { cn } from "@/lib/utils";
+
+const LIKE_REASONS = [
+  { id: "strong_tech_fit", label: "Strong tech stack fit" },
+  { id: "right_complexity", label: "Right complexity" },
+  { id: "clear_scope", label: "Clear scope / repro" },
+  { id: "active_repo", label: "Great repo / maintainer" },
+  { id: "interesting_problem", label: "Interesting problem" },
+];
 
 const DISLIKE_REASONS = [
   { id: "wrong_stack", label: "Not my tech stack" },
@@ -17,32 +25,121 @@ const DISLIKE_REASONS = [
 
 export function FeedbackActions({ rec }: { rec: Recommendation }) {
   const qc = useQueryClient();
-  const [vote, setVote] = useState<"like" | "dislike" | null>(null);
-  const [showReasons, setShowReasons] = useState(false);
-  const [selectedReason, setSelectedReason] = useState<string | null>(null);
+  const initialVote = rec.user_vote === 1 ? "like" : rec.user_vote === -1 ? "dislike" : null;
 
-  const m = useMutation({
-    mutationFn: ({ decision, reason }: { decision: FeedbackDecision; reason?: string }) =>
-      api.feedback.submit(rec.id, decision, reason),
-    onSuccess: (_r, { decision, reason }) => {
-      const reasonLabel = DISLIKE_REASONS.find((r) => r.id === reason)?.label;
+  const [vote, setVote] = useState<"like" | "dislike" | null>(initialVote);
+  const [reasonDrawer, setReasonDrawer] = useState<"like" | "dislike" | null>(null);
+  const [selectedReason, setSelectedReason] = useState<string | null>(rec.user_vote_reason ?? null);
+  const [localDecision, setLocalDecision] = useState<FeedbackDecision | null>(rec.decision);
+
+  useEffect(() => {
+    setVote(rec.user_vote === 1 ? "like" : rec.user_vote === -1 ? "dislike" : null);
+    setSelectedReason(rec.user_vote_reason ?? null);
+    setLocalDecision(rec.decision);
+  }, [rec.id, rec.user_vote, rec.user_vote_reason, rec.decision]);
+
+  const platformIssueId = rec.issue.platform_issue_id || rec.id || rec.issue.native_id;
+
+  const voteMutation = useMutation({
+    mutationFn: async (vars: {
+      action: "set" | "clear";
+      voteVal?: 1 | -1;
+      reason?: string;
+      decisionAlso?: FeedbackDecision;
+    }) => {
+      if (vars.action === "clear") {
+        await api.votes.remove({
+          source: rec.issue.source,
+          platform_issue_id: platformIssueId,
+        });
+        return vars;
+      }
+
+      await api.votes.record({
+        source: rec.issue.source,
+        platform_issue_id: platformIssueId,
+        vote: vars.voteVal!,
+        ...(vars.reason ? { reason: vars.reason } : {}),
+        ...(rec.run_id ? { recommendation_run_id: rec.run_id } : {}),
+      });
+
+      if (vars.decisionAlso) {
+        await api.feedback.submit(rec.id, vars.decisionAlso, vars.reason);
+      }
+      return vars;
+    },
+    onSuccess: (vars) => {
+      if (vars.action === "clear") {
+        toast.info("Vote removed from your preference history");
+      } else if (vars.voteVal === 1) {
+        const label = LIKE_REASONS.find((r) => r.id === vars.reason)?.label;
+        toast.success(
+          label ? `Saved positive signal: ${label}` : "Saved to your liked preference profile",
+          {
+            description:
+              "C++ VoteAffinity will boost similar technologies, labels, and difficulty levels.",
+          },
+        );
+      } else {
+        const label = DISLIKE_REASONS.find((r) => r.id === vars.reason)?.label;
+        toast.success(label ? `Feedback saved: ${label}` : "Saved negative signal", {
+          description:
+            vars.reason === "mute_repo"
+              ? `Future recommendations will exclude ${rec.issue.repo_key}.`
+              : "C++ VoteAffinity will de-prioritize similar candidate profiles.",
+        });
+      }
+      qc.invalidateQueries({ queryKey: ["recommendations"] });
+      qc.invalidateQueries({ queryKey: ["feedback"] });
+    },
+    onError: (e) => {
+      toast.error("Couldn't save vote", {
+        description: e instanceof Error ? e.message : undefined,
+      });
+    },
+  });
+
+  const decisionMutation = useMutation({
+    mutationFn: async ({ decision, reason }: { decision: FeedbackDecision; reason?: string }) => {
+      await api.feedback.submit(rec.id, decision, reason);
+      if (decision === "accepted" && vote !== "like") {
+        await api.votes
+          .record({
+            source: rec.issue.source,
+            platform_issue_id: platformIssueId,
+            vote: 1,
+            ...(reason ? { reason } : {}),
+            ...(rec.run_id ? { recommendation_run_id: rec.run_id } : {}),
+          })
+          .catch(() => {
+            /* keep feedback even if vote call fails */
+          });
+      }
+      return decision;
+    },
+    onSuccess: (decision) => {
+      setLocalDecision(decision);
+      if (decision === "accepted" && vote !== "like") {
+        setVote("like");
+      }
       toast.success(
         decision === "accepted"
           ? "Recommendation accepted"
           : decision === "completed"
             ? "Marked completed"
-            : reasonLabel
-              ? `Feedback saved: De-prioritizing ${reasonLabel.toLowerCase()}`
-              : "Recommendation dismissed",
+            : "Recommendation dismissed",
         {
           description:
             decision === "accepted"
-              ? "Preferences adjusted. Real-world PRs happen on the native platform repository."
-              : "Algorithm weights updated to de-prioritize similar candidate profiles.",
+              ? "Preference profile updated. Open the issue on the native platform to start."
+              : decision === "completed"
+                ? "Completion metric updated for future difficulty calibration."
+                : "Algorithm weights updated.",
         },
       );
       qc.invalidateQueries({ queryKey: ["recommendations"] });
       qc.invalidateQueries({ queryKey: ["feedback"] });
+      qc.invalidateQueries({ queryKey: ["profile"] });
     },
     onError: (e) =>
       toast.error("Couldn't save feedback", {
@@ -53,36 +150,52 @@ export function FeedbackActions({ rec }: { rec: Recommendation }) {
   const handleVote = (type: "like" | "dislike") => {
     if (vote === type) {
       setVote(null);
-      setShowReasons(false);
+      setReasonDrawer(null);
       setSelectedReason(null);
-      toast.info("Vote cleared");
+      voteMutation.mutate({ action: "clear" });
       return;
     }
 
     setVote(type);
+    setSelectedReason(null);
+    setReasonDrawer(type);
 
-    if (type === "like") {
-      setShowReasons(false);
-      setSelectedReason(null);
-      m.mutate({ decision: "accepted" });
-    } else {
-      setShowReasons(true);
+    // Record the vote immediately so it is never lost even if the user skips picking a tag
+    voteMutation.mutate({
+      action: "set",
+      voteVal: type === "like" ? 1 : -1,
+    });
+  };
+
+  const handleReasonSelect = (type: "like" | "dislike", reasonId: string) => {
+    setSelectedReason(reasonId);
+    setReasonDrawer(null);
+    voteMutation.mutate({
+      action: "set",
+      voteVal: type === "like" ? 1 : -1,
+      reason: reasonId,
+      decisionAlso: type === "dislike" ? "rejected" : undefined,
+    });
+    if (type === "dislike") {
+      setLocalDecision("rejected");
     }
   };
 
-  const handleReasonSelect = (reasonId: string) => {
-    setSelectedReason(reasonId);
-    setShowReasons(false);
-    m.mutate({ decision: "rejected", reason: reasonId });
-  };
+  const activeReasonLabel =
+    vote === "like"
+      ? LIKE_REASONS.find((r) => r.id === selectedReason)?.label
+      : DISLIKE_REASONS.find((r) => r.id === selectedReason)?.label;
+
+  const isBusy = voteMutation.isPending || decisionMutation.isPending;
 
   return (
     <div className="flex flex-col gap-2.5 w-full">
       <div className="flex flex-wrap items-center justify-between gap-3 w-full">
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
           <Button
             size="sm"
             variant="ghost"
+            disabled={isBusy}
             onClick={() => handleVote("like")}
             title="Recommend more issues like this"
             className={cn(
@@ -98,6 +211,7 @@ export function FeedbackActions({ rec }: { rec: Recommendation }) {
           <Button
             size="sm"
             variant="ghost"
+            disabled={isBusy}
             onClick={() => handleVote("dislike")}
             title="Recommend fewer issues like this"
             className={cn(
@@ -110,9 +224,17 @@ export function FeedbackActions({ rec }: { rec: Recommendation }) {
             <ThumbsDown className="size-3.5 mr-1" />
             Unfit
           </Button>
-          {selectedReason && (
-            <span className="text-[11px] font-medium text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md">
-              {DISLIKE_REASONS.find((r) => r.id === selectedReason)?.label}
+
+          {activeReasonLabel && (
+            <span
+              className={cn(
+                "text-[11px] font-medium px-2 py-0.5 rounded-md border",
+                vote === "like"
+                  ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                  : "text-rose-600 bg-rose-50 border-rose-200",
+              )}
+            >
+              {activeReasonLabel}
             </span>
           )}
         </div>
@@ -129,30 +251,30 @@ export function FeedbackActions({ rec }: { rec: Recommendation }) {
             </a>
           </Button>
 
-          {rec.decision === "accepted" ? (
+          {localDecision === "accepted" ? (
             <>
               <StatusBadge tone="success">Accepted</StatusBadge>
               <Button
                 size="sm"
                 variant="outline"
-                disabled={m.isPending}
-                onClick={() => m.mutate({ decision: "completed" })}
+                disabled={isBusy}
+                onClick={() => decisionMutation.mutate({ decision: "completed" })}
                 className="h-8 border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 active:scale-[0.98]"
               >
                 <CheckCheck className="size-3.5 mr-1" />
                 Complete
               </Button>
             </>
-          ) : rec.decision ? (
-            <StatusBadge tone={rec.decision === "rejected" ? "danger" : "success"}>
-              {rec.decision}
+          ) : localDecision ? (
+            <StatusBadge tone={localDecision === "rejected" ? "danger" : "success"}>
+              {localDecision}
             </StatusBadge>
           ) : (
             <>
               <Button
                 size="sm"
-                disabled={m.isPending}
-                onClick={() => m.mutate({ decision: "accepted" })}
+                disabled={isBusy}
+                onClick={() => decisionMutation.mutate({ decision: "accepted" })}
                 className="h-8 bg-blue-600 text-white hover:bg-blue-700 font-medium shadow-xs active:scale-[0.98]"
               >
                 <Check className="size-3.5 mr-1" />
@@ -161,10 +283,10 @@ export function FeedbackActions({ rec }: { rec: Recommendation }) {
               <Button
                 size="sm"
                 variant="ghost"
-                disabled={m.isPending}
+                disabled={isBusy}
                 onClick={() => {
                   setVote("dislike");
-                  setShowReasons(true);
+                  setReasonDrawer("dislike");
                 }}
                 className="h-8 text-slate-500 hover:text-rose-600 hover:bg-rose-50 active:scale-[0.98]"
               >
@@ -176,29 +298,45 @@ export function FeedbackActions({ rec }: { rec: Recommendation }) {
         </div>
       </div>
 
-      {/* Dislike Reason 1-Click Chip Drawer */}
-      {showReasons && (
-        <div className="flex flex-wrap items-center gap-1.5 pt-1.5 pb-1 px-3 rounded-lg bg-slate-50 border border-slate-200 text-xs animate-in fade-in slide-in-from-top-1 duration-150">
-          <span className="text-slate-500 text-[11px] font-medium mr-1">
-            Why wasn't this a fit?
+      {/* Like / Dislike Reason 1-Click Chip Drawer */}
+      {reasonDrawer && (
+        <div
+          className={cn(
+            "flex flex-wrap items-center gap-1.5 py-2 px-3 rounded-lg border text-xs animate-in fade-in slide-in-from-top-1 duration-150",
+            reasonDrawer === "like"
+              ? "bg-emerald-50/60 border-emerald-200"
+              : "bg-slate-50 border-slate-200",
+          )}
+        >
+          <span className="text-slate-600 text-[11px] font-medium mr-1">
+            {reasonDrawer === "like"
+              ? "What made this a good fit? (optional)"
+              : "Why wasn't this a fit? (optional)"}
           </span>
-          {DISLIKE_REASONS.map((r) => (
+          {(reasonDrawer === "like" ? LIKE_REASONS : DISLIKE_REASONS).map((r) => (
             <button
               key={r.id}
               type="button"
-              onClick={() => handleReasonSelect(r.id)}
-              className="px-2 py-0.5 rounded-md border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-100 text-slate-700 text-[11px] font-medium transition-colors active:scale-[0.97]"
+              disabled={isBusy}
+              onClick={() => handleReasonSelect(reasonDrawer, r.id)}
+              className={cn(
+                "px-2 py-0.5 rounded-md border text-[11px] font-medium transition-colors active:scale-[0.97] cursor-pointer",
+                selectedReason === r.id
+                  ? reasonDrawer === "like"
+                    ? "border-emerald-400 bg-emerald-100 text-emerald-800"
+                    : "border-rose-400 bg-rose-100 text-rose-800"
+                  : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-100 text-slate-700",
+              )}
             >
               {r.label}
             </button>
           ))}
           <button
             type="button"
-            onClick={() => setShowReasons(false)}
-            className="text-slate-400 hover:text-slate-600 text-[11px] ml-auto"
-            title="Dismiss"
+            onClick={() => setReasonDrawer(null)}
+            className="text-slate-400 hover:text-slate-700 text-[11px] ml-auto cursor-pointer"
           >
-            Cancel
+            Done
           </button>
         </div>
       )}

@@ -77,8 +77,8 @@ function DetailPage() {
                   Deterministic Ranking Justification
                 </h2>
                 <p className="mt-2 text-sm text-slate-700 leading-relaxed">
-                  {rec.why ??
-                    "High alignment with your verified skill profile, recent activity in this language, and fast maintainer response time."}
+                  {rec.why ||
+                    "6-factor ranking computed from verified repository and skill signals."}
                 </p>
               </section>
 
