@@ -9,8 +9,8 @@ export function IssueCard({ rec }: { rec: Recommendation }) {
   const { issue } = rec;
 
   return (
-    <article className="group relative rounded-xl border border-slate-200/90 bg-white transition-all duration-180 hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5 shadow-xs">
-      <div className="grid gap-6 p-5 lg:grid-cols-[1fr_270px]">
+    <article className="group relative overflow-hidden rounded-xl border border-slate-200/90 bg-white transition-all duration-180 hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5 shadow-xs">
+      <div className="grid min-w-0 gap-6 p-5 lg:grid-cols-[1fr_270px]">
         <div className="min-w-0 flex flex-col justify-between">
           <div>
             <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-500">
@@ -22,7 +22,7 @@ export function IssueCard({ rec }: { rec: Recommendation }) {
               </div>
             </div>
 
-            <h2 className="mt-2.5 text-base sm:text-lg font-bold tracking-tight leading-snug text-slate-900">
+            <h2 className="mt-2.5 text-base sm:text-lg font-bold tracking-tight leading-snug text-slate-900 break-words [overflow-wrap:anywhere]">
               <Link
                 to="/app/recommendations/$id"
                 params={{ id: rec.id }}
@@ -33,7 +33,7 @@ export function IssueCard({ rec }: { rec: Recommendation }) {
             </h2>
 
             {issue.body && (
-              <p className="mt-2 text-sm text-slate-600 line-clamp-2 leading-relaxed">
+              <p className="mt-2 text-sm text-slate-600 line-clamp-2 leading-relaxed break-words [overflow-wrap:anywhere]">
                 {issue.body}
               </p>
             )}

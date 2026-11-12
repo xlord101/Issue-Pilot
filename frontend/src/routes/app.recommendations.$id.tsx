@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Sparkles, ExternalLink, FileText } from "lucide-react";
-import { LabelList, SourceBadge, VerificationBadge } from "@/components/ip/badges";
+import { LabelList, SourceBadge, VerificationBadge, sourceLabel } from "@/components/ip/badges";
 import { FeedbackActions } from "@/components/ip/feedback-actions";
 import { ScoreBreakdown, ScoreTotal } from "@/components/ip/score";
 import { EmptyState, QueryState } from "@/components/ip/states";
@@ -40,17 +40,19 @@ function DetailPage() {
           <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
             <div className="min-w-0 space-y-6">
               {/* Header Box */}
-              <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm">
+              <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm">
                 <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-500">
                   <SourceBadge source={rec.issue.source} />
-                  <span className="font-mono text-slate-900 font-bold">{rec.issue.repo_key}</span>
+                  <span className="font-mono text-slate-900 font-bold break-all">
+                    {rec.issue.repo_key}
+                  </span>
                   <span className="font-mono text-slate-500">#{rec.issue.native_id}</span>
                   <div className="ml-auto">
                     <VerificationBadge issue={rec.issue} />
                   </div>
                 </div>
 
-                <h1 className="mt-3 text-xl sm:text-2xl font-bold tracking-tight text-slate-900 leading-snug">
+                <h1 className="mt-3 text-xl sm:text-2xl font-bold tracking-tight text-slate-900 leading-snug break-words [overflow-wrap:anywhere]">
                   {rec.issue.title}
                 </h1>
 
@@ -76,13 +78,13 @@ function DetailPage() {
               </section>
 
               {/* Issue Description */}
-              <section className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm space-y-3">
+              <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm space-y-3">
                 <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 flex items-center gap-2">
                   <FileText className="size-4 text-blue-600" />
                   Issue Description
                 </h2>
                 {rec.issue.body ? (
-                  <p className="whitespace-pre-wrap text-sm text-slate-700 leading-relaxed font-sans">
+                  <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm text-slate-700 leading-relaxed font-sans">
                     {rec.issue.body}
                   </p>
                 ) : (
@@ -130,7 +132,9 @@ function DetailPage() {
                         <div className="text-[10px] font-mono uppercase tracking-wider text-blue-700 font-bold">
                           {ev.signal ? SIGNAL_META[ev.signal]?.label : "General Factor"}
                         </div>
-                        <p className="text-slate-700">{ev.description}</p>
+                        <p className="text-slate-700 break-words [overflow-wrap:anywhere]">
+                          {ev.description}
+                        </p>
                         {ev.url && (
                           <a
                             href={ev.url}
@@ -174,7 +178,8 @@ function DetailPage() {
                 className="w-full bg-blue-600 text-white hover:bg-blue-700 font-medium shadow-xs active:scale-[0.98]"
               >
                 <a href={rec.issue.url} target="_blank" rel="noreferrer">
-                  Open on {rec.issue.source} <ExternalLink className="size-3.5 ml-1.5" />
+                  Open on {sourceLabel(rec.issue.source)}{" "}
+                  <ExternalLink className="size-3.5 ml-1.5" />
                 </a>
               </Button>
             </aside>

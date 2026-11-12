@@ -46,7 +46,7 @@ const PLATFORMS: { id: "all" | Source; label: string }[] = [
   { id: "all", label: "All Platforms" },
   { id: "github", label: "GitHub" },
   { id: "gitlab", label: "GitLab" },
-  { id: "gitea", label: "Codeberg" },
+  { id: "codeberg", label: "Codeberg" },
   { id: "bugzilla", label: "Bugzilla" },
 ];
 
@@ -172,7 +172,7 @@ function ExplorePage() {
   const totalInPool = q.data?.totalInPool ?? issues.length;
 
   return (
-    <div className="space-y-8">
+    <div className="min-w-0 space-y-8">
       {/* Surface Header */}
       <div>
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -314,17 +314,19 @@ function ExplorePage() {
             </span>
           </div>
 
-          <div className="grid gap-4">
+          <div className="grid min-w-0 gap-4">
             {issues.map((issue) => (
               <div
                 key={issue.id}
-                className="group rounded-xl border border-slate-200/90 bg-white p-5 transition-all duration-180 hover:border-slate-300 hover:shadow-md shadow-xs"
+                className="group min-w-0 overflow-hidden rounded-xl border border-slate-200/90 bg-white p-5 transition-all duration-180 hover:border-slate-300 hover:shadow-md shadow-xs"
               >
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                  <div className="space-y-2">
+                <div className="flex min-w-0 flex-col sm:flex-row sm:items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1 space-y-2">
                     <div className="flex flex-wrap items-center gap-2 text-xs">
                       <SourceBadge source={issue.source} />
-                      <span className="font-mono text-slate-900 font-bold">{issue.repo}</span>
+                      <span className="font-mono text-slate-900 font-bold break-all">
+                        {issue.repo}
+                      </span>
                       <span className="font-mono text-slate-500">#{issue.native_id}</span>
                       <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
                         Open &bull; Unassigned
@@ -334,20 +336,20 @@ function ExplorePage() {
                       </span>
                     </div>
 
-                    <h2 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-snug">
+                    <h2 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-snug break-words [overflow-wrap:anywhere]">
                       <a
                         href={issue.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex items-center gap-1.5"
+                        className="flex items-center gap-1.5 break-words [overflow-wrap:anywhere]"
                       >
                         {issue.title}
-                        <ExternalLink className="size-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <ExternalLink className="size-3.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </a>
                     </h2>
 
                     {issue.body && (
-                      <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">
+                      <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed break-words [overflow-wrap:anywhere]">
                         {issue.body}
                       </p>
                     )}
@@ -365,7 +367,8 @@ function ExplorePage() {
                       {issue.labels.map((l) => (
                         <span
                           key={l}
-                          className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 font-medium"
+                          className="max-w-[240px] truncate rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600 font-medium"
+                          title={l}
                         >
                           {l}
                         </span>

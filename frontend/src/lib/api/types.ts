@@ -3,8 +3,8 @@
  * is typed nullable — UI code must handle null explicitly.
  */
 
-export type Source = "github" | "gitlab" | "gitea" | "bugzilla";
-export const SOURCES: Source[] = ["github", "gitlab", "gitea", "bugzilla"];
+export type Source = "github" | "gitlab" | "codeberg" | "gitea" | "bugzilla";
+export const SOURCES: Source[] = ["github", "gitlab", "codeberg", "bugzilla"];
 
 export type SignalKey =
   "skill_match" | "difficulty_match" | "responsiveness" | "repo_health" | "feedback" | "freshness";
@@ -187,9 +187,21 @@ export interface TechSkill {
   evidence_count: number | null;
 }
 
+export interface GitHubAnalysisResult {
+  status: string;
+  userId?: string | null | undefined;
+  repositoriesAnalyzed: number;
+  inferredSkillsCount: number;
+  inferredSkills: TechSkill[];
+  analyzedAt?: string | null | undefined;
+  message?: string | null | undefined;
+}
+
 export interface TechProfile {
   login: string;
   skills: TechSkill[];
+  inferred_skills?: TechSkill[];
+  is_github?: boolean;
   capability?: number | null;
   capability_confidence?: number | null;
   onboarding_completed?: boolean;

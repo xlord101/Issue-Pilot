@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -11,7 +11,7 @@ import {
   type CalibrationData,
 } from "@/components/ip/starter-questionnaire";
 import { pageMeta } from "@/lib/format";
-import { Sparkles, ArrowRight, ShieldCheck } from "lucide-react";
+import { Sparkles, ArrowRight, ShieldCheck, GitBranch, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/onboarding")({
@@ -41,10 +41,36 @@ function OnboardingPage() {
     enabled: Boolean(sessionQuery.data),
   });
 
+  const autoScannedRef = useRef(false);
+  const analyzeMutation = useMutation({
+    mutationFn: () => api.onboarding.analyze(),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ["profile"] });
+      if (res.inferredSkillsCount > 0) {
+        toast.success("GitHub stack detected", {
+          description: `Pre-filled ${res.inferredSkillsCount} technologies from ${res.repositoriesAnalyzed} public repositories.`,
+        });
+      }
+    },
+  });
+  const { mutate: triggerAnalyze } = analyzeMutation;
+
+  useEffect(() => {
+    const profile = profileQuery.data;
+    if (!profile || autoScannedRef.current) return;
+    const hasConfirmed = Boolean(profile.skills && profile.skills.length > 0);
+    const hasInferred = Boolean(profile.inferred_skills && profile.inferred_skills.length > 0);
+    if (profile.is_github && !hasConfirmed && !hasInferred) {
+      autoScannedRef.current = true;
+      triggerAnalyze();
+    }
+  }, [profileQuery.data, triggerAnalyze]);
+
   const saveMutation = useMutation({
     mutationFn: async (data: CalibrationData) => {
-      const allKnownTechs = [
+      const baseTechs = [
         "TypeScript",
+        "JavaScript",
         "Python",
         "React",
         "C++",
@@ -55,8 +81,13 @@ function OnboardingPage() {
         "MongoDB",
         "Docker",
       ];
-      // Any technology from the deck that is not in the active stack is explicitly dismissed
-      const dismissed = allKnownTechs.filter((t) => data.stack[t] === undefined);
+      const inferredNames = (profileQuery.data?.inferred_skills ?? [])
+        .map((s) => s.name)
+        .filter(Boolean);
+      const allKnownTechs = Array.from(new Set([...baseTechs, ...inferredNames]));
+      const activeLower = new Set(Object.keys(data.stack).map((k) => k.toLowerCase()));
+      // Any technology from the deck or inferred scan that is not in the active stack is explicitly dismissed
+      const dismissed = allKnownTechs.filter((t) => !activeLower.has(t.toLowerCase()));
 
       const confirmed_skills = Object.entries(data.stack).map(([tech, score]) => ({
         technology: tech,
@@ -194,6 +225,60 @@ function OnboardingPage() {
                 highest-signal issues.
               </p>
             </div>
+
+            {profileQuery.data?.is_github && (
+              <div className="rounded-xl border border-slate-200/90 bg-white px-4 py-3 shadow-xs flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 text-xs text-slate-700">
+                  <span className="flex size-7 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 shrink-0">
+                    <GitBranch className="size-3.5" />
+                  </span>
+                  {analyzeMutation.isPending ? (
+                    <span>
+                      Scanning your public GitHub repositories &amp; dependency manifests...
+                    </span>
+                  ) : analyzeMutation.isError ? (
+                    <span className="text-rose-700">
+                      GitHub repo scan could not complete automatically. Select your stack below or
+                      retry.
+                    </span>
+                  ) : profileQuery.data.inferred_skills &&
+                    profileQuery.data.inferred_skills.length > 0 ? (
+                    <span>
+                      Detected{" "}
+                      <strong className="font-mono text-slate-900">
+                        {profileQuery.data.inferred_skills.length}
+                      </strong>{" "}
+                      technologies from{" "}
+                      <strong className="font-mono text-slate-900">
+                        {profileQuery.data.repos_analyzed ??
+                          analyzeMutation.data?.repositoriesAnalyzed ??
+                          0}
+                      </strong>{" "}
+                      public GitHub repositories.
+                    </span>
+                  ) : (
+                    <span>
+                      No languages auto-detected from public non-fork GitHub repositories. Pick your
+                      technologies in Step 2.
+                    </span>
+                  )}
+                </div>
+
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={analyzeMutation.isPending}
+                  onClick={() => analyzeMutation.mutate()}
+                  className="h-7 border-slate-200 bg-white hover:bg-slate-50 text-xs text-slate-700 active:scale-[0.98]"
+                >
+                  <RefreshCw
+                    className={`size-3 mr-1.5 ${analyzeMutation.isPending ? "animate-spin" : ""}`}
+                  />
+                  {analyzeMutation.isPending ? "Scanning..." : "Re-scan GitHub"}
+                </Button>
+              </div>
+            )}
 
             <BehavioralCalibrationDeck
               initialProfile={profileQuery.data}

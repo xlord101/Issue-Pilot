@@ -16,6 +16,7 @@ export interface CalibrationData {
 
 const TECH_OPTIONS = [
   "TypeScript",
+  "JavaScript",
   "Python",
   "React",
   "C++",
@@ -103,10 +104,23 @@ export function BehavioralCalibrationDeck({
     let exp: "first_time" | "familiar" | "seasoned" = "familiar";
     let nav: "surgical" | "modular" | "architectural" = "modular";
     let goal: "quick_win" | "deep_dive" | "high_impact" = "deep_dive";
-    let stack: Record<string, number> = {
-      TypeScript: 80,
-      Python: 75,
-      React: 70,
+    let stack: Record<string, number> = {};
+
+    const toSkillMap = (skillsList: NonNullable<TechProfile["skills"]>) => {
+      const loadedStack: Record<string, number> = {};
+      for (const s of skillsList) {
+        if (s.name) {
+          const score = s.strength
+            ? s.strength > 1
+              ? Math.round(s.strength)
+              : Math.round(s.strength * 100)
+            : 75;
+          const canonical =
+            TECH_OPTIONS.find((t) => t.toLowerCase() === s.name.toLowerCase()) || s.name;
+          loadedStack[canonical] = Math.max(30, Math.min(100, score || 75));
+        }
+      }
+      return loadedStack;
     };
 
     if (initialProfile) {
@@ -124,25 +138,31 @@ export function BehavioralCalibrationDeck({
       }
 
       if (initialProfile.skills && initialProfile.skills.length > 0) {
-        const loadedStack: Record<string, number> = {};
-        for (const s of initialProfile.skills) {
-          if (s.name) {
-            const score = s.strength
-              ? s.strength > 1
-                ? Math.round(s.strength)
-                : Math.round(s.strength * 100)
-              : 75;
-            const canonical =
-              TECH_OPTIONS.find((t) => t.toLowerCase() === s.name.toLowerCase()) || s.name;
-            loadedStack[canonical] = Math.max(30, Math.min(100, score || 75));
-          }
+        const loadedStack = toSkillMap(initialProfile.skills);
+        if (Object.keys(loadedStack).length > 0) {
+          stack = loadedStack;
         }
+      } else if (initialProfile.inferred_skills && initialProfile.inferred_skills.length > 0) {
+        const loadedStack = toSkillMap(initialProfile.inferred_skills);
         if (Object.keys(loadedStack).length > 0) {
           stack = loadedStack;
         }
       }
     }
     return { exp, nav, goal, stack };
+  }, [initialProfile]);
+
+  const availableTechOptions = useMemo(() => {
+    const merged = [...TECH_OPTIONS];
+    const seen = new Set(merged.map((t) => t.toLowerCase()));
+    const extras = [...(initialProfile?.skills ?? []), ...(initialProfile?.inferred_skills ?? [])];
+    for (const item of extras) {
+      if (item.name && !seen.has(item.name.toLowerCase())) {
+        seen.add(item.name.toLowerCase());
+        merged.push(item.name);
+      }
+    }
+    return merged;
   }, [initialProfile]);
 
   const [step, setStep] = useState<number>(1);
@@ -414,7 +434,7 @@ export function BehavioralCalibrationDeck({
             </p>
 
             <div className="mt-4 flex flex-wrap gap-2">
-              {TECH_OPTIONS.map((t) => {
+              {availableTechOptions.map((t) => {
                 const selected = selectedTechs[t] !== undefined;
                 return (
                   <button
@@ -434,6 +454,13 @@ export function BehavioralCalibrationDeck({
               })}
             </div>
           </div>
+
+          {Object.keys(selectedTechs).length === 0 && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-xs text-amber-800">
+              Select at least one language or framework above to calibrate your proficiency sliders
+              and generate recommendations.
+            </div>
+          )}
 
           {/* Proficiency Sliders for Selected Techs */}
           {Object.keys(selectedTechs).length > 0 && (

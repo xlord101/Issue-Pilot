@@ -3,23 +3,45 @@ import { cn } from "@/lib/utils";
 import type { NormalizedIssue, Source } from "@/lib/api";
 import { relativeTime, absoluteTime } from "@/lib/format";
 
-const SOURCE_LABEL: Record<Source, string> = {
+const SOURCE_LABEL: Record<string, string> = {
   github: "GitHub",
   gitlab: "GitLab",
-  gitea: "Codeberg/Gitea",
+  codeberg: "Codeberg",
+  gitea: "Codeberg",
   bugzilla: "Bugzilla",
 };
 
-const SOURCE_MARK: Record<Source, string> = {
-  github: "GH",
-  gitlab: "GL",
-  gitea: "CB",
-  bugzilla: "BZ",
+function normalizeSourceKey(source: string | null | undefined): string {
+  return String(source ?? "")
+    .trim()
+    .toLowerCase();
+}
+
+export const sourceLabel = (s: Source | string) => {
+  const key = normalizeSourceKey(s);
+  return SOURCE_LABEL[key] ?? (s || "Source");
 };
 
-export const sourceLabel = (s: Source) => SOURCE_LABEL[s] ?? s;
+function SourceIcon({ sourceKey }: { sourceKey: string }) {
+  if (sourceKey === "github") return <GitHubMark className="size-3.5 text-slate-900 shrink-0" />;
+  if (sourceKey === "gitlab") return <GitLabMark className="size-3.5 text-orange-600 shrink-0" />;
+  if (sourceKey === "codeberg" || sourceKey === "gitea") {
+    return <CodebergMark className="size-3.5 text-blue-600 shrink-0" />;
+  }
+  if (sourceKey === "bugzilla") {
+    return <BugzillaMark className="size-3.5 text-rose-600 shrink-0" />;
+  }
+  return <span className="font-mono text-[10px] font-bold text-slate-900">SRC</span>;
+}
 
-export function SourceBadge({ source, className }: { source: Source; className?: string }) {
+export function SourceBadge({
+  source,
+  className,
+}: {
+  source: Source | string;
+  className?: string;
+}) {
+  const key = normalizeSourceKey(source);
   return (
     <span
       className={cn(
@@ -27,9 +49,7 @@ export function SourceBadge({ source, className }: { source: Source; className?:
         className,
       )}
     >
-      <span className="font-mono text-[10px] font-bold text-slate-900">
-        {SOURCE_MARK[source] ?? "??"}
-      </span>
+      <SourceIcon sourceKey={key} />
       {sourceLabel(source)}
     </span>
   );

@@ -148,7 +148,7 @@ public class GitHubProfileAnalyzerService {
         });
 
         // 5. Persist to ContributorProfile safely (without overwriting confirmed skills)
-        persistInferredSkills(canonicalUserId, finalizedSkills);
+        persistInferredSkills(canonicalUserId, finalizedSkills, analyzedCount);
 
         String nowIso = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
         return new AnalysisResult(
@@ -560,6 +560,10 @@ public class GitHubProfileAnalyzerService {
      * Persists inferred skills safely into ContributorProfile without modifying confirmed skills.
      */
     private void persistInferredSkills(String canonicalUserId, List<InferredSkill> finalizedSkills) {
+        persistInferredSkills(canonicalUserId, finalizedSkills, 0);
+    }
+
+    private void persistInferredSkills(String canonicalUserId, List<InferredSkill> finalizedSkills, int reposAnalyzed) {
         Map<String, Object> userDoc = userRepository.getUser(canonicalUserId);
         ContributorProfile profile;
         if (userDoc != null) {
@@ -578,7 +582,14 @@ public class GitHubProfileAnalyzerService {
             profile.addInferredSkillSafely(skill);
         }
 
+        Map<String, Object> prefs = profile.getPreferences() != null
+                ? new LinkedHashMap<>(profile.getPreferences())
+                : new LinkedHashMap<>();
+        prefs.put("repos_analyzed", reposAnalyzed);
+        profile.setPreferences(prefs);
+
         userRepository.upsertUser(profile);
-        logger.info("Persisted {} inferred skills for user '{}'.", profile.getInferredSkills().size(), canonicalUserId);
+        logger.info("Persisted {} inferred skills ({} repos analyzed) for user '{}'.",
+                profile.getInferredSkills().size(), reposAnalyzed, canonicalUserId);
     }
 }

@@ -36,6 +36,7 @@ export interface IssuePilotApi {
   onboarding: {
     status(): Promise<T.ExtractionStatus>;
     retry(): Promise<T.ExtractionStatus>;
+    analyze(): Promise<T.GitHubAnalysisResult>;
     submitStarterProfile(input: T.StarterProfile): Promise<T.ExtractionStatus>;
     confirmCalibration(input: {
       confirmed_skills: { technology: string; score: number; level: string; category?: string }[];

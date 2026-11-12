@@ -40,7 +40,24 @@ interface BackendSkillEntry {
   technology?: string;
   category?: string;
   score?: number | null;
+  confidence?: number | null;
   evidence_count?: number | null;
+  evidence?: unknown[];
+}
+
+interface BackendAnalyzeResponse {
+  status?: string;
+  userId?: string;
+  user_id?: string;
+  repositoriesAnalyzed?: number;
+  repositories_analyzed?: number;
+  inferredSkillsCount?: number;
+  inferred_skills_count?: number;
+  inferredSkills?: BackendSkillEntry[];
+  inferred_skills?: BackendSkillEntry[];
+  analyzedAt?: string | null;
+  analyzed_at?: string | null;
+  message?: string | null;
 }
 
 interface BackendProfileResponse {
@@ -362,6 +379,34 @@ export const liveApi: IssuePilotApi = {
       return liveApi.onboarding.status();
     },
 
+    async analyze() {
+      const res = await request<BackendAnalyzeResponse>("onboarding.retry", e.onboarding.retry, {
+        method: "POST",
+      });
+      const rawInferred = res?.inferredSkills ?? res?.inferred_skills ?? [];
+      const mappedInferred: T.TechSkill[] = rawInferred.map((s) => {
+        const conf = s.confidence != null ? Number(s.confidence) : 0.7;
+        const pct = Math.max(35, Math.min(95, Math.round(conf * 100)));
+        return {
+          name: s.technology ?? "Unknown",
+          kind: asTechKind(s.category),
+          strength: s.score != null ? Math.round(Number(s.score)) : pct,
+          evidence_count: Array.isArray(s.evidence) ? s.evidence.length : (s.evidence_count ?? 1),
+        };
+      });
+      return {
+        status: res?.status ?? "completed",
+        userId: res?.userId ?? res?.user_id,
+        repositoriesAnalyzed: Number(res?.repositoriesAnalyzed ?? res?.repositories_analyzed ?? 0),
+        inferredSkillsCount: Number(
+          res?.inferredSkillsCount ?? res?.inferred_skills_count ?? mappedInferred.length,
+        ),
+        inferredSkills: mappedInferred,
+        analyzedAt: res?.analyzedAt ?? res?.analyzed_at ?? null,
+        message: res?.message ?? null,
+      };
+    },
+
     async submitStarterProfile(body) {
       await request<unknown>("onboarding.starterProfile", e.onboarding.starterProfile, {
         method: "POST",
@@ -541,10 +586,27 @@ export const liveApi: IssuePilotApi = {
       const skillsList: T.TechSkill[] = profile.skills
         ? Object.values(profile.skills).map((s) => ({
             name: s.technology || "Unknown",
-            kind: "language",
+            kind: asTechKind(s.category),
             strength: s.score != null ? Math.round(Number(s.score)) : null,
             evidence_count: s.evidence_count != null ? Number(s.evidence_count) : null,
           }))
+        : [];
+
+      const inferredList: T.TechSkill[] = Array.isArray(profile.inferred_skills)
+        ? profile.inferred_skills.map((s) => {
+            const conf = s.confidence != null ? Number(s.confidence) : 0.7;
+            const derivedPct = Math.max(35, Math.min(95, Math.round(conf * 100)));
+            return {
+              name: s.technology || "Unknown",
+              kind: asTechKind(s.category),
+              strength: s.score != null ? Math.round(Number(s.score)) : derivedPct,
+              evidence_count: Array.isArray(s.evidence)
+                ? s.evidence.length
+                : s.evidence_count != null
+                  ? Number(s.evidence_count)
+                  : 1,
+            };
+          })
         : [];
 
       const prefs = profile.preferences ?? {};
@@ -558,6 +620,8 @@ export const liveApi: IssuePilotApi = {
             ? String(profile.user_id).replace(/^(github:|local:)/, "")
             : "contributor"),
         skills: skillsList,
+        inferred_skills: inferredList,
+        is_github: isGithub,
         capability: profile.capability != null ? Math.round(Number(profile.capability)) : null,
         capability_confidence:
           profile.capability_confidence != null ? Number(profile.capability_confidence) : null,

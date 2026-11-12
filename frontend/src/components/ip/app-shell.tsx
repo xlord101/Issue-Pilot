@@ -279,7 +279,7 @@ export function AppShell({ session, children }: { session: Session; children: Re
   );
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 antialiased selection:bg-blue-600 selection:text-white font-sans">
+    <div className="min-h-screen overflow-x-hidden bg-[#f8fafc] text-slate-900 antialiased selection:bg-blue-600 selection:text-white font-sans">
       {/* Desktop Collapsible Sidebar */}
       <aside
         className={cn(
@@ -301,7 +301,7 @@ export function AppShell({ session, children }: { session: Session; children: Re
       {/* Main Surface */}
       <div
         className={cn(
-          "transition-all duration-200 ease-in-out",
+          "min-w-0 transition-all duration-200 ease-in-out",
           isCollapsed ? "lg:pl-[72px]" : "lg:pl-64",
         )}
       >
@@ -357,7 +357,10 @@ export function AppShell({ session, children }: { session: Session; children: Re
           </div>
         </header>
 
-        <main key={pathname} className="page-enter mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-10">
+        <main
+          key={pathname}
+          className="page-enter mx-auto min-w-0 max-w-6xl px-4 py-8 sm:px-6 lg:py-10"
+        >
           {children}
         </main>
       </div>

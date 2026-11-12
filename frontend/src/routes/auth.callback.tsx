@@ -51,8 +51,6 @@ function Callback() {
             (profile.onboarding_completed || (profile.skills && profile.skills.length > 0))
           ) {
             navigate({ to: "/app/feed", replace: true });
-          } else if (s.new_user === "false") {
-            navigate({ to: "/app/feed", replace: true });
           } else {
             navigate({ to: "/onboarding", replace: true });
           }
