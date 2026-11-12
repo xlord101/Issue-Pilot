@@ -146,7 +146,7 @@ export async function request<T>(
     );
   }
 
-  if (res.status === 404 || res.status === 501) throw new NotConnectedError(name);
+  if (res.status === 501) throw new NotConnectedError(name);
 
   if (!res.ok) {
     let detail = res.statusText;
@@ -163,9 +163,19 @@ export async function request<T>(
       /* ignore non-JSON error response */
     }
 
-    if (res.status === 401) {
-      // Clear expired or invalidated token to prevent poisoning future authentication attempts
+    if (
+      res.status === 404 &&
+      (!payload || (typeof detail === "string" && detail.startsWith("No static resource")))
+    ) {
+      throw new NotConnectedError(name);
+    }
+
+    if (res.status === 401 && !isPublicEndpoint) {
+      // Clear expired or invalidated token and notify listeners to reset session state
       setStoredAuthToken(null);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("issuepilot:unauthorized"));
+      }
     }
 
     throw new ApiError(

@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { Outlet, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "@/hooks/use-session";
 import type { Role } from "@/lib/api";
 import { AppShell } from "./app-shell";
@@ -19,7 +20,18 @@ export function GatedLayout({
   deniedHint?: ReactNode;
 }) {
   const q = useSession();
+  const qc = useQueryClient();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const onUnauthorized = () => {
+      qc.setQueryData(["session"], null);
+      qc.removeQueries({ queryKey: ["profile"] });
+      navigate({ to: "/login", replace: true });
+    };
+    window.addEventListener("issuepilot:unauthorized", onUnauthorized);
+    return () => window.removeEventListener("issuepilot:unauthorized", onUnauthorized);
+  }, [qc, navigate]);
 
   useEffect(() => {
     if (q.isSuccess && !q.data) navigate({ to: "/login", replace: true });

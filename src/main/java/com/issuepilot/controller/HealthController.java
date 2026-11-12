@@ -4,14 +4,12 @@ import com.issuepilot.config.AppProperties;
 import com.issuepilot.config.MongoConfig;
 import com.issuepilot.service.CppRankingClient;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/health")
 public class HealthController {
 
     private final MongoConfig mongoConfig;
@@ -35,7 +33,16 @@ public class HealthController {
         return schedulerService != null && schedulerService.isRunning();
     }
 
-    @GetMapping
+    @GetMapping("/")
+    public Map<String, Object> rootStatus() {
+        Map<String, Object> info = new LinkedHashMap<>();
+        info.put("service", "issue-pilot-api");
+        info.put("status", "ok");
+        info.put("health", "/api/health");
+        return info;
+    }
+
+    @GetMapping("/api/health")
     public Map<String, Object> healthCheck() {
         boolean atlasOk = mongoConfig.isConnected();
         boolean cppOk = false;

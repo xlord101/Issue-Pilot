@@ -210,10 +210,45 @@ public class RecommendationController {
                 logger.info("No candidates matched strict user criteria; attempting fallback to recent open candidates from repository.");
                 candidates = issueRepository.queryIssues("open", false, null, null, null, null, null, 20, 0);
                 if (candidates.isEmpty()) {
-                    throw new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "No eligible open candidates found in MongoDB Atlas matching the specified criteria. Ingest candidates first or set demo_mode=true."
-                    );
+                    logger.info("Candidate pool currently has 0 eligible open issues; returning graceful empty recommendation response.");
+                    String nowIso = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
+                    String runId = req.run_id != null && !req.run_id.isBlank()
+                            ? req.run_id
+                            : "run_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 6);
+                    String effectiveUserId = (req.user_id != null && !req.user_id.isBlank())
+                            ? req.user_id
+                            : ((profile != null && profile.get("user_id") != null)
+                                    ? profile.get("user_id").toString()
+                                    : "anonymous_user");
+                    String version = "1.0.0-phase1";
+                    try {
+                        if (cppRankingClient.isAvailable()) {
+                            version = cppRankingClient.getVersion();
+                        }
+                    } catch (Exception ignored) {}
+
+                    Map<String, Object> emptyResponse = new LinkedHashMap<>();
+                    emptyResponse.put("run_id", runId);
+                    emptyResponse.put("data_source", dataSource);
+                    emptyResponse.put("algorithm_version", version);
+                    emptyResponse.put("user_id", effectiveUserId);
+                    emptyResponse.put("total_candidates_considered", 0);
+                    emptyResponse.put("total_ranked", 0);
+                    emptyResponse.put("shortlist_size", 0);
+                    emptyResponse.put("candidates_verified", 0);
+                    emptyResponse.put("candidates_excluded", 0);
+                    emptyResponse.put("candidates_inconclusive", 0);
+                    emptyResponse.put("delivered_count", 0);
+                    emptyResponse.put("total_available", 0);
+                    emptyResponse.put("has_more", false);
+                    emptyResponse.put("next_cursor", null);
+                    emptyResponse.put("is_partial_result", true);
+                    emptyResponse.put("partial_result_reason", "Candidate issue pool is currently empty or initial discovery is still running. Refresh in a moment.");
+                    emptyResponse.put("duration_ms", 0L);
+                    emptyResponse.put("recommendations", Collections.emptyList());
+                    emptyResponse.put("verified_recommendations", Collections.emptyList());
+                    emptyResponse.put("generated_at", nowIso);
+                    return emptyResponse;
                 }
             }
         }

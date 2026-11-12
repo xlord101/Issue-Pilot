@@ -1,10 +1,12 @@
 package com.issuepilot.service;
 
 import com.issuepilot.config.AppProperties;
+import com.issuepilot.repository.IssueRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -21,6 +23,7 @@ public class SchedulerService {
     private final DiscoveryService discoveryService;
     private final RefreshService refreshService;
     private final LifecycleService lifecycleService;
+    private final IssueRepository issueRepository;
 
     private ScheduledExecutorService executorService;
     private volatile boolean running = false;
@@ -33,10 +36,22 @@ public class SchedulerService {
             RefreshService refreshService,
             LifecycleService lifecycleService
     ) {
+        this(properties, discoveryService, refreshService, lifecycleService, null);
+    }
+
+    @Autowired
+    public SchedulerService(
+            AppProperties properties,
+            DiscoveryService discoveryService,
+            RefreshService refreshService,
+            LifecycleService lifecycleService,
+            @Autowired(required = false) IssueRepository issueRepository
+    ) {
         this.properties = properties;
         this.discoveryService = discoveryService;
         this.refreshService = refreshService;
         this.lifecycleService = lifecycleService;
+        this.issueRepository = issueRepository;
     }
 
     @PostConstruct
@@ -66,15 +81,27 @@ public class SchedulerService {
         int intervalMinutes = properties.getSchedulerIntervalMinutes();
         if (intervalMinutes <= 0) intervalMinutes = 60;
 
+        long initialDelaySeconds = intervalMinutes * 60L;
+        if (properties.isIngestionEnabled() && issueRepository != null) {
+            try {
+                if (issueRepository.countEligibleOpenIssues() == 0) {
+                    initialDelaySeconds = 10L;
+                    logger.info("Candidate pool is empty; scheduling initial ingestion cycle in {} seconds.", initialDelaySeconds);
+                }
+            } catch (Exception e) {
+                logger.warn("Unable to check initial candidate pool size on scheduler start: {}", e.getMessage());
+            }
+        }
+
         executorService.scheduleAtFixedRate(
                 this::runScheduledCycle,
-                intervalMinutes * 60L,
+                initialDelaySeconds,
                 intervalMinutes * 60L,
                 TimeUnit.SECONDS
         );
 
         running = true;
-        logger.info("Ingestion scheduler started with interval {} minutes.", intervalMinutes);
+        logger.info("Ingestion scheduler started (initialDelay={}s, interval={}m).", initialDelaySeconds, intervalMinutes);
         return true;
     }
 
