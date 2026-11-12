@@ -3,8 +3,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { GitHubMark, GitLabMark, CodebergMark, BugzillaMark } from "@/components/ip/badges";
 import { AuroraBackground } from "@/components/ip/aurora-background";
+import { useSession } from "@/hooks/use-session";
 import { pageMeta } from "@/lib/format";
-import { ArrowRight, CheckCircle2, Compass, Check, Search } from "lucide-react";
+import { ArrowRight, CheckCircle2, Compass, Search } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () =>
@@ -55,26 +56,26 @@ const STEPS = [
   {
     stepNumber: "01",
     label: "Calibration",
-    title: "Calibrate your skills",
+    title: "Map your stack and target complexity",
     description:
-      "Select your active tech stack and comfort level, or connect GitHub to derive your capability target directly from verified code history.",
-    highlight: "No guesswork or subjective self-assessments",
+      "Select active languages, frameworks, and navigation comfort—or sign in with GitHub to derive your capability baseline directly from commit history.",
+    spec: "Stack vector · Capability dial (0–100)",
   },
   {
     stepNumber: "02",
-    label: "Matching",
-    title: "Precision recommendations",
+    label: "Deterministic Ranking",
+    title: "Score every open issue across 6 signals",
     description:
-      "Our recommendation engine continuously scores issues across language familiarity, issue complexity, repository health, and maintainer response velocity.",
-    highlight: "Ranked to your target growth zone",
+      "Eligible issues are evaluated in C++ across skill fit, estimated issue complexity, repository maintenance cadence, maintainer response speed, freshness, and past feedback.",
+    spec: "S · D · R · H · F · N weighted composite",
   },
   {
     stepNumber: "03",
-    label: "Verification",
-    title: "Zero-collision guarantee",
+    label: "Pre-Delivery Check",
+    title: "Verify unclaimed status right before display",
     description:
-      "Before any issue appears in your feed, live platform APIs verify zero active assignees and zero open pull requests. Never waste time on claimed tickets.",
-    highlight: "Live checked across all 4 platforms",
+      "Before a recommendation renders in your feed, live host API checks confirm the ticket is still open, unassigned, and has zero active pull requests.",
+    spec: "GitHub · GitLab · Codeberg · Bugzilla",
   },
 ];
 
@@ -99,7 +100,13 @@ const PIPELINE_GUARANTEES = [
 
 function LandingPage() {
   const navigate = useNavigate();
+  const { data: session } = useSession();
   const [searchQuery, setSearchQuery] = useState("");
+  const startDestination = session
+    ? session.onboarding_completed
+      ? "/app/feed"
+      : "/onboarding"
+    : "/login";
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,7 +116,7 @@ function LandingPage() {
         search: { q: searchQuery.trim() },
       });
     } else {
-      navigate({ to: "/onboarding" });
+      navigate({ to: startDestination });
     }
   };
 
@@ -129,11 +136,14 @@ function LandingPage() {
         <header className="border-b border-slate-200/70 relative z-30">
           <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
             <div className="flex items-center gap-8">
-              <Link to="/" className="flex items-center gap-2 text-slate-900">
-                <div className="size-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-sm">
-                  <div className="size-3.5 rounded-sm bg-white" />
-                </div>
-                <span className="font-bold text-lg tracking-tight text-slate-900">issue pilot</span>
+              <Link to="/" className="flex items-center gap-2.5 text-slate-900">
+                <img
+                  src="/brand-logo.png"
+                  alt=""
+                  aria-hidden
+                  className="size-8 shrink-0 object-contain"
+                />
+                <span className="font-bold text-lg tracking-tight text-slate-900">Issue Pilot</span>
               </Link>
 
               <nav className="hidden md:flex items-center gap-6 text-sm text-slate-600 font-medium">
@@ -153,20 +163,22 @@ function LandingPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                className="text-slate-700 hover:text-slate-900 hover:bg-slate-200/50 active:scale-[0.98]"
-              >
-                <Link to="/login">Sign in</Link>
-              </Button>
+              {!session && (
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="sm"
+                  className="text-slate-700 hover:text-slate-900 hover:bg-slate-200/50 active:scale-[0.98]"
+                >
+                  <Link to="/login">Sign in</Link>
+                </Button>
+              )}
               <Button
                 asChild
                 size="sm"
                 className="bg-blue-600 text-white hover:bg-blue-700 font-semibold px-4 shadow-sm shadow-blue-600/20 active:scale-[0.98]"
               >
-                <Link to="/onboarding">Get started</Link>
+                <Link to={startDestination}>{session ? "Open workspace" : "Get started"}</Link>
               </Button>
             </div>
           </div>
@@ -267,75 +279,68 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* 3. HOW IT WORKS (Clean, non-interactive 3-step feature section) */}
+      {/* 3. HOW IT WORKS — Editorial Asymmetric Spec Layout */}
       <section id="pipeline" className="bg-slate-50/70 py-20 sm:py-28 border-b border-slate-100">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          {/* Section Header */}
-          <div className="text-center max-w-2xl mx-auto space-y-4 mb-16">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50/80 px-3 py-1 text-xs font-semibold text-blue-700">
-              How It Works
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
-              Find issues you can actually ship.
-            </h2>
-            <p className="text-base text-slate-600 leading-relaxed">
-              Three simple steps to move from browsing open source to having your pull request
-              reviewed and merged.
-            </p>
-          </div>
+          <div className="grid gap-12 lg:grid-cols-12 lg:gap-16 items-start">
+            {/* Left Anchored Column */}
+            <div className="lg:col-span-5 lg:sticky lg:top-24 space-y-6">
+              <div className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-600">
+                Pipeline / 01–03
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 leading-[1.12]">
+                Find issues you can actually ship.
+              </h2>
+              <p className="text-base text-slate-600 leading-relaxed max-w-md">
+                Three deterministic stages take you from raw skill signals to an unclaimed ticket
+                ready for a clean pull request.
+              </p>
 
-          {/* 3 Step Cards */}
-          <div className="grid md:grid-cols-3 gap-8">
-            {STEPS.map((step) => (
-              <div
-                key={step.stepNumber}
-                className="relative rounded-2xl border border-slate-200/80 bg-white p-7 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all flex flex-col justify-between space-y-6"
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="size-11 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">
+              <div className="pt-6 border-t border-slate-200/90 flex flex-wrap items-center gap-3">
+                <Button
+                  asChild
+                  className="bg-slate-900 hover:bg-slate-800 text-white font-medium px-5 active:scale-[0.98] transition-transform duration-150"
+                >
+                  <Link to={startDestination}>
+                    {session ? "Continue to workspace" : "Sign in to calibrate"}
+                    <ArrowRight className="size-4 ml-2" />
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="ghost"
+                  className="text-slate-700 hover:text-slate-900 hover:bg-slate-200/60 font-medium active:scale-[0.98] transition-transform duration-150"
+                >
+                  <Link to="/app/explore">Browse issue pool</Link>
+                </Button>
+              </div>
+            </div>
+
+            {/* Right Stepped Engineering Ledger */}
+            <div className="lg:col-span-7 border-t border-slate-200 divide-y divide-slate-200">
+              {STEPS.map((step) => (
+                <div
+                  key={step.stepNumber}
+                  className="group py-7 sm:py-8 grid sm:grid-cols-[72px_1fr] gap-3 sm:gap-6 px-3 -mx-3 rounded-lg transition-colors duration-150 hover:bg-white/80"
+                >
+                  <div className="flex sm:flex-col items-baseline sm:items-start justify-between gap-2">
+                    <span className="font-mono text-2xl sm:text-3xl font-semibold tracking-tight text-slate-300 group-hover:text-blue-600 transition-colors tabular-nums">
                       {step.stepNumber}
-                    </div>
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    </span>
+                    <span className="font-mono text-[10px] font-medium uppercase tracking-widest text-slate-400">
                       {step.label}
                     </span>
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900">{step.title}</h3>
-                  <p className="text-sm text-slate-600 leading-relaxed">{step.description}</p>
-                </div>
-                <div className="pt-4 border-t border-slate-100 flex items-center text-xs font-medium text-slate-500">
-                  <Check className="size-4 text-blue-600 mr-2 shrink-0" />
-                  {step.highlight}
-                </div>
-              </div>
-            ))}
-          </div>
 
-          {/* Clean Bottom Callout Banner */}
-          <div className="mt-14 rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xs">
-            <div className="space-y-1 text-center sm:text-left">
-              <div className="text-base font-bold text-slate-900">
-                Ready to find your next open-source contribution?
-              </div>
-              <div className="text-sm text-slate-600">
-                Calibrate your profile in under 2 minutes and explore personalized, unclaimed
-                issues.
-              </div>
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <Button
-                asChild
-                variant="outline"
-                className="border-slate-300 text-slate-700 hover:text-slate-900 hover:bg-slate-50 active:scale-[0.98]"
-              >
-                <Link to="/app/explore">Explore issues</Link>
-              </Button>
-              <Button
-                asChild
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 shadow-xs active:scale-[0.98]"
-              >
-                <Link to="/onboarding">Get started &rarr;</Link>
-              </Button>
+                  <div className="space-y-2.5">
+                    <h3 className="text-lg font-bold tracking-tight text-slate-900">
+                      {step.title}
+                    </h3>
+                    <p className="text-sm text-slate-600 leading-relaxed">{step.description}</p>
+                    <div className="pt-1 font-mono text-xs text-slate-500">{step.spec}</div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -462,7 +467,7 @@ function LandingPage() {
                 size="lg"
                 className="bg-white text-blue-900 hover:bg-slate-100 font-semibold px-6 shadow-md active:scale-[0.98]"
               >
-                <Link to="/onboarding">Get started free</Link>
+                <Link to={startDestination}>{session ? "Open workspace" : "Get started free"}</Link>
               </Button>
               <Button
                 asChild
@@ -482,10 +487,13 @@ function LandingPage() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 space-y-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="col-span-2 space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="size-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
-                  IP
-                </div>
+              <div className="flex items-center gap-2.5">
+                <img
+                  src="/brand-logo.png"
+                  alt=""
+                  aria-hidden
+                  className="size-7 shrink-0 object-contain"
+                />
                 <span className="font-bold text-base text-slate-900 tracking-tight">
                   Issue Pilot
                 </span>
@@ -517,7 +525,7 @@ function LandingPage() {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/onboarding" className="hover:text-slate-900">
+                  <Link to={startDestination} className="hover:text-slate-900">
                     Calibration Deck
                   </Link>
                 </li>
@@ -545,7 +553,7 @@ function LandingPage() {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/onboarding" className="hover:text-slate-900">
+                  <Link to={startDestination} className="hover:text-slate-900">
                     Behavioral Calibration
                   </Link>
                 </li>

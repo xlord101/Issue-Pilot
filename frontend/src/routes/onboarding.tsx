@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Logo } from "@/components/ip/logo";
-import { ErrorState } from "@/components/ip/states";
+import { ErrorState, LoadingState } from "@/components/ip/states";
+import { useSession } from "@/hooks/use-session";
 import { api } from "@/lib/api";
 import {
   BehavioralCalibrationDeck,
@@ -25,11 +26,19 @@ export const Route = createFileRoute("/onboarding")({
 function OnboardingPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const sessionQuery = useSession();
   const [calibrated, setCalibrated] = useState<CalibrationData | null>(null);
+
+  useEffect(() => {
+    if (sessionQuery.isSuccess && !sessionQuery.data) {
+      navigate({ to: "/login", replace: true });
+    }
+  }, [sessionQuery.isSuccess, sessionQuery.data, navigate]);
 
   const profileQuery = useQuery({
     queryKey: ["profile"],
     queryFn: () => api.profile.me(),
+    enabled: Boolean(sessionQuery.data),
   });
 
   const saveMutation = useMutation({
@@ -109,7 +118,11 @@ function OnboardingPage() {
 
       {/* Main Body */}
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:py-14">
-        {profileQuery.isError ? (
+        {sessionQuery.isPending || (sessionQuery.isSuccess && !sessionQuery.data) ? (
+          <LoadingState rows={2} label="Checking session" />
+        ) : sessionQuery.isError ? (
+          <ErrorState error={sessionQuery.error} onRetry={() => sessionQuery.refetch()} />
+        ) : profileQuery.isError ? (
           <ErrorState error={profileQuery.error} onRetry={() => profileQuery.refetch()} />
         ) : calibrated ? (
           <div className="rounded-2xl border border-slate-200/90 bg-white p-8 sm:p-10 shadow-lg shadow-slate-900/5 text-center space-y-6">
