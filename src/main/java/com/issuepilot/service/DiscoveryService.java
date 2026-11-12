@@ -3,6 +3,7 @@ package com.issuepilot.service;
 import com.issuepilot.adapter.AdapterRegistry;
 import com.issuepilot.adapter.BaseIssueSourceAdapter;
 import com.issuepilot.adapter.CodebergAdapter;
+import com.issuepilot.adapter.GitLabAdapter;
 import com.issuepilot.adapter.TechnologyDetectionHelper;
 import com.issuepilot.config.AppProperties;
 import com.issuepilot.config.MongoConfig;
@@ -183,6 +184,8 @@ public class DiscoveryService {
 
                 if (adapter instanceof CodebergAdapter codebergAdapter) {
                     codebergAdapter.resetGlobalSearchState();
+                } else if (adapter instanceof GitLabAdapter gitLabAdapter) {
+                    gitLabAdapter.resetGlobalSearchState();
                 }
 
             if (!adapter.isConfigured()) {
@@ -218,6 +221,11 @@ public class DiscoveryService {
             String globalSearchStatus = null;
             String globalSearchError = null;
 
+            // Spread GitHub Search API quota evenly across all stacks (avoid burning all 10-30 req/min on the first 2 stacks)
+            int effectivePagesForSource = ("github".equals(src) && maxIssuesToDiscover == null)
+                    ? Math.min(pagesPerQuery, 1)
+                    : pagesPerQuery;
+
             for (String stack : targetStacks) {
                 if (maxIssuesToDiscover != null && totalDiscovered >= maxIssuesToDiscover) {
                     break;
@@ -225,7 +233,7 @@ public class DiscoveryService {
 
                 String query = buildPlatformQuery(src, stack, cutoffDate, cutoffIso);
 
-                for (int page = 1; page <= pagesPerQuery; page++) {
+                for (int page = 1; page <= effectivePagesForSource; page++) {
                     if (maxIssuesToDiscover != null && totalDiscovered >= maxIssuesToDiscover) {
                         break;
                     }
@@ -355,9 +363,9 @@ public class DiscoveryService {
                     }
                 }
 
-                // Small pacing to avoid overloading remote platform APIs
+                // Small pacing to avoid overloading remote platform search rate limits
                 try {
-                    Thread.sleep(20);
+                    Thread.sleep("github".equals(src) ? 400L : 20L);
                 } catch (InterruptedException ignored) {}
             }
 

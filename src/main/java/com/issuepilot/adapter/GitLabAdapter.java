@@ -32,6 +32,8 @@ public class GitLabAdapter implements BaseIssueSourceAdapter {
     private final Map<String, Object> rateLimitState = new HashMap<>();
     private String lastSuccessfulCheckAt = null;
     private final Random random = new Random();
+    private volatile boolean globalSearchDisabledOrFailing = false;
+    private String lastGlobalSearchError = null;
 
     @Autowired
     public GitLabAdapter(AppProperties properties, ObjectMapper objectMapper) {
@@ -63,6 +65,11 @@ public class GitLabAdapter implements BaseIssueSourceAdapter {
     @Override
     public Map<String, Object> getRateLimitState() {
         return Collections.unmodifiableMap(rateLimitState);
+    }
+
+    public void resetGlobalSearchState() {
+        this.globalSearchDisabledOrFailing = false;
+        this.lastGlobalSearchError = null;
     }
 
     public String sanitizeErrorMessage(String msg) {
@@ -243,30 +250,103 @@ public class GitLabAdapter implements BaseIssueSourceAdapter {
             cleanQuery = cleanQuery.replaceAll("(?i)(is:issue|is:open|language:|in:title,body|label:\"[^\"]+\"|label:[^\\s]+)", "").trim();
 
             String encodedQuery = URLEncoder.encode(cleanQuery, StandardCharsets.UTF_8);
-            String url = String.format("%s/issues?scope=all&state=opened%s&search=%s&page=%d&per_page=%d&order_by=updated_at&sort=%s",
-                    properties.getGitlabApiBaseUrl(), createdAfterParam, encodedQuery, page, perPage, order);
 
-            HttpRequest request = newRequestBuilder(url).GET().build();
-            HttpResponse<String> response = executeWithRetry(request);
+            // 1. Attempt global search unless it already failed (400/5xx) in this run
+            if (!globalSearchDisabledOrFailing) {
+                String url = String.format("%s/issues?scope=all&state=opened%s&search=%s&page=%d&per_page=%d&order_by=updated_at&sort=%s",
+                        properties.getGitlabApiBaseUrl(), createdAfterParam, encodedQuery, page, perPage, order);
 
-            if (response.statusCode() == 429) {
-                throw new RateLimitExceededException("GitLab rate limit exceeded", (Long) rateLimitState.get("reset"), 0);
+                HttpRequest request = newRequestBuilder(url).GET().build();
+                HttpResponse<String> response = executeWithRetry(request);
+
+                if (response.statusCode() == 429) {
+                    throw new RateLimitExceededException("GitLab rate limit exceeded", (Long) rateLimitState.get("reset"), 0);
+                }
+                if (response.statusCode() == 401 || response.statusCode() == 403) {
+                    throw new SourceAPIException("GitLab API returned " + response.statusCode(), response.statusCode());
+                }
+                if (response.statusCode() == 200) {
+                    List<Map<String, Object>> items = objectMapper.readValue(response.body(), new TypeReference<>() {});
+                    int total = items.size();
+                    Optional<String> totalHeader = response.headers().firstValue("x-total");
+                    if (totalHeader.isPresent()) {
+                        try { total = Integer.parseInt(totalHeader.get()); } catch (Exception ignored) {}
+                    }
+
+                    Map<String, Object> result = new LinkedHashMap<>();
+                    result.put("total_count", total);
+                    result.put("items", items);
+                    result.put("rate_limit", rateLimitState);
+                    result.put("global_search_status", "completed");
+                    result.put("fallback_used", false);
+                    return result;
+                }
+
+                // Global /api/v4/issues?scope=all returns 400/500 for unauthenticated or restricted tokens on gitlab.com.
+                globalSearchDisabledOrFailing = true;
+                lastGlobalSearchError = "GitLab global search endpoint returned HTTP " + response.statusCode();
+                logger.warn("GitLab global search returned HTTP {}; falling back to curated public project issue feeds.", response.statusCode());
             }
-            if (response.statusCode() != 200) {
-                throw new SourceAPIException("GitLab API returned " + response.statusCode(), response.statusCode());
+
+            // 2. Curated public GitLab OSS project fallback (project-scoped /issues works reliably)
+            List<String> fallbackProjects = List.of(
+                    "gitlab-org/gitlab",
+                    "wireshark/wireshark",
+                    "inkscape/inkscape",
+                    "GNOME/gimp",
+                    "fdroid/fdroidclient"
+            );
+            List<Map<String, Object>> collectedItems = new ArrayList<>();
+            List<String> fallbackErrors = new ArrayList<>();
+            boolean fallbackSuccess = false;
+
+            for (String projectPath : fallbackProjects) {
+                try {
+                    String encodedProject = URLEncoder.encode(projectPath, StandardCharsets.UTF_8);
+                    String projectUrl = String.format("%s/projects/%s/issues?state=opened%s%s&page=%d&per_page=%d&order_by=updated_at&sort=%s",
+                            properties.getGitlabApiBaseUrl(),
+                            encodedProject,
+                            createdAfterParam,
+                            encodedQuery.isBlank() ? "" : "&search=" + encodedQuery,
+                            page,
+                            Math.min(perPage, 20),
+                            order);
+                    HttpRequest projReq = newRequestBuilder(projectUrl).GET().build();
+                    HttpResponse<String> projResp = executeWithRetry(projReq);
+
+                    if (projResp.statusCode() == 200) {
+                        fallbackSuccess = true;
+                        List<Map<String, Object>> projItems = objectMapper.readValue(projResp.body(), new TypeReference<>() {});
+                        for (Map<String, Object> item : projItems) {
+                            if (!item.containsKey("references") && item.get("iid") != null) {
+                                item.put("references", Map.of("full", projectPath + "#" + item.get("iid")));
+                            }
+                            collectedItems.add(item);
+                            if (collectedItems.size() >= perPage) break;
+                        }
+                    } else {
+                        fallbackErrors.add("Project " + projectPath + " returned HTTP " + projResp.statusCode());
+                    }
+                } catch (Exception ex) {
+                    fallbackErrors.add("Project " + projectPath + " failed: " + sanitizeErrorMessage(ex.getMessage()));
+                }
+                if (collectedItems.size() >= perPage) break;
             }
 
-            List<Map<String, Object>> items = objectMapper.readValue(response.body(), new TypeReference<>() {});
-            int total = items.size();
-            Optional<String> totalHeader = response.headers().firstValue("x-total");
-            if (totalHeader.isPresent()) {
-                try { total = Integer.parseInt(totalHeader.get()); } catch (Exception ignored) {}
+            if (!fallbackSuccess && collectedItems.isEmpty() && !fallbackErrors.isEmpty()) {
+                throw new SourceAPIException("GitLab global search failed (" + lastGlobalSearchError + ") and curated project fallback failed: " + String.join(", ", fallbackErrors), 502);
             }
 
             Map<String, Object> result = new LinkedHashMap<>();
-            result.put("total_count", total);
-            result.put("items", items);
+            result.put("total_count", collectedItems.size());
+            result.put("items", collectedItems);
             result.put("rate_limit", rateLimitState);
+            result.put("global_search_status", "failed");
+            result.put("global_search_error", lastGlobalSearchError != null ? lastGlobalSearchError : "GitLab global search endpoint failed");
+            result.put("fallback_used", true);
+            result.put("fallback_status", fallbackSuccess ? "completed" : "failed");
+            result.put("fallback_count", collectedItems.size());
+            result.put("source_error", (lastGlobalSearchError != null ? lastGlobalSearchError : "GitLab global search failed") + " (curated project fallback utilized)");
             return result;
         } catch (SourceAPIException e) {
             throw e;
