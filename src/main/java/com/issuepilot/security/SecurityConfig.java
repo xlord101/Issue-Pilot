@@ -19,6 +19,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
@@ -57,6 +59,11 @@ import java.util.List;
 public class SecurityConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(10);
+    }
 
     @Bean
     public JwtDecoder jwtDecoder(AppProperties properties) {
@@ -180,7 +187,11 @@ public class SecurityConfig {
                     "/api/auth/github/callback",
                     "/api/auth/exchange",
                     "/api/auth/register",
+                    "/api/auth/verify-otp",
+                    "/api/auth/resend-otp",
                     "/api/auth/login",
+                    "/api/auth/forgot-password",
+                    "/api/auth/reset-password",
                     "/",
                     "/index.html",
                     "/error",

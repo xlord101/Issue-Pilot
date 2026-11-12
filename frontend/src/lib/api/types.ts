@@ -136,6 +136,16 @@ export interface Session {
   user: { id: string; login: string; name: string | null; avatar_url: string | null };
   roles: Role[];
   is_demo: boolean;
+  onboarding_completed?: boolean | undefined;
+}
+
+export interface OtpChallenge {
+  status: string;
+  requires_verification: boolean;
+  email: string;
+  expires_in_seconds: number;
+  resend_cooldown_seconds: number;
+  message: string;
 }
 
 export type ExtractionState = "queued" | "running" | "ready" | "failed";

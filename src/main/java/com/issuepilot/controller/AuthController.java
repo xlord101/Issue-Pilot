@@ -8,6 +8,7 @@ import com.issuepilot.security.OAuthStateStore;
 import com.issuepilot.security.TokenService;
 import com.issuepilot.security.UserCredentialService;
 import com.issuepilot.security.UserIdentityResolver;
+import com.issuepilot.service.LocalAuthService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -22,7 +23,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -56,6 +56,7 @@ public class AuthController {
     private final MongoConfig mongoConfig;
     private final AppProperties properties;
     private final UserIdentityResolver userIdentityResolver;
+    private final LocalAuthService localAuthService;
 
     public AuthController(
             GitHubOAuthService gitHubOAuthService,
@@ -65,7 +66,8 @@ public class AuthController {
             UserCredentialService userCredentialService,
             MongoConfig mongoConfig,
             AppProperties properties,
-            UserIdentityResolver userIdentityResolver) {
+            UserIdentityResolver userIdentityResolver,
+            LocalAuthService localAuthService) {
         this.gitHubOAuthService = gitHubOAuthService;
         this.oAuthStateStore = oAuthStateStore;
         this.tokenService = tokenService;
@@ -74,6 +76,7 @@ public class AuthController {
         this.mongoConfig = mongoConfig;
         this.properties = properties;
         this.userIdentityResolver = userIdentityResolver;
+        this.localAuthService = localAuthService;
     }
 
     /**
@@ -239,94 +242,83 @@ public class AuthController {
         public String password;
     }
 
+    public static class VerifyOtpRequest {
+        public String email;
+        public String otp;
+    }
+
+    public static class ResendOtpRequest {
+        public String email;
+    }
+
+    public static class ForgotPasswordRequest {
+        public String email;
+    }
+
+    public static class ResetPasswordRequest {
+        public String email;
+        public String otp;
+        public String new_password;
+    }
+
     @PostMapping("/register")
-    public Map<String, Object> register(@RequestBody RegisterRequest req) {
-        if (req == null || req.email == null || req.email.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required.");
+    public ResponseEntity<Map<String, Object>> register(@RequestBody(required = false) RegisterRequest req) {
+        if (req == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Registration payload is required.");
         }
-        if (req.password == null || req.password.isBlank() || req.password.length() < 6) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must be at least 6 characters.");
+        Map<String, Object> result = localAuthService.register(req.first_name, req.last_name, req.email, req.password);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(result);
+    }
+
+    @PostMapping("/verify-otp")
+    public Map<String, Object> verifyOtp(@RequestBody(required = false) VerifyOtpRequest req) {
+        if (req == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Verification payload is required.");
         }
+        return localAuthService.verifyEmailOtp(req.email, req.otp);
+    }
 
-        String cleanEmail = req.email.trim().toLowerCase(Locale.ROOT);
-        String firstName = req.first_name != null ? req.first_name.trim() : "";
-        String lastName = req.last_name != null ? req.last_name.trim() : "";
-        String displayName = (firstName + " " + lastName).trim();
-        if (displayName.isBlank()) {
-            displayName = cleanEmail.split("@")[0];
+    @PostMapping("/resend-otp")
+    public ResponseEntity<Map<String, Object>> resendOtp(@RequestBody(required = false) ResendOtpRequest req) {
+        if (req == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email payload is required.");
         }
-        String username = cleanEmail.split("@")[0].replaceAll("[^a-zA-Z0-9_-]", "");
-        if (username.isBlank())
-            username = "contributor";
-
-        userRepository.provisionOrUpdateOAuthUser(
-                "local",
-                cleanEmail,
-                username,
-                displayName,
-                "https://api.dicebear.com/7.x/identicon/svg?seed="
-                        + URLEncoder.encode(cleanEmail, StandardCharsets.UTF_8),
-                "",
-                cleanEmail);
-
-        String canonicalUserId = "local:" + cleanEmail;
-        String jwt = tokenService.issueToken(canonicalUserId, username, List.of("ROLE_USER"),
-                Map.of("email", cleanEmail, "display_name", displayName));
-
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("status", "success");
-        response.put("token_type", "Bearer");
-        response.put("access_token", jwt);
-        response.put("expires_in", properties.getAppJwtExpirationSeconds());
-        response.put("user_id", canonicalUserId);
-        return response;
+        Map<String, Object> result = localAuthService.resendVerificationOtp(req.email);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(result);
     }
 
     @PostMapping("/login")
-    public Map<String, Object> login(@RequestBody LoginRequest req) {
-        if (req == null || req.email == null || req.email.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required.");
+    public ResponseEntity<Map<String, Object>> login(@RequestBody(required = false) LoginRequest req) {
+        if (req == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Login payload is required.");
         }
-        if (req.password == null || req.password.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password is required.");
+        try {
+            return ResponseEntity.ok(localAuthService.login(req.email, req.password));
+        } catch (LocalAuthService.EmailNotVerifiedException ex) {
+            Map<String, Object> body = new LinkedHashMap<>();
+            body.put("status", HttpStatus.FORBIDDEN.value());
+            body.put("error", "Forbidden");
+            body.put("code", "EMAIL_NOT_VERIFIED");
+            body.put("email", ex.getEmail());
+            body.put("message", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
         }
+    }
 
-        String cleanEmail = req.email.trim().toLowerCase(Locale.ROOT);
-        String canonicalUserId = "local:" + cleanEmail;
-        Map<String, Object> userDoc = userRepository.getUser(canonicalUserId);
-        if (userDoc == null) {
-            userDoc = userRepository.findByProviderIdentity("local", cleanEmail);
+    @PostMapping("/forgot-password")
+    public Map<String, Object> forgotPassword(@RequestBody(required = false) ForgotPasswordRequest req) {
+        if (req == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email payload is required.");
         }
+        return localAuthService.forgotPassword(req.email);
+    }
 
-        String username = cleanEmail.split("@")[0];
-        String displayName = username;
-        if (userDoc != null && userDoc.get("identity") instanceof Map<?, ?> identity) {
-            if (identity.get("username") != null)
-                username = identity.get("username").toString();
-            if (identity.get("display_name") != null)
-                displayName = identity.get("display_name").toString();
-        } else {
-            userRepository.provisionOrUpdateOAuthUser(
-                    "local",
-                    cleanEmail,
-                    username,
-                    displayName,
-                    "https://api.dicebear.com/7.x/identicon/svg?seed="
-                            + URLEncoder.encode(cleanEmail, StandardCharsets.UTF_8),
-                    "",
-                    cleanEmail);
+    @PostMapping("/reset-password")
+    public Map<String, Object> resetPassword(@RequestBody(required = false) ResetPasswordRequest req) {
+        if (req == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password reset payload is required.");
         }
-
-        String jwt = tokenService.issueToken(canonicalUserId, username, List.of("ROLE_USER"),
-                Map.of("email", cleanEmail, "display_name", displayName));
-
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("status", "success");
-        response.put("token_type", "Bearer");
-        response.put("access_token", jwt);
-        response.put("expires_in", properties.getAppJwtExpirationSeconds());
-        response.put("user_id", canonicalUserId);
-        return response;
+        return localAuthService.resetPassword(req.email, req.otp, req.new_password);
     }
 
     /**

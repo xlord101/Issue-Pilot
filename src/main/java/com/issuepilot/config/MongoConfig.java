@@ -275,7 +275,29 @@ public class MongoConfig {
                     new IndexOptions().name("idx_user_tokens_provider_user").sparse(true)
             );
 
-            logger.info("MongoDB Atlas indexes for all 6 collections verified and ready.");
+            // 7. local_credentials collection indexes (isolated BCrypt password hashes)
+            var localCreds = db.getCollection("local_credentials");
+            localCreds.createIndex(
+                    Indexes.ascending("user_id"),
+                    new IndexOptions().name("idx_local_cred_user_id").unique(true)
+            );
+            localCreds.createIndex(
+                    Indexes.ascending("email"),
+                    new IndexOptions().name("idx_local_cred_email").unique(true)
+            );
+
+            // 8. email_otps collection indexes (TTL auto-cleanup on expires_at)
+            var emailOtps = db.getCollection("email_otps");
+            emailOtps.createIndex(
+                    Indexes.ascending("email", "purpose"),
+                    new IndexOptions().name("idx_email_otp_key").unique(true)
+            );
+            emailOtps.createIndex(
+                    Indexes.ascending("expires_at"),
+                    new IndexOptions().name("idx_email_otp_ttl").expireAfter(0L, TimeUnit.SECONDS)
+            );
+
+            logger.info("MongoDB Atlas indexes for all 8 collections verified and ready.");
         } catch (Exception e) {
             logger.error("Failed to initialize MongoDB indexes: {}", e.getMessage());
         }

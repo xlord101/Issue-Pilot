@@ -14,10 +14,18 @@ export const endpoints = {
     exchange: "/api/auth/exchange" as Endpoint,
     /** GET → Current User Identity / 401 */
     me: "/api/auth/me" as Endpoint,
-    /** POST { first_name, last_name, email, password } → { access_token } */
+    /** POST { first_name, last_name, email, password } → { status: 'verification_required', email } */
     register: "/api/auth/register" as Endpoint,
+    /** POST { email, otp } → { access_token } */
+    verifyOtp: "/api/auth/verify-otp" as Endpoint,
+    /** POST { email } → { status: 'verification_required' } */
+    resendOtp: "/api/auth/resend-otp" as Endpoint,
     /** POST { email, password } → { access_token } */
     login: "/api/auth/login" as Endpoint,
+    /** POST { email } → { status: 'success' } */
+    forgotPassword: "/api/auth/forgot-password" as Endpoint,
+    /** POST { email, otp, new_password } → { status: 'success' } */
+    resetPassword: "/api/auth/reset-password" as Endpoint,
     /** POST → Logout confirmation */
     logout: "/api/auth/logout" as Endpoint,
   },

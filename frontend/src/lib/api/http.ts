@@ -113,6 +113,10 @@ export async function request<T>(
     path === "/api/auth/exchange" ||
     path === "/api/auth/login" ||
     path === "/api/auth/register" ||
+    path === "/api/auth/verify-otp" ||
+    path === "/api/auth/resend-otp" ||
+    path === "/api/auth/forgot-password" ||
+    path === "/api/auth/reset-password" ||
     path === "/api/auth/github/login" ||
     path === "/api/auth/github/callback" ||
     path.startsWith("/api/health");

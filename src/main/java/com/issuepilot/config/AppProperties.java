@@ -213,6 +213,42 @@ public class AppProperties {
     @Value("${GITHUB_ANALYZER_MAX_RETRIES:2}")
     private int githubAnalyzerMaxRetries = 2;
 
+    @Value("${RESEND_API_KEY:}")
+    private String resendApiKey = "";
+
+    @Value("${RESEND_API_URL:https://api.resend.com/emails}")
+    private String resendApiUrl = "https://api.resend.com/emails";
+
+    @Value("${MAIL_FROM:}")
+    private String mailFrom = "";
+
+    @Value("${SMTP_HOST:}")
+    private String smtpHost = "";
+
+    @Value("${SMTP_PORT:587}")
+    private int smtpPort = 587;
+
+    @Value("${SMTP_USERNAME:}")
+    private String smtpUsername = "";
+
+    @Value("${SMTP_PASSWORD:}")
+    private String smtpPassword = "";
+
+    @Value("${SMTP_AUTH:true}")
+    private boolean smtpAuth = true;
+
+    @Value("${SMTP_STARTTLS:true}")
+    private boolean smtpStarttls = true;
+
+    @Value("${OTP_EXPIRY_MINUTES:10}")
+    private int otpExpiryMinutes = 10;
+
+    @Value("${OTP_RESEND_COOLDOWN_SECONDS:60}")
+    private int otpResendCooldownSeconds = 60;
+
+    @Value("${OTP_MAX_ATTEMPTS:5}")
+    private int otpMaxAttempts = 5;
+
     public String getMongodbUri() {
         return mongodbUri;
     }
@@ -528,5 +564,53 @@ public class AppProperties {
 
     public int getGithubAnalyzerMaxRetries() {
         return githubAnalyzerMaxRetries;
+    }
+
+    public String getResendApiKey() {
+        return resendApiKey;
+    }
+
+    public String getResendApiUrl() {
+        return resendApiUrl;
+    }
+
+    public String getMailFrom() {
+        return mailFrom;
+    }
+
+    public String getSmtpHost() {
+        return smtpHost;
+    }
+
+    public int getSmtpPort() {
+        return smtpPort;
+    }
+
+    public String getSmtpUsername() {
+        return smtpUsername;
+    }
+
+    public String getSmtpPassword() {
+        return smtpPassword;
+    }
+
+    public boolean isSmtpAuth() {
+        return smtpAuth;
+    }
+
+    public boolean isSmtpStarttls() {
+        return smtpStarttls;
+    }
+
+    public int getOtpExpiryMinutes() {
+        return otpExpiryMinutes;
+    }
+
+    public int getOtpResendCooldownSeconds() {
+        return otpResendCooldownSeconds;
+    }
+
+    public int getOtpMaxAttempts() {
+        return otpMaxAttempts;
     }
 }

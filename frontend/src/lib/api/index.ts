@@ -22,8 +22,18 @@ export interface IssuePilotApi {
       lastName: string;
       email: string;
       password: string;
-    }): Promise<T.Session>;
+    }): Promise<T.OtpChallenge>;
+    verifyOtp(payload: { email: string; otp: string }): Promise<T.Session>;
+    resendOtp(payload: { email: string }): Promise<T.OtpChallenge>;
     signInWithPassword(payload: { email: string; password: string }): Promise<T.Session>;
+    forgotPassword(payload: {
+      email: string;
+    }): Promise<{ message: string; expires_in_seconds?: number; resend_cooldown_seconds?: number }>;
+    resetPassword(payload: {
+      email: string;
+      otp: string;
+      newPassword: string;
+    }): Promise<{ message: string }>;
     signOut(): Promise<void>;
   };
   onboarding: {

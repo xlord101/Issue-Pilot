@@ -6,9 +6,10 @@
 # ==============================================================================
 
 # --- Stage 1: Build Native C++ Ranking Engine ---
-FROM gcc:13-bookworm AS cpp-builder
+FROM ubuntu:24.04 AS cpp-builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    g++ \
     cmake \
     make \
     && rm -rf /var/lib/apt/lists/*
@@ -35,7 +36,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests -B
 
 # --- Stage 3: Minimal Production Runtime ---
-FROM eclipse-temurin:21-jre-jammy AS runtime
+FROM eclipse-temurin:21-jre-noble AS runtime
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
@@ -63,3 +64,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
   CMD curl -f http://localhost:8000/api/health || exit 1
 
 ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8000} -Djava.security.egd=file:/dev/./urandom -jar /app/issue-pilot.jar"]
+

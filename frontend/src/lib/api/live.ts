@@ -25,7 +25,9 @@ export const liveApi: IssuePilotApi = {
         if (!data || !data.authenticated) return null;
 
         const identity = (data.identity as Record<string, any>) || {};
-        const numericId = data.user_id ? String(data.user_id).replace("github:", "") : "";
+        const rawId = data.user_id ? String(data.user_id) : "";
+        const isGithub = rawId.startsWith("github:");
+        const numericId = isGithub ? rawId.replace("github:", "") : rawId;
         const login =
           identity["username"] || identity["login"] || data.username || numericId || "contributor";
         const displayName =
@@ -33,7 +35,7 @@ export const liveApi: IssuePilotApi = {
         const avatarUrl =
           identity["avatar_url"] ||
           data.avatar_url ||
-          (numericId ? `https://avatars.githubusercontent.com/u/${numericId}` : null);
+          (isGithub && numericId ? `https://avatars.githubusercontent.com/u/${numericId}` : null);
 
         return {
           user: {
@@ -44,6 +46,7 @@ export const liveApi: IssuePilotApi = {
           },
           roles: ["contributor"],
           is_demo: false,
+          onboarding_completed: Boolean(data.onboarding_completed),
         };
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) {
@@ -89,13 +92,23 @@ export const liveApi: IssuePilotApi = {
     },
 
     async register(payload) {
-      const res = await request<any>("auth.register", e.auth.register, {
+      return await request<T.OtpChallenge>("auth.register", e.auth.register, {
         method: "POST",
         body: {
           first_name: payload.firstName,
           last_name: payload.lastName,
           email: payload.email,
           password: payload.password,
+        },
+      });
+    },
+
+    async verifyOtp(payload) {
+      const res = await request<any>("auth.verifyOtp", e.auth.verifyOtp, {
+        method: "POST",
+        body: {
+          email: payload.email,
+          otp: payload.otp,
         },
       });
       const token = res?.access_token || res?.token;
@@ -105,13 +118,20 @@ export const liveApi: IssuePilotApi = {
       const s = await liveApi.auth.getSession();
       if (!s) {
         throw new ApiError(
-          "Account created, but failed to retrieve session.",
+          "Email verified, but failed to retrieve session.",
           500,
-          "/api/auth/register",
+          "/api/auth/verify-otp",
           "POST",
         );
       }
       return s;
+    },
+
+    async resendOtp(payload) {
+      return await request<T.OtpChallenge>("auth.resendOtp", e.auth.resendOtp, {
+        method: "POST",
+        body: { email: payload.email },
+      });
     },
 
     async signInWithPassword(payload) {
@@ -135,7 +155,35 @@ export const liveApi: IssuePilotApi = {
           "POST",
         );
       }
-      return s;
+      return {
+        ...s,
+        onboarding_completed:
+          typeof res?.onboarding_completed === "boolean"
+            ? res.onboarding_completed
+            : s.onboarding_completed,
+      };
+    },
+
+    async forgotPassword(payload) {
+      return await request<{
+        message: string;
+        expires_in_seconds?: number;
+        resend_cooldown_seconds?: number;
+      }>("auth.forgotPassword", e.auth.forgotPassword, {
+        method: "POST",
+        body: { email: payload.email },
+      });
+    },
+
+    async resetPassword(payload) {
+      return await request<{ message: string }>("auth.resetPassword", e.auth.resetPassword, {
+        method: "POST",
+        body: {
+          email: payload.email,
+          otp: payload.otp,
+          new_password: payload.newPassword,
+        },
+      });
     },
 
     async signOut() {

@@ -115,25 +115,17 @@ export const mockApi: IssuePilotApi = {
     },
     async register(payload) {
       await wait(500);
-      const name =
-        `${payload.firstName} ${payload.lastName}`.trim() ||
-        payload.email.split("@")[0] ||
-        "Contributor";
-      const userSession = {
-        user: {
-          id: "user_" + Date.now(),
-          login: payload.email.split("@")[0] || "user",
-          name,
-          avatar_url: null,
-        },
-        roles: ["contributor"] as ("contributor" | "maintainer" | "admin")[],
-        is_demo: true,
+      return {
+        status: "verification_required",
+        requires_verification: true,
+        email: payload.email,
+        expires_in_seconds: 600,
+        resend_cooldown_seconds: 60,
+        message: `Verification code sent to ${payload.email}.`,
       };
-      window.sessionStorage.setItem(DEMO_FLAG, "1");
-      return userSession;
     },
-    async signInWithPassword(payload) {
-      await wait(500);
+    async verifyOtp(payload) {
+      await wait(400);
       const name = payload.email.split("@")[0] || "Contributor";
       const userSession = {
         user: { id: "user_" + Date.now(), login: name, name, avatar_url: null },
@@ -142,6 +134,37 @@ export const mockApi: IssuePilotApi = {
       };
       window.sessionStorage.setItem(DEMO_FLAG, "1");
       return userSession;
+    },
+    async resendOtp(payload) {
+      await wait(400);
+      return {
+        status: "verification_required",
+        requires_verification: true,
+        email: payload.email,
+        expires_in_seconds: 600,
+        resend_cooldown_seconds: 60,
+        message: `Verification code sent to ${payload.email}.`,
+      };
+    },
+    async signInWithPassword(payload) {
+      await wait(500);
+      const name = payload.email.split("@")[0] || "Contributor";
+      const userSession = {
+        user: { id: "user_" + Date.now(), login: name, name, avatar_url: null },
+        roles: ["contributor"] as ("contributor" | "maintainer" | "admin")[],
+        is_demo: true,
+        onboarding_completed: true,
+      };
+      window.sessionStorage.setItem(DEMO_FLAG, "1");
+      return userSession;
+    },
+    async forgotPassword(payload) {
+      await wait(400);
+      return { message: `Verification code sent to ${payload.email}.` };
+    },
+    async resetPassword() {
+      await wait(400);
+      return { message: "Password updated successfully." };
     },
     async signOut() {
       window.sessionStorage.removeItem(DEMO_FLAG);
