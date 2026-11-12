@@ -7,7 +7,6 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.bson.Document;
 import org.slf4j.Logger;
@@ -81,6 +80,7 @@ public class MongoConfig {
                 this.connected = true;
                 this.lastSuccessfulPing = System.currentTimeMillis();
                 logger.info("Successfully connected to MongoDB Atlas database '{}'", getEffectiveDatabaseName());
+                initIndexes();
             } catch (Exception pingEx) {
                 logger.warn("Initial MongoDB ping failed: {}. Application will run in degraded/sample mode.", pingEx.getMessage());
                 this.connected = false;
@@ -159,7 +159,18 @@ public class MongoConfig {
         }
     }
 
-    @PostConstruct
+    private void createIndexSafe(
+            com.mongodb.client.MongoCollection<Document> collection,
+            org.bson.conversions.Bson keys,
+            IndexOptions options
+    ) {
+        try {
+            collection.createIndex(keys, options);
+        } catch (Exception e) {
+            logger.warn("Could not create index '{}' on '{}': {}", options.getName(), collection.getNamespace().getCollectionName(), e.getMessage());
+        }
+    }
+
     public void initIndexes() {
         if (!isConnected()) {
             logger.warn("Skipping index initialization because MongoDB is not connected.");
@@ -171,128 +182,155 @@ public class MongoConfig {
 
             // 1. issues collection indexes
             var issues = db.getCollection("issues");
-            issues.createIndex(
+            createIndexSafe(issues,
                     Indexes.ascending("source", "repository_full_name", "issue_number"),
                     new IndexOptions().name("idx_source_repo_issue").unique(true)
             );
-            issues.createIndex(
+            createIndexSafe(issues,
                     Indexes.ascending("id"),
                     new IndexOptions().name("idx_issue_id").unique(true).sparse(true)
             );
-            issues.createIndex(
+            createIndexSafe(issues,
                     Indexes.ascending("source", "source_instance", "source_issue_id"),
                     new IndexOptions().name("idx_source_instance_issue_id").sparse(true)
             );
-            issues.createIndex(
+            createIndexSafe(issues,
                     Indexes.ascending("state", "is_assigned"),
                     new IndexOptions().name("idx_state_assigned")
             );
-            issues.createIndex(
+            createIndexSafe(issues,
+                    Indexes.compoundIndex(
+                            Indexes.ascending("state", "is_assigned", "stale_status"),
+                            Indexes.descending("created_at")
+                    ),
+                    new IndexOptions().name("idx_open_eligible_created")
+            );
+            createIndexSafe(issues,
                     Indexes.ascending("detected_technologies"),
                     new IndexOptions().name("idx_detected_technologies")
             );
-            issues.createIndex(
+            createIndexSafe(issues,
+                    Indexes.ascending("technologies.technology"),
+                    new IndexOptions().name("idx_technologies_tech")
+            );
+            createIndexSafe(issues,
+                    Indexes.ascending("repository_full_name"),
+                    new IndexOptions().name("idx_repository_full_name")
+            );
+            createIndexSafe(issues,
+                    Indexes.ascending("difficulty_evidence.technical_complexity"),
+                    new IndexOptions().name("idx_difficulty_complexity")
+            );
+            createIndexSafe(issues,
+                    Indexes.descending("created_at"),
+                    new IndexOptions().name("idx_created_at")
+            );
+            createIndexSafe(issues,
                     Indexes.descending("updated_at"),
                     new IndexOptions().name("idx_updated_at")
             );
-            issues.createIndex(
+            createIndexSafe(issues,
                     Indexes.ascending("stale_status"),
                     new IndexOptions().name("idx_stale_status")
             );
 
             // 2. users collection indexes
             var users = db.getCollection("users");
-            users.createIndex(
+            createIndexSafe(users,
                     Indexes.ascending("user_id"),
                     new IndexOptions().name("idx_user_id").unique(true)
             );
-            users.createIndex(
+            createIndexSafe(users,
                     Indexes.descending("updated_at"),
                     new IndexOptions().name("idx_user_updated_at")
             );
-            users.createIndex(
+            createIndexSafe(users,
                     Indexes.ascending("identity.provider", "identity.provider_user_id"),
                     new IndexOptions().name("idx_identity_provider_user").sparse(true)
             );
 
             // 3. recommendations collection indexes
             var recs = db.getCollection("recommendations");
-            recs.createIndex(
+            createIndexSafe(recs,
                     Indexes.compoundIndex(Indexes.ascending("user_id"), Indexes.descending("generated_at")),
                     new IndexOptions().name("idx_user_generated")
             );
-            recs.createIndex(
+            createIndexSafe(recs,
                     Indexes.ascending("issue_id"),
                     new IndexOptions().name("idx_rec_issue_id")
             );
-            recs.createIndex(
+            createIndexSafe(recs,
                     Indexes.descending("generated_at"),
                     new IndexOptions().name("idx_generated_at")
             );
-            recs.createIndex(
+            createIndexSafe(recs,
                     Indexes.ascending("run_id", "issue_id"),
                     new IndexOptions().name("idx_rec_run_issue")
+            );
+            createIndexSafe(recs,
+                    Indexes.ascending("expires_at"),
+                    new IndexOptions().name("idx_rec_ttl").expireAfter(0L, TimeUnit.SECONDS)
             );
 
             // 4. feedback collection indexes
             var feedback = db.getCollection("feedback");
-            feedback.createIndex(
+            createIndexSafe(feedback,
                     Indexes.compoundIndex(Indexes.ascending("user_id"), Indexes.descending("event_timestamp")),
                     new IndexOptions().name("idx_feedback_user")
             );
-            feedback.createIndex(
+            createIndexSafe(feedback,
                     Indexes.ascending("issue_id"),
                     new IndexOptions().name("idx_feedback_issue")
             );
-            feedback.createIndex(
+            createIndexSafe(feedback,
                     Indexes.ascending("event_type"),
                     new IndexOptions().name("idx_feedback_event_type")
             );
 
             // 5. jobs collection indexes
             var jobs = db.getCollection("jobs");
-            jobs.createIndex(
+            createIndexSafe(jobs,
                     Indexes.ascending("job_id"),
                     new IndexOptions().name("idx_job_id").unique(true)
             );
-            jobs.createIndex(
+            createIndexSafe(jobs,
                     Indexes.descending("start_time"),
                     new IndexOptions().name("idx_job_start")
             );
-            jobs.createIndex(
+            createIndexSafe(jobs,
                     Indexes.ascending("status"),
                     new IndexOptions().name("idx_job_status")
             );
 
             // 6. user_tokens collection indexes
             var userTokens = db.getCollection("user_tokens");
-            userTokens.createIndex(
+            createIndexSafe(userTokens,
                     Indexes.ascending("canonical_user_id"),
                     new IndexOptions().name("idx_user_tokens_canonical_user_id").unique(true)
             );
-            userTokens.createIndex(
+            createIndexSafe(userTokens,
                     Indexes.ascending("provider", "provider_user_id"),
                     new IndexOptions().name("idx_user_tokens_provider_user").sparse(true)
             );
 
             // 7. local_credentials collection indexes (isolated BCrypt password hashes)
             var localCreds = db.getCollection("local_credentials");
-            localCreds.createIndex(
+            createIndexSafe(localCreds,
                     Indexes.ascending("user_id"),
                     new IndexOptions().name("idx_local_cred_user_id").unique(true)
             );
-            localCreds.createIndex(
+            createIndexSafe(localCreds,
                     Indexes.ascending("email"),
                     new IndexOptions().name("idx_local_cred_email").unique(true)
             );
 
             // 8. email_otps collection indexes (TTL auto-cleanup on expires_at)
             var emailOtps = db.getCollection("email_otps");
-            emailOtps.createIndex(
+            createIndexSafe(emailOtps,
                     Indexes.ascending("email", "purpose"),
                     new IndexOptions().name("idx_email_otp_key").unique(true)
             );
-            emailOtps.createIndex(
+            createIndexSafe(emailOtps,
                     Indexes.ascending("expires_at"),
                     new IndexOptions().name("idx_email_otp_ttl").expireAfter(0L, TimeUnit.SECONDS)
             );

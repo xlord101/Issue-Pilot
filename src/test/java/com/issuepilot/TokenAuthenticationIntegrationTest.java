@@ -201,7 +201,7 @@ public class TokenAuthenticationIntegrationTest {
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/api/simulator/sample-data"))
-                .andExpect(status().isOk());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

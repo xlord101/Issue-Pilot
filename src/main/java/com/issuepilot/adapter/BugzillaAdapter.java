@@ -415,13 +415,15 @@ public class BugzillaAdapter implements BaseIssueSourceAdapter {
         String updatedAt = (String) rawItem.getOrDefault("last_change_time", rawItem.get("updated_at"));
         String closedAt = "closed".equalsIgnoreCase(state) ? updatedAt : null;
 
-        List<Map<String, Object>> technologies = TechnologyDetectionHelper.detectTechnologies(summary, labels);
+        String description = rawItem.get("description") != null ? rawItem.get("description").toString().trim() : "";
+        List<Map<String, Object>> technologies = TechnologyDetectionHelper.detectTechnologies(
+                description.isEmpty() ? summary : summary + " " + description, labels);
         List<String> detectedTechs = new ArrayList<>();
         for (Map<String, Object> t : technologies) {
             detectedTechs.add((String) t.get("technology"));
         }
 
-        Map<String, Object> diffEvidence = TechnologyDetectionHelper.estimateDifficulty(summary, "", labels, comments);
+        Map<String, Object> diffEvidence = TechnologyDetectionHelper.estimateDifficulty(summary, description, labels, comments);
         Map<String, Object> freshEvidence = TechnologyDetectionHelper.computeFreshness(createdAt, updatedAt);
 
         // Responsiveness & Health: Unavailable on Bugzilla -> triggers C++ engine weight renormalization
@@ -465,7 +467,7 @@ public class BugzillaAdapter implements BaseIssueSourceAdapter {
         normalized.put("repository_url", null);
         normalized.put("issue_number", bugId);
         normalized.put("title", summary);
-        normalized.put("body", "");
+        normalized.put("body", description);
         normalized.put("issue_url", canonicalUrl);
         normalized.put("canonical_url", canonicalUrl);
         normalized.put("product", product);

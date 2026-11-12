@@ -66,8 +66,10 @@ public class IssueController {
             @RequestParam(defaultValue = "50") int limit,
             @RequestParam(defaultValue = "0") int skip
     ) {
+        int safeLimit = Math.min(Math.max(1, limit), 200);
+        int safeSkip = Math.max(0, skip);
         List<Map<String, Object>> list = issueRepository.queryIssues(
-                state, isAssigned, technology, minDifficulty, maxDifficulty, search, source, limit, skip
+                state, isAssigned, technology, minDifficulty, maxDifficulty, search, source, safeLimit, safeSkip
         );
         long totalInPool = issueRepository.countIssues();
 

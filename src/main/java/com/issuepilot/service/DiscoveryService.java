@@ -2,6 +2,7 @@ package com.issuepilot.service;
 
 import com.issuepilot.adapter.AdapterRegistry;
 import com.issuepilot.adapter.BaseIssueSourceAdapter;
+import com.issuepilot.adapter.CodebergAdapter;
 import com.issuepilot.adapter.TechnologyDetectionHelper;
 import com.issuepilot.config.AppProperties;
 import com.issuepilot.config.MongoConfig;
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -95,84 +98,92 @@ public class DiscoveryService {
             jobId = "discovery_offline_" + System.currentTimeMillis();
         }
 
-        long t0 = System.currentTimeMillis();
-        int targetPoolSize = properties.getCandidatePoolTarget();
-        int maxPerRepo = properties.getMaxIssuesPerRepo();
-        int pagesPerQuery = (maxPagesPerQuery != null && maxPagesPerQuery > 0) ? maxPagesPerQuery : properties.getMaxSearchPagesPerRun();
-        int itemsPerPage = (perPage != null && perPage > 0) ? perPage : properties.getPerPageCount();
+        boolean lockReleased = false;
+        try {
+            long t0 = System.currentTimeMillis();
+            int targetPoolSize = properties.getCandidatePoolTarget();
+            int maxPerRepo = properties.getMaxIssuesPerRepo();
+            int pagesPerQuery = (maxPagesPerQuery != null && maxPagesPerQuery > 0) ? maxPagesPerQuery : properties.getMaxSearchPagesPerRun();
+            int itemsPerPage = (perPage != null && perPage > 0) ? perPage : properties.getPerPageCount();
 
-        int ageDays = (creationAgeDays != null && (creationAgeDays == 7 || creationAgeDays == 30)) ? creationAgeDays : 30;
-        Instant cutoffInstant = Instant.now().minus(Duration.ofDays(ageDays));
-        String cutoffIso = DateTimeFormatter.ISO_INSTANT.format(cutoffInstant);
-        String cutoffDate = DateTimeFormatter.ISO_LOCAL_DATE.format(cutoffInstant.atZone(ZoneOffset.UTC));
+            int ageDays = (creationAgeDays != null && (creationAgeDays == 7 || creationAgeDays == 30)) ? creationAgeDays : 30;
+            Instant cutoffInstant = Instant.now().minus(Duration.ofDays(ageDays));
+            String cutoffIso = DateTimeFormatter.ISO_INSTANT.format(cutoffInstant);
+            String cutoffDate = DateTimeFormatter.ISO_LOCAL_DATE.format(cutoffInstant.atZone(ZoneOffset.UTC));
 
-        long currentActivePool = 0;
-        if (mongoConfig.isConnected()) {
-            try {
-                currentActivePool = issueRepository.countIssues();
-            } catch (Exception ignored) {}
-        }
-
-        if (currentActivePool >= targetPoolSize) {
-            Map<String, Object> summary = new LinkedHashMap<>();
-            summary.put("status", "completed");
-            summary.put("job_id", jobId);
-            summary.put("job_type", "discovery");
-            summary.put("discovered_count", 0);
-            summary.put("inserted_count", 0);
-            summary.put("updated_count", 0);
-            summary.put("skipped_count", 0);
-            summary.put("active_pool_size", currentActivePool);
-            summary.put("target_pool_size", targetPoolSize);
-            summary.put("creation_age_days", ageDays);
-            summary.put("per_source_summary", Collections.emptyMap());
-            summary.put("note", "Candidate pool target reached; discovery halted.");
+            long currentActivePool = 0;
             if (mongoConfig.isConnected()) {
-                jobRepository.releaseJobLock(jobId, "completed", summary);
+                try {
+                    currentActivePool = issueRepository.countEligibleOpenIssues();
+                } catch (Exception ignored) {}
             }
-            return summary;
-        }
 
-        // Deduplicate Baseline and Active-User Stack preferences
-        Set<String> targetStacks = new LinkedHashSet<>(BASELINE_STACKS);
-        if (mongoConfig.isConnected()) {
-            try {
-                Set<String> activeUserTechs = userRepository.getActiveTechnologyPreferences(Instant.now().minus(Duration.ofDays(30)), 100);
-                if (activeUserTechs != null) {
-                    targetStacks.addAll(activeUserTechs);
+            if (currentActivePool >= targetPoolSize) {
+                Map<String, Object> summary = new LinkedHashMap<>();
+                summary.put("status", "completed");
+                summary.put("job_id", jobId);
+                summary.put("job_type", "discovery");
+                summary.put("discovered_count", 0);
+                summary.put("inserted_count", 0);
+                summary.put("updated_count", 0);
+                summary.put("skipped_count", 0);
+                summary.put("active_pool_size", currentActivePool);
+                summary.put("target_pool_size", targetPoolSize);
+                summary.put("creation_age_days", ageDays);
+                summary.put("per_source_summary", Collections.emptyMap());
+                summary.put("note", "Candidate pool target reached; discovery halted.");
+                if (mongoConfig.isConnected()) {
+                    jobRepository.releaseJobLock(jobId, "completed", summary);
+                    lockReleased = true;
                 }
-            } catch (Exception e) {
-                logger.warn("Could not retrieve active-user technology preferences: {}", e.getMessage());
+                return summary;
             }
-        }
 
-        List<String> targetSources = new ArrayList<>();
-        if (sourceFilter == null || sourceFilter.isBlank() || "all".equalsIgnoreCase(sourceFilter)) {
-            targetSources.addAll(adapterRegistry.getAllAdapters().keySet());
-        } else {
-            targetSources.add(sourceFilter.toLowerCase().trim());
-        }
-
-        int totalDiscovered = 0;
-        int totalInserted = 0;
-        int totalUpdated = 0;
-        int totalSkipped = 0;
-        int totalFilteredState = 0;
-        int totalFilteredAge = 0;
-        int totalFilteredTech = 0;
-        int totalFilteredIdentity = 0;
-        int totalSkippedDiversity = 0;
-        List<String> errors = new ArrayList<>();
-        Map<String, Map<String, Object>> perSourceSummary = new LinkedHashMap<>();
-
-        for (String src : targetSources) {
-            BaseIssueSourceAdapter adapter;
-            try {
-                adapter = adapterRegistry.getAdapter(src);
-            } catch (Exception e) {
-                errors.add("Source " + src + " not found: " + e.getMessage());
-                continue;
+            // Deduplicate Baseline and Active-User Stack preferences
+            Set<String> targetStacks = new LinkedHashSet<>(BASELINE_STACKS);
+            if (mongoConfig.isConnected()) {
+                try {
+                    Set<String> activeUserTechs = userRepository.getActiveTechnologyPreferences(Instant.now().minus(Duration.ofDays(30)), 100);
+                    if (activeUserTechs != null) {
+                        targetStacks.addAll(activeUserTechs);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Could not retrieve active-user technology preferences: {}", e.getMessage());
+                }
             }
+
+            List<String> targetSources = new ArrayList<>();
+            if (sourceFilter == null || sourceFilter.isBlank() || "all".equalsIgnoreCase(sourceFilter)) {
+                targetSources.addAll(adapterRegistry.getAllAdapters().keySet());
+            } else {
+                targetSources.add(sourceFilter.toLowerCase().trim());
+            }
+
+            int totalDiscovered = 0;
+            int totalInserted = 0;
+            int totalUpdated = 0;
+            int totalSkipped = 0;
+            int totalFilteredState = 0;
+            int totalFilteredAge = 0;
+            int totalFilteredTech = 0;
+            int totalFilteredIdentity = 0;
+            int totalSkippedDiversity = 0;
+            List<String> errors = new ArrayList<>();
+            Map<String, Map<String, Object>> perSourceSummary = new LinkedHashMap<>();
+            Map<String, Long> repoCountsCache = new HashMap<>();
+
+            for (String src : targetSources) {
+                BaseIssueSourceAdapter adapter;
+                try {
+                    adapter = adapterRegistry.getAdapter(src);
+                } catch (Exception e) {
+                    errors.add("Source " + src + " not found: " + e.getMessage());
+                    continue;
+                }
+
+                if (adapter instanceof CodebergAdapter codebergAdapter) {
+                    codebergAdapter.resetGlobalSearchState();
+                }
 
             if (!adapter.isConfigured()) {
                 Map<String, Object> disabledStats = new LinkedHashMap<>();
@@ -268,9 +279,10 @@ public class DiscoveryService {
                                 continue;
                             }
 
-                            // 2. Post-Retrieval Validation: Open state check
+                            // 2. Post-Retrieval Validation: Open & unassigned state check
                             String state = (String) normalized.getOrDefault("state", "open");
-                            if (!"open".equalsIgnoreCase(state)) {
+                            boolean isAssigned = Boolean.TRUE.equals(normalized.get("is_assigned"));
+                            if (!"open".equalsIgnoreCase(state) || isAssigned) {
                                 srcFilteredState++;
                                 totalFilteredState++;
                                 srcSkipped++;
@@ -278,19 +290,15 @@ public class DiscoveryService {
                                 continue;
                             }
 
-                            // 3. Post-Retrieval Validation: Creation-age window check
+                            // 3. Post-Retrieval Validation: Creation-age window check (fail closed if missing/unparseable)
                             String createdAt = (String) normalized.get("created_at");
-                            if (createdAt != null && !createdAt.isBlank()) {
-                                try {
-                                    Instant createdInstant = Instant.parse(createdAt);
-                                    if (createdInstant.isBefore(cutoffInstant)) {
-                                        srcFilteredAge++;
-                                        totalFilteredAge++;
-                                        srcSkipped++;
-                                        totalSkipped++;
-                                        continue;
-                                    }
-                                } catch (Exception ignored) {}
+                            Instant createdInstant = parseIsoInstant(createdAt);
+                            if (createdInstant == null || createdInstant.isBefore(cutoffInstant)) {
+                                srcFilteredAge++;
+                                totalFilteredAge++;
+                                srcSkipped++;
+                                totalSkipped++;
+                                continue;
                             }
 
                             // 4. Post-Retrieval Validation: Technology relevance check
@@ -302,10 +310,10 @@ public class DiscoveryService {
                                 continue;
                             }
 
-                            // Diversity check (max issues per repository)
+                            // Diversity check (max issues per repository, cached per run to avoid N+1 DB counts)
                             String repoFullName = (String) normalized.get("repository_full_name");
                             if (repoFullName != null && !repoFullName.isBlank() && mongoConfig.isConnected()) {
-                                long repoCount = issueRepository.countByRepository(repoFullName);
+                                long repoCount = repoCountsCache.computeIfAbsent(repoFullName, issueRepository::countByRepository);
                                 if (repoCount >= maxPerRepo) {
                                     totalSkippedDiversity++;
                                     srcSkipped++;
@@ -321,6 +329,9 @@ public class DiscoveryService {
                                     if (upserted != null) {
                                         srcInserted++;
                                         totalInserted++;
+                                        if (repoFullName != null && !repoFullName.isBlank()) {
+                                            repoCountsCache.merge(repoFullName, 1L, Long::sum);
+                                        }
                                     } else {
                                         srcUpdated++;
                                         totalUpdated++;
@@ -445,9 +456,34 @@ public class DiscoveryService {
 
         if (mongoConfig.isConnected()) {
             jobRepository.releaseJobLock(jobId, overallStatus, summary);
+            lockReleased = true;
         }
 
         return summary;
+        } finally {
+            if (!lockReleased && mongoConfig.isConnected() && jobId != null) {
+                try {
+                    jobRepository.releaseJobLock(jobId, "failed", Map.of("job_id", jobId, "status", "failed"));
+                } catch (Exception ignored) {}
+            }
+        }
+    }
+
+    private Instant parseIsoInstant(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        String trimmed = raw.trim();
+        try {
+            return OffsetDateTime.parse(trimmed).toInstant();
+        } catch (Exception ignored) {}
+        try {
+            return Instant.parse(trimmed);
+        } catch (Exception ignored) {}
+        try {
+            return LocalDate.parse(trimmed).atStartOfDay(ZoneOffset.UTC).toInstant();
+        } catch (Exception ignored) {}
+        return null;
     }
 
     private String buildPlatformQuery(String source, String stack, String cutoffDate, String cutoffIso) {

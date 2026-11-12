@@ -66,8 +66,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleGeneralException(Exception ex) {
         logger.error("Unhandled server exception: {}", ex.getMessage(), ex);
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("detail", ex.getMessage());
-        body.put("message", ex.getMessage());
+        body.put("detail", "An unexpected internal server error occurred.");
+        body.put("message", "An unexpected internal server error occurred.");
         body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
         return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
     }

@@ -386,15 +386,6 @@ export const liveApi: IssuePilotApi = {
     },
   },
 
-  portfolio: {
-    async list() {
-      const session = await liveApi.auth.getSession();
-      if (!session) return [];
-      const res = await request<any>("feedback.list", `/api/feedback/${session.user.id}`);
-      return (res?.portfolio as T.PortfolioItem[]) ?? [];
-    },
-  },
-
   profile: {
     async me() {
       const profile = await request<any>("profile.me", e.profile.me);
@@ -451,46 +442,6 @@ export const liveApi: IssuePilotApi = {
         profile_source: isGithub ? "github" : "questionnaire",
         starter: null,
       };
-    },
-  },
-
-  notifications: {
-    async status() {
-      return [];
-    },
-  },
-
-  maintainer: {
-    async repos() {
-      return [];
-    },
-    async registerRepo() {
-      throw new ApiError(
-        "Maintainer endpoint not implemented on live backend",
-        501,
-        "/api/maintainer/repos",
-        "POST",
-      );
-    },
-    async triage() {
-      return [];
-    },
-    async decide() {
-      throw new ApiError(
-        "Maintainer triage endpoint not implemented on live backend",
-        501,
-        "/api/maintainer/triage",
-        "POST",
-      );
-    },
-    async history() {
-      return { decisions: [], audit: [] };
-    },
-  },
-
-  admin: {
-    async fetch(section) {
-      return request<any>("admin.fetch", `/api/admin/${section}`);
     },
   },
 };

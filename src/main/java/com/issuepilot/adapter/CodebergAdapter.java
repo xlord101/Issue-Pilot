@@ -183,11 +183,19 @@ public class CodebergAdapter implements BaseIssueSourceAdapter {
     @Override
     public Map<String, Object> searchIssues(String query, int page, int perPage, String sort, String order) {
         try {
+            Instant createdAfterCutoff = null;
             String cleanQuery = query != null ? query.trim() : "";
             if (cleanQuery.contains("created_after:")) {
                 int idx = cleanQuery.indexOf("created_after:");
                 String rest = cleanQuery.substring(idx + 14).trim();
                 String datePart = rest.split("\\s+")[0];
+                try {
+                    createdAfterCutoff = java.time.OffsetDateTime.parse(datePart).toInstant();
+                } catch (Exception ignored) {
+                    try {
+                        createdAfterCutoff = java.time.LocalDate.parse(datePart).atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
+                    } catch (Exception ignored2) {}
+                }
                 cleanQuery = cleanQuery.replace("created_after:" + datePart, "").trim();
             }
             cleanQuery = cleanQuery.replaceAll("(?i)(is:issue|is:open|language:|in:title,body|label:\"[^\"]+\"|label:[^\\s]+)", "").trim();
@@ -207,7 +215,8 @@ public class CodebergAdapter implements BaseIssueSourceAdapter {
                 }
 
                 if (response.statusCode() == 200) {
-                    List<Map<String, Object>> items = objectMapper.readValue(response.body(), new TypeReference<>() {});
+                    List<Map<String, Object>> rawItems = objectMapper.readValue(response.body(), new TypeReference<>() {});
+                    List<Map<String, Object>> items = filterByCreatedAfter(rawItems, createdAfterCutoff);
                     int total = items.size();
                     Optional<String> totalHeader = response.headers().firstValue("x-total-count");
                     if (totalHeader.isPresent()) {
@@ -247,7 +256,10 @@ public class CodebergAdapter implements BaseIssueSourceAdapter {
 
                     if (repoResp.statusCode() == 200) {
                         fallbackSuccess = true;
-                        List<Map<String, Object>> repoItems = objectMapper.readValue(repoResp.body(), new TypeReference<>() {});
+                        List<Map<String, Object>> repoItems = filterByCreatedAfter(
+                                objectMapper.readValue(repoResp.body(), new TypeReference<>() {}),
+                                createdAfterCutoff
+                        );
                         for (Map<String, Object> item : repoItems) {
                             if (!item.containsKey("repository")) {
                                 String[] p = repoPath.split("/");
@@ -495,5 +507,32 @@ public class CodebergAdapter implements BaseIssueSourceAdapter {
         normalized.put("refresh_status", "active");
 
         return normalized;
+    }
+
+    private List<Map<String, Object>> filterByCreatedAfter(List<Map<String, Object>> items, Instant cutoff) {
+        if (items == null || items.isEmpty() || cutoff == null) {
+            return items != null ? items : Collections.emptyList();
+        }
+        List<Map<String, Object>> filtered = new ArrayList<>(items.size());
+        for (Map<String, Object> item : items) {
+            Object rawCreated = item.get("created_at");
+            if (rawCreated == null) {
+                continue;
+            }
+            try {
+                Instant created = java.time.OffsetDateTime.parse(rawCreated.toString().trim()).toInstant();
+                if (!created.isBefore(cutoff)) {
+                    filtered.add(item);
+                }
+            } catch (Exception e) {
+                try {
+                    Instant created = Instant.parse(rawCreated.toString().trim());
+                    if (!created.isBefore(cutoff)) {
+                        filtered.add(item);
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+        return filtered;
     }
 }

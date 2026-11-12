@@ -36,6 +36,11 @@ public class LocalAuthService {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
     private static final int MIN_PASSWORD_LENGTH = 8;
+    private static final int MAX_LOGIN_ATTEMPTS = 5;
+    private static final Duration LOGIN_WINDOW = Duration.ofMinutes(15);
+
+    private record FailedLoginWindow(int count, Instant windowStart) {}
+    private final Map<String, FailedLoginWindow> failedLogins = new java.util.concurrent.ConcurrentHashMap<>();
 
     private final UserRepository userRepository;
     private final LocalCredentialRepository credentialRepository;
@@ -193,11 +198,16 @@ public class LocalAuthService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password is required.");
         }
 
+        enforceLoginRateLimit(cleanEmail);
+
         Document cred = credentialRepository.findByEmail(cleanEmail);
         String storedHash = cred != null ? cred.getString("password_hash") : null;
         if (cred == null || storedHash == null || !passwordEncoder.matches(rawPassword, storedHash)) {
+            recordFailedLogin(cleanEmail);
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password.");
         }
+
+        failedLogins.remove(cleanEmail);
 
         if (!Boolean.TRUE.equals(cred.getBoolean("email_verified"))) {
             throw new EmailNotVerifiedException(
@@ -460,6 +470,36 @@ public class LocalAuthService {
     private String buildUsername(String cleanEmail) {
         String localPart = cleanEmail.split("@")[0].replaceAll("[^a-zA-Z0-9_-]", "");
         return localPart.isBlank() ? "contributor" : localPart;
+    }
+
+    private void enforceLoginRateLimit(String cleanEmail) {
+        FailedLoginWindow window = failedLogins.get(cleanEmail);
+        if (window == null) {
+            return;
+        }
+        if (Duration.between(window.windowStart(), Instant.now()).compareTo(LOGIN_WINDOW) >= 0) {
+            failedLogins.remove(cleanEmail);
+            return;
+        }
+        if (window.count() >= MAX_LOGIN_ATTEMPTS) {
+            throw new ResponseStatusException(
+                    HttpStatus.TOO_MANY_REQUESTS,
+                    "Too many failed sign-in attempts. Please wait 15 minutes before trying again or reset your password."
+            );
+        }
+    }
+
+    private void recordFailedLogin(String cleanEmail) {
+        Instant now = Instant.now();
+        if (failedLogins.size() > 10_000) {
+            failedLogins.entrySet().removeIf(e -> Duration.between(e.getValue().windowStart(), now).compareTo(LOGIN_WINDOW) >= 0);
+        }
+        failedLogins.compute(cleanEmail, (k, existing) -> {
+            if (existing == null || Duration.between(existing.windowStart(), now).compareTo(LOGIN_WINDOW) >= 0) {
+                return new FailedLoginWindow(1, now);
+            }
+            return new FailedLoginWindow(existing.count() + 1, existing.windowStart());
+        });
     }
 
     private Instant toInstant(Object dateObj) {

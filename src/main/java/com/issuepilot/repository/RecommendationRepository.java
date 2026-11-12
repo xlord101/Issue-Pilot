@@ -5,6 +5,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -33,7 +34,9 @@ public class RecommendationRepository {
     ) {
         if (mongoTemplate == null) return Collections.emptyList();
 
-        String nowIso = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
+        Instant now = Instant.now();
+        String nowIso = DateTimeFormatter.ISO_INSTANT.format(now);
+        Date expiresAt = Date.from(now.plus(30, ChronoUnit.DAYS));
         List<Document> docsToInsert = new ArrayList<>();
 
         List<Map<String, Object>> candidatesToSave = (auditedCandidates != null && !auditedCandidates.isEmpty())
@@ -66,6 +69,7 @@ public class RecommendationRepository {
                 doc.append("response_metadata", c.get("response_metadata"));
                 doc.append("algorithm_version", algorithmVersion);
                 doc.append("generated_at", nowIso);
+                doc.append("expires_at", expiresAt);
 
                 // Preserve original candidate metadata
                 for (Map.Entry<String, Object> entry : c.entrySet()) {

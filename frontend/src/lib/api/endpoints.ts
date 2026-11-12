@@ -4,8 +4,6 @@
  */
 export type Endpoint = string | null;
 
-export type AdminSection = "crawler" | "queue" | "metrics" | "settings";
-
 export const endpoints = {
   auth: {
     /** GET — redirects browser to GitHub OAuth 2.0 flow. */

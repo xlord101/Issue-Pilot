@@ -8,7 +8,7 @@ import {
   FileText,
   CheckCircle2,
 } from "lucide-react";
-import { DemoDataBadge, LabelList, SourceBadge, VerificationBadge } from "@/components/ip/badges";
+import { LabelList, SourceBadge, VerificationBadge } from "@/components/ip/badges";
 import { FeedbackActions } from "@/components/ip/feedback-actions";
 import { ScoreBreakdown, ScoreTotal } from "@/components/ip/score";
 import { EmptyState, QueryState } from "@/components/ip/states";

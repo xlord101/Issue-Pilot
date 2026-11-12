@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.issuepilot.adapter.*;
 import com.issuepilot.config.AppProperties;
+import jakarta.annotation.PreDestroy;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -13,7 +14,10 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Service
 public class LiveVerifier {
@@ -23,9 +27,12 @@ public class LiveVerifier {
     private final AdapterRegistry adapterRegistry;
     private final HttpClient httpClient;
 
+    private static final int MAX_CACHE_SIZE = 2000;
+
     // Cache: key -> CacheEntry
     private final Map<String, CacheEntry> cache = new ConcurrentHashMap<>();
     private final Map<String, Object> rateLimitState = new ConcurrentHashMap<>();
+    private final ExecutorService verificationExecutor;
 
     public static class VerificationResult {
         private final boolean valid;
@@ -120,9 +127,37 @@ public class LiveVerifier {
                 .connectTimeout(Duration.ofSeconds(properties.getVerificationTimeoutSeconds()))
                 .build();
 
+        int threads = Math.max(2, Math.min(8, properties.getVerificationConcurrency()));
+        this.verificationExecutor = Executors.newFixedThreadPool(threads, r -> {
+            Thread t = new Thread(r, "issue-pilot-verifier");
+            t.setDaemon(true);
+            return t;
+        });
+
         rateLimitState.put("limit", properties.getGithubToken() != null && !properties.getGithubToken().isBlank() ? 5000 : 60);
         rateLimitState.put("remaining", properties.getGithubToken() != null && !properties.getGithubToken().isBlank() ? 5000 : 60);
         rateLimitState.put("reset", System.currentTimeMillis() / 1000 + 3600);
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        verificationExecutor.shutdownNow();
+    }
+
+    private void putCacheEntry(String key, CacheEntry entry) {
+        if (cache.size() >= MAX_CACHE_SIZE) {
+            long ttlMs = Math.max(60L, properties.getVerificationCacheTtlSeconds()) * 1000L;
+            long cutoff = System.currentTimeMillis() - ttlMs;
+            cache.entrySet().removeIf(e -> e.getValue().cachedAt < cutoff);
+            if (cache.size() >= MAX_CACHE_SIZE) {
+                int removed = 0;
+                for (Iterator<String> it = cache.keySet().iterator(); it.hasNext() && removed < MAX_CACHE_SIZE / 4; removed++) {
+                    it.next();
+                    it.remove();
+                }
+            }
+        }
+        cache.put(key, entry);
     }
 
     public void clearCache() {
@@ -250,7 +285,7 @@ public class LiveVerifier {
 
                 // 304 Not Modified
                 if (status == 304 && cached != null) {
-                    cache.put(cacheKey, new CacheEntry(now, cached.etag, cached.result));
+                    putCacheEntry(cacheKey, new CacheEntry(now, cached.etag, cached.result));
                     return new VerificationResult(
                             cached.result.isValid(),
                             cached.result.getStatus(),
@@ -289,7 +324,7 @@ public class LiveVerifier {
                     VerificationResult r = new VerificationResult(
                             false, "excluded", "Issue or repository no longer exists (HTTP 404)", repoFullName, null, false, false, Map.of("status_code", 404)
                     );
-                    cache.put(cacheKey, new CacheEntry(now, null, r));
+                    putCacheEntry(cacheKey, new CacheEntry(now, null, r));
                     return r;
                 }
 
@@ -338,11 +373,11 @@ public class LiveVerifier {
                 meta.put("canonical_url", canonicalUrl);
 
                 // Pull request check
-                if (data.containsKey("pull_request")) {
+                if (data.get("pull_request") != null) {
                     VerificationResult r = new VerificationResult(
                             false, "excluded", "Candidate is a pull request, not an issue", canonicalRepo, canonicalUrl, false, false, meta
                     );
-                    cache.put(cacheKey, new CacheEntry(now, etag, r));
+                    putCacheEntry(cacheKey, new CacheEntry(now, etag, r));
                     return r;
                 }
 
@@ -352,7 +387,7 @@ public class LiveVerifier {
                     VerificationResult r = new VerificationResult(
                             false, "excluded", "Issue is " + state + " on GitHub", canonicalRepo, canonicalUrl, false, false, meta
                     );
-                    cache.put(cacheKey, new CacheEntry(now, etag, r));
+                    putCacheEntry(cacheKey, new CacheEntry(now, etag, r));
                     return r;
                 }
 
@@ -364,7 +399,7 @@ public class LiveVerifier {
                     VerificationResult r = new VerificationResult(
                             false, "excluded", "Issue is assigned to another contributor", canonicalRepo, canonicalUrl, false, false, meta
                     );
-                    cache.put(cacheKey, new CacheEntry(now, etag, r));
+                    putCacheEntry(cacheKey, new CacheEntry(now, etag, r));
                     return r;
                 }
 
@@ -376,7 +411,7 @@ public class LiveVerifier {
                     VerificationResult r = new VerificationResult(
                             false, "excluded", "Repository is archived and read-only", canonicalRepo, canonicalUrl, false, false, meta
                     );
-                    cache.put(cacheKey, new CacheEntry(now, etag, r));
+                    putCacheEntry(cacheKey, new CacheEntry(now, etag, r));
                     return r;
                 }
 
@@ -387,7 +422,7 @@ public class LiveVerifier {
                         VerificationResult r = new VerificationResult(
                                 false, "excluded", "Issue is locked (" + lockReason + ")", canonicalRepo, canonicalUrl, false, false, meta
                         );
-                        cache.put(cacheKey, new CacheEntry(now, etag, r));
+                        putCacheEntry(cacheKey, new CacheEntry(now, etag, r));
                         return r;
                     }
                 }
@@ -396,7 +431,7 @@ public class LiveVerifier {
                 VerificationResult r = new VerificationResult(
                         true, "live_verified", "Live GitHub state confirmed: Open & Unassigned", canonicalRepo, canonicalUrl, false, false, meta
                 );
-                cache.put(cacheKey, new CacheEntry(now, etag, r));
+                putCacheEntry(cacheKey, new CacheEntry(now, etag, r));
                 return r;
 
             } catch (Exception e) {
@@ -439,26 +474,26 @@ public class LiveVerifier {
             Map<String, Object> data = adapter.getIssue(owner, repoName, issueNum);
             if (data == null) {
                 VerificationResult r = new VerificationResult(false, "excluded", "GitLab issue not found or deleted (HTTP 404)", repo, null, false, false, null);
-                cache.put(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
+                putCacheEntry(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
                 return r;
             }
 
             String state = (String) data.getOrDefault("state", "opened");
             if (!"opened".equalsIgnoreCase(state) && !"open".equalsIgnoreCase(state)) {
                 VerificationResult r = new VerificationResult(false, "excluded", "Issue is " + state + " on GitLab", repo, (String) data.get("web_url"), false, false, null);
-                cache.put(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
+                putCacheEntry(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
                 return r;
             }
 
             Object assigneesObj = data.get("assignees");
             if (assigneesObj instanceof List && !((List<?>) assigneesObj).isEmpty()) {
                 VerificationResult r = new VerificationResult(false, "excluded", "Issue is already assigned on GitLab", repo, (String) data.get("web_url"), false, false, null);
-                cache.put(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
+                putCacheEntry(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
                 return r;
             }
 
             VerificationResult r = new VerificationResult(true, "live_verified", "Confirmed open and eligible via GitLab API", repo, (String) data.get("web_url"), false, false, null);
-            cache.put(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
+            putCacheEntry(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
             return r;
         } catch (RateLimitExceededException e) {
             return new VerificationResult(false, "inconclusive", "GitLab rate limit budget exhausted: " + e.getMessage(), repo, null, true, true, null);
@@ -490,32 +525,32 @@ public class LiveVerifier {
             Map<String, Object> data = adapter.getIssue(owner, repoName, issueNum);
             if (data == null) {
                 VerificationResult r = new VerificationResult(false, "excluded", "Codeberg issue not found or deleted (HTTP 404)", repo, null, false, false, null);
-                cache.put(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
+                putCacheEntry(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
                 return r;
             }
 
-            if (data.containsKey("pull_request")) {
+            if (data.get("pull_request") != null) {
                 VerificationResult r = new VerificationResult(false, "excluded", "Candidate is a pull request on Codeberg", repo, (String) data.get("html_url"), false, false, null);
-                cache.put(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
+                putCacheEntry(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
                 return r;
             }
 
             String state = (String) data.getOrDefault("state", "open");
             if (!"open".equalsIgnoreCase(state)) {
                 VerificationResult r = new VerificationResult(false, "excluded", "Issue is " + state + " on Codeberg", repo, (String) data.get("html_url"), false, false, null);
-                cache.put(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
+                putCacheEntry(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
                 return r;
             }
 
             Object assignees = data.get("assignees");
             if ((assignees instanceof List && !((List<?>) assignees).isEmpty()) || data.get("assignee") != null) {
                 VerificationResult r = new VerificationResult(false, "excluded", "Issue is already assigned on Codeberg", repo, (String) data.get("html_url"), false, false, null);
-                cache.put(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
+                putCacheEntry(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
                 return r;
             }
 
             VerificationResult r = new VerificationResult(true, "live_verified", "Confirmed open and eligible via Codeberg API", repo, (String) data.get("html_url"), false, false, null);
-            cache.put(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
+            putCacheEntry(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
             return r;
         } catch (RateLimitExceededException e) {
             return new VerificationResult(false, "inconclusive", "Codeberg rate limit budget exhausted: " + e.getMessage(), repo, null, true, true, null);
@@ -540,7 +575,7 @@ public class LiveVerifier {
             Map<String, Object> bug = adapter.getIssue("", "", issueNum);
             if (bug == null) {
                 VerificationResult r = new VerificationResult(false, "excluded", "Bugzilla bug not found or inaccessible (HTTP 404)", repo, null, false, false, null);
-                cache.put(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
+                putCacheEntry(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
                 return r;
             }
 
@@ -550,20 +585,25 @@ public class LiveVerifier {
 
             if (!openStatuses.contains(bzStatus) || !resolution.isBlank()) {
                 VerificationResult r = new VerificationResult(false, "excluded", "Bug resolved or closed on Bugzilla (status: " + bzStatus + ")", repo, null, false, false, null);
-                cache.put(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
+                putCacheEntry(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
                 return r;
             }
 
             String assignedTo = (String) bug.getOrDefault("assigned_to", "");
             if (assignedTo != null && !assignedTo.isBlank() && !assignedTo.toLowerCase().contains("nobody@")) {
                 VerificationResult r = new VerificationResult(false, "excluded", "Bug is already assigned to " + assignedTo + " on Bugzilla", repo, null, false, false, null);
-                cache.put(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
+                putCacheEntry(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
                 return r;
             }
 
-            String canonicalUrl = "https://bugzilla.mozilla.org/show_bug.cgi?id=" + issueNum;
+            String baseWeb = "https://bugzilla.mozilla.org";
+            String configuredBz = properties.getBugzillaBaseUrl();
+            if (configuredBz != null && !configuredBz.isBlank()) {
+                baseWeb = configuredBz.trim().replaceAll("/rest/?$", "").replaceAll("/+$", "");
+            }
+            String canonicalUrl = baseWeb + "/show_bug.cgi?id=" + issueNum;
             VerificationResult r = new VerificationResult(true, "live_verified", "Confirmed open and eligible via Bugzilla REST API", repo, canonicalUrl, false, false, null);
-            cache.put(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
+            putCacheEntry(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
             return r;
         } catch (RateLimitExceededException e) {
             return new VerificationResult(false, "inconclusive", "Bugzilla request budget exhausted: " + e.getMessage(), repo, null, true, true, null);
@@ -589,22 +629,39 @@ public class LiveVerifier {
         int excludedCount = 0;
         int inconclusiveCount = 0;
 
-        for (int i = 0; i < rankedCandidates.size(); i++) {
-            Map<String, Object> c = new HashMap<>(rankedCandidates.get(i));
-            c.put("original_rank", i + 1);
-            c.put("original_score", c.get("final_score"));
+        int cursor = 0;
+        while (cursor < effectiveBudget && delivered.size() < targetCount) {
+            int remainingNeeded = targetCount - delivered.size();
+            int waveEnd = Math.min(effectiveBudget, cursor + remainingNeeded);
 
-            if (delivered.size() < targetCount && i < effectiveBudget) {
-                verifiedCount++;
-                if (demoMode) {
+            if (demoMode) {
+                for (int i = cursor; i < waveEnd; i++) {
+                    Map<String, Object> c = new HashMap<>(rankedCandidates.get(i));
+                    c.put("original_rank", i + 1);
+                    c.put("original_score", c.get("final_score"));
+                    verifiedCount++;
                     c.put("verification_status", "sample_verified");
                     c.put("verification_notes", "Verified via local sample/offline demonstration dataset.");
                     c.put("decision", "included");
                     c.put("delivered_rank", delivered.size() + 1);
                     delivered.add(c);
                     audited.add(c);
-                } else {
-                    VerificationResult vResult = verifyCandidate(c, timeout, maxRetries);
+                }
+            } else {
+                List<CompletableFuture<VerificationResult>> futures = new ArrayList<>(waveEnd - cursor);
+                List<Map<String, Object>> waveCandidates = new ArrayList<>(waveEnd - cursor);
+                for (int i = cursor; i < waveEnd; i++) {
+                    Map<String, Object> c = new HashMap<>(rankedCandidates.get(i));
+                    c.put("original_rank", i + 1);
+                    c.put("original_score", c.get("final_score"));
+                    waveCandidates.add(c);
+                    futures.add(CompletableFuture.supplyAsync(() -> verifyCandidate(c, timeout, maxRetries), verificationExecutor));
+                }
+
+                for (int j = 0; j < waveCandidates.size(); j++) {
+                    Map<String, Object> c = waveCandidates.get(j);
+                    verifiedCount++;
+                    VerificationResult vResult = futures.get(j).join();
                     c.put("verification_status", vResult.getStatus());
                     c.put("verification_notes", vResult.getReason());
                     c.put("canonical_repo", vResult.getCanonicalRepo());
@@ -628,19 +685,20 @@ public class LiveVerifier {
                         audited.add(c);
                     }
                 }
-            } else if (i < effectiveBudget) {
-                // Already reached targetCount, mark remaining candidates in budget as skipped
-                c.put("decision", "skipped");
-                c.put("verification_status", "unverified");
-                c.put("exclusion_reason", "Target recommendation count satisfied");
-                audited.add(c);
-            } else {
-                // Beyond budget
-                c.put("decision", "skipped");
-                c.put("verification_status", "unverified");
-                c.put("exclusion_reason", "Candidate exceeded verification shortlist budget");
-                audited.add(c);
             }
+            cursor = waveEnd;
+        }
+
+        for (int i = cursor; i < rankedCandidates.size(); i++) {
+            Map<String, Object> c = new HashMap<>(rankedCandidates.get(i));
+            c.put("original_rank", i + 1);
+            c.put("original_score", c.get("final_score"));
+            c.put("decision", "skipped");
+            c.put("verification_status", "unverified");
+            c.put("exclusion_reason", i < effectiveBudget
+                    ? "Target recommendation count satisfied"
+                    : "Candidate exceeded verification shortlist budget");
+            audited.add(c);
         }
 
         // Renumber delivered ranks 1..N

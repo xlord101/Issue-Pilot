@@ -2,6 +2,8 @@ package com.issuepilot.repository;
 
 import com.issuepilot.config.MongoConfig;
 import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.stereotype.Repository;
@@ -15,6 +17,8 @@ import java.util.regex.Pattern;
 
 @Repository
 public class IssueRepository {
+
+    private static final Logger logger = LoggerFactory.getLogger(IssueRepository.class);
 
     private final MongoOperations mongoTemplate;
     private final MongoConfig mongoConfig;
@@ -220,7 +224,7 @@ public class IssueRepository {
                 if (state != null && !state.isBlank() && !state.equalsIgnoreCase("all")) {
                     query.append("state", state.toLowerCase().trim());
                     if (state.equalsIgnoreCase("open")) {
-                        query.append("stale_status", new Document("$nin", Arrays.asList("closed", "unavailable")));
+                        query.append("stale_status", new Document("$nin", Arrays.asList("closed", "unavailable", "stale")));
                     }
                 }
 
@@ -315,7 +319,7 @@ public class IssueRepository {
                 if (state != null && !state.isBlank() && !state.equalsIgnoreCase("all")) {
                     query.append("state", state.toLowerCase().trim());
                     if (state.equalsIgnoreCase("open")) {
-                        query.append("stale_status", new Document("$nin", Arrays.asList("closed", "unavailable")));
+                        query.append("stale_status", new Document("$nin", Arrays.asList("closed", "unavailable", "stale")));
                     }
                 }
 
@@ -374,19 +378,51 @@ public class IssueRepository {
                     results.add(cleanDoc(d));
                 }
                 return results;
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                org.slf4j.LoggerFactory.getLogger(IssueRepository.class)
+                        .warn("queryIssuesMultiTech Mongo query failed, falling back cleanly: {}", e.getMessage());
+            }
         }
 
-        return queryIssues(state, isAssigned, null, minDifficulty, maxDifficulty, search, source, limit, skip);
+        String singleTech = (technologies != null && technologies.size() == 1) ? technologies.iterator().next() : null;
+        return queryIssues(state, isAssigned, singleTech, minDifficulty, maxDifficulty, search, source, limit, skip);
     }
 
     public long countIssues() {
         if (isMongoActive()) {
             try {
                 return mongoTemplate.getCollection("issues").countDocuments();
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                logger.warn("Failed counting total issues: {}", e.getMessage());
+            }
         }
         return inMemoryIssues.size();
+    }
+
+    public long countEligibleOpenIssues() {
+        if (isMongoActive()) {
+            try {
+                Document query = new Document("state", "open")
+                        .append("is_assigned", false)
+                        .append("stale_status", new Document("$nin", Arrays.asList("closed", "unavailable", "stale")));
+                return mongoTemplate.getCollection("issues").countDocuments(query);
+            } catch (Exception e) {
+                logger.warn("Failed counting eligible open issues: {}", e.getMessage());
+            }
+        }
+        long count = 0;
+        for (Map<String, Object> m : inMemoryIssues.values()) {
+            String state = String.valueOf(m.getOrDefault("state", "open"));
+            boolean assigned = Boolean.TRUE.equals(m.get("is_assigned"));
+            String stale = String.valueOf(m.getOrDefault("stale_status", "active"));
+            if ("open".equalsIgnoreCase(state) && !assigned
+                    && !"closed".equalsIgnoreCase(stale)
+                    && !"unavailable".equalsIgnoreCase(stale)
+                    && !"stale".equalsIgnoreCase(stale)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     public long countBySource(String source) {
@@ -394,7 +430,9 @@ public class IssueRepository {
         if (isMongoActive()) {
             try {
                 return mongoTemplate.getCollection("issues").countDocuments(new Document("source", source.toLowerCase().trim()));
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                logger.warn("Failed counting issues by source '{}': {}", source, e.getMessage());
+            }
         }
         long count = 0;
         for (Map<String, Object> m : inMemoryIssues.values()) {
@@ -409,9 +447,11 @@ public class IssueRepository {
             try {
                 Document query = new Document("repository_full_name", repoFullName)
                         .append("state", "open")
-                        .append("stale_status", new Document("$nin", Arrays.asList("closed", "unavailable")));
+                        .append("stale_status", new Document("$nin", Arrays.asList("closed", "unavailable", "stale")));
                 return mongoTemplate.getCollection("issues").countDocuments(query);
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                logger.warn("Failed counting issues for repository '{}': {}", repoFullName, e.getMessage());
+            }
         }
         long count = 0;
         for (Map<String, Object> m : inMemoryIssues.values()) {
@@ -428,9 +468,77 @@ public class IssueRepository {
             try {
                 var res = mongoTemplate.getCollection("issues").deleteOne(new Document("id", id));
                 return res.getDeletedCount() > 0 || inMemDeleted;
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                logger.warn("Failed deleting issue '{}': {}", id, e.getMessage());
+            }
         }
         return inMemDeleted;
+    }
+
+    public long deleteIssuesByIds(Collection<String> issueIds) {
+        if (issueIds == null || issueIds.isEmpty()) return 0;
+        List<String> cleanIds = new ArrayList<>();
+        long inMemDeleted = 0;
+        for (String id : issueIds) {
+            if (id != null && !id.isBlank()) {
+                cleanIds.add(id.trim());
+                if (inMemoryIssues.remove(id.trim()) != null) {
+                    inMemDeleted++;
+                }
+            }
+        }
+        if (cleanIds.isEmpty()) return 0;
+
+        if (isMongoActive()) {
+            try {
+                var res = mongoTemplate.getCollection("issues").deleteMany(
+                        new Document("id", new Document("$in", cleanIds))
+                );
+                return Math.max(res.getDeletedCount(), inMemDeleted);
+            } catch (Exception e) {
+                logger.warn("Failed batch deleting {} issues: {}", cleanIds.size(), e.getMessage());
+            }
+        }
+        return inMemDeleted;
+    }
+
+    public long markIssuesVerifiedOpen(Collection<String> issueIds) {
+        if (issueIds == null || issueIds.isEmpty()) return 0;
+        List<String> cleanIds = new ArrayList<>();
+        String nowIso = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
+        long inMemUpdated = 0;
+        for (String id : issueIds) {
+            if (id != null && !id.isBlank()) {
+                String trimmed = id.trim();
+                cleanIds.add(trimmed);
+                Map<String, Object> existing = inMemoryIssues.get(trimmed);
+                if (existing != null) {
+                    existing.put("last_seen_at", nowIso);
+                    existing.put("last_verified_at", nowIso);
+                    existing.put("stale_status", "active");
+                    existing.put("refresh_status", "active");
+                    inMemUpdated++;
+                }
+            }
+        }
+        if (cleanIds.isEmpty()) return 0;
+
+        if (isMongoActive()) {
+            try {
+                Document update = new Document("$set", new Document("last_seen_at", nowIso)
+                        .append("last_verified_at", nowIso)
+                        .append("stale_status", "active")
+                        .append("refresh_status", "active"));
+                var res = mongoTemplate.getCollection("issues").updateMany(
+                        new Document("id", new Document("$in", cleanIds)),
+                        update
+                );
+                return Math.max(res.getModifiedCount(), inMemUpdated);
+            } catch (Exception e) {
+                logger.warn("Failed updating verification timestamp for {} issues: {}", cleanIds.size(), e.getMessage());
+            }
+        }
+        return inMemUpdated;
     }
 
     public List<Map<String, Object>> getCandidatesForRefresh(int limit, int maxAgeDays) {

@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { NormalizedIssue, Source } from "@/lib/api";
-import { USE_MOCK_API } from "@/lib/api";
 import { relativeTime, absoluteTime } from "@/lib/format";
 
 const SOURCE_LABEL: Record<Source, string> = {
@@ -120,20 +119,6 @@ export function LabelList({ labels, source }: { labels: string[] | null; source:
         Supporting signal — not sole decision
       </li>
     </ul>
-  );
-}
-
-export function DemoDataBadge({ className }: { className?: string }) {
-  if (!USE_MOCK_API) return null;
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-amber-700 font-medium",
-        className,
-      )}
-    >
-      Demo data
-    </span>
   );
 }
 

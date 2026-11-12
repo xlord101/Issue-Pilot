@@ -55,6 +55,8 @@ public class RefreshService {
             jobId = "refresh_offline_" + System.currentTimeMillis();
         }
 
+        boolean lockReleased = false;
+        try {
         long t0 = System.currentTimeMillis();
         int refreshAge = (maxAgeDays != null && maxAgeDays > 0) ? maxAgeDays : properties.getRefreshCadenceDays();
 
@@ -79,12 +81,14 @@ public class RefreshService {
             summary.put("issues_marked_unavailable", 0);
             summary.put("message", "No candidates currently require refresh.");
             jobRepository.releaseJobLock(jobId, "completed", summary);
+            lockReleased = true;
             return summary;
         }
 
         int totalRefreshed = 0;
         int totalClosed = 0;
         int totalUnavailable = 0;
+        List<String> idsToDelete = new ArrayList<>();
         List<String> errors = new ArrayList<>();
 
         for (Map<String, Object> candidate : candidates) {
@@ -116,21 +120,24 @@ public class RefreshService {
                 }
 
                 if (freshData == null) {
-                    issueRepository.markIssueUnavailable(issueId);
+                    idsToDelete.add(issueId);
                     totalUnavailable++;
                     continue;
                 }
 
-                // Check state
+                // Delete closed/resolved/PR issues immediately instead of storing zombie records
                 String state = (String) freshData.getOrDefault("state", "open");
-                if ("closed".equalsIgnoreCase(state) || "resolved".equalsIgnoreCase(state)) {
-                    String closedAt = (String) freshData.get("closed_at");
-                    issueRepository.markIssueClosed(issueId, closedAt);
+                if ("closed".equalsIgnoreCase(state) || "resolved".equalsIgnoreCase(state) || freshData.get("pull_request") != null) {
+                    idsToDelete.add(issueId);
                     totalClosed++;
                 } else {
-                    // Normalize & update
+                    // Normalize & check assignment before updating
                     Map<String, Object> normalized = adapter.normalizeIssue(freshData, null);
-                    if (normalized != null) {
+                    if (normalized == null || Boolean.TRUE.equals(normalized.get("is_assigned"))
+                            || !"open".equalsIgnoreCase(String.valueOf(normalized.getOrDefault("state", "open")))) {
+                        idsToDelete.add(issueId);
+                        totalClosed++;
+                    } else {
                         normalized.put("id", issueId);
                         normalized.put("last_seen_at", DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
                         normalized.put("stale_status", "active");
@@ -144,6 +151,10 @@ public class RefreshService {
             } catch (Exception e) {
                 errors.add("Error refreshing " + issueId + ": " + e.getMessage());
             }
+        }
+
+        if (!idsToDelete.isEmpty()) {
+            issueRepository.deleteIssuesByIds(idsToDelete);
         }
 
         long elapsedSec = (System.currentTimeMillis() - t0) / 1000;
@@ -160,6 +171,14 @@ public class RefreshService {
         summary.put("errors", errors);
 
         jobRepository.releaseJobLock(jobId, (String) summary.get("status"), summary);
+        lockReleased = true;
         return summary;
+        } finally {
+            if (!lockReleased && mongoConfig.isConnected() && jobId != null) {
+                try {
+                    jobRepository.releaseJobLock(jobId, "failed", Map.of("job_id", jobId, "status", "failed"));
+                } catch (Exception ignored) {}
+            }
+        }
     }
 }

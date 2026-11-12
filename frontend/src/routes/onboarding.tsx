@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Logo } from "@/components/ip/logo";
 import { ErrorState } from "@/components/ip/states";
-import { api, USE_MOCK_API, type StarterProfile } from "@/lib/api";
+import { api, type StarterProfile } from "@/lib/api";
 import {
   BehavioralCalibrationDeck,
   type CalibrationData,

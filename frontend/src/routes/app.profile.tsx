@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { User, Cpu, Sparkles, RefreshCw, GitPullRequest, Code2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { DemoDataBadge, StatusBadge } from "@/components/ip/badges";
+import { StatusBadge } from "@/components/ip/badges";
 import { EmptyState, PageHeader, QueryState } from "@/components/ip/states";
 import { api, type TechSkill } from "@/lib/api";
 import { relativeTime } from "@/lib/format";
@@ -54,7 +54,6 @@ function ProfilePage() {
               Recalibrate Model
             </Link>
           </Button>
-          <DemoDataBadge />
         </div>
       </div>
 

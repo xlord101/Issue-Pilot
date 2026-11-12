@@ -27,9 +27,12 @@ public class ValidationController {
 
     @PostMapping("/run")
     public Map<String, Object> runValidationSuite() {
-        File testExe = new File("ranking_engine/build/test_ranking.exe");
+        String exeName = System.getProperty("os.name", "").toLowerCase().contains("win")
+                ? "test_ranking.exe"
+                : "test_ranking";
+        File testExe = new File("ranking_engine/build/" + exeName);
         if (!testExe.exists()) {
-            testExe = new File("../ranking_engine/build/test_ranking.exe");
+            testExe = new File("../ranking_engine/build/" + exeName);
         }
 
         String unitTestsOutput = "";

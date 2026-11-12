@@ -52,6 +52,12 @@ RUN chmod +x /app/ranking_engine/build/issue_pilot_ranking_engine
 # Copy executable Spring Boot JAR
 COPY --from=jar-builder /build/target/issue-pilot-*.jar /app/issue-pilot.jar
 
+# Create unprivileged runtime user
+RUN groupadd --system issuepilot \
+    && useradd --system --gid issuepilot --home-dir /app --no-create-home issuepilot \
+    && chown -R issuepilot:issuepilot /app
+USER issuepilot
+
 # Production runtime configuration
 ENV SERVER_PORT=8000 \
     PORT=8000 \

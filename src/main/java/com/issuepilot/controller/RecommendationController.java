@@ -321,6 +321,34 @@ public class RecommendationController {
         List<Map<String, Object>> auditedRecords = backfillResult.getAuditedRecords();
         Map<String, Object> metrics = backfillResult.getMetrics();
 
+        // Feed live verification outcomes back into MongoDB Atlas in O(1) batches:
+        // 1) Delete confirmed closed/404/PR/assigned issues immediately so no future user is served or re-verifies them
+        // 2) Bump last_seen_at/last_verified_at on confirmed open issues so RefreshService skips redundant API polling
+        if (!req.demo_mode && req.prefer_live_atlas && mongoConfig.isConnected() && !auditedRecords.isEmpty()) {
+            List<String> rejectedIds = new ArrayList<>();
+            List<String> verifiedOpenIds = new ArrayList<>();
+            for (Map<String, Object> rec : auditedRecords) {
+                Object idObj = rec.get("id");
+                if (idObj == null) continue;
+                String recId = idObj.toString();
+                String decision = String.valueOf(rec.getOrDefault("decision", ""));
+                if ("rejected".equalsIgnoreCase(decision)) {
+                    rejectedIds.add(recId);
+                } else if ("included".equalsIgnoreCase(decision)) {
+                    verifiedOpenIds.add(recId);
+                }
+            }
+            if (!rejectedIds.isEmpty()) {
+                long deleted = issueRepository.deleteIssuesByIds(rejectedIds);
+                if (deleted > 0) {
+                    logger.info("Deleted {} closed/assigned/unavailable issues from Atlas following live verification.", deleted);
+                }
+            }
+            if (!verifiedOpenIds.isEmpty()) {
+                issueRepository.markIssuesVerifiedOpen(verifiedOpenIds);
+            }
+        }
+
         // Filter by match score bounds if requested
         if (req.min_score != null || req.max_score != null) {
             double minS = req.min_score != null ? req.min_score : 0.0;
@@ -376,14 +404,14 @@ public class RecommendationController {
                         ? profile.get("user_id").toString()
                         : "anonymous_user");
 
-        if (mongoConfig.isConnected() && !req.demo_mode) {
+        if (mongoConfig.isConnected() && !req.demo_mode && !deliveredRecs.isEmpty()) {
             try {
                 recommendationRepository.saveRecommendations(
                         effectiveUserId,
                         deliveredRecs,
                         modelVersion,
                         runId,
-                        auditedRecords
+                        null
                 );
             } catch (Exception e) {
                 logger.warn("Could not persist recommendation snapshot to Atlas: {}", e.getMessage());

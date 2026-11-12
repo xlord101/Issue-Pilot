@@ -441,7 +441,17 @@ public class SecurityAuthorizationTest {
         mockMvc.perform(get("/api/issues"))
                 .andExpect(status().isOk());
 
+        // Simulator and mutating/admin routes must NOT be publicly accessible
         mockMvc.perform(get("/api/simulator/sample-data"))
-                .andExpect(status().isOk());
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(get("/api/simulator/sample-data")
+                        .with(jwt().jwt(j -> j.claim("user_id", ALICE).claim("roles", List.of("ROLE_USER")))))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(post("/api/issues")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"id\":\"x\"}"))
+                .andExpect(status().isUnauthorized());
     }
 }

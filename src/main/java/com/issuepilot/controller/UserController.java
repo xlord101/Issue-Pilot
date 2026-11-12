@@ -124,13 +124,16 @@ public class UserController {
             @RequestParam(defaultValue = "0") int skip,
             Authentication authentication
     ) {
-        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
-            boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            if (!isAdmin) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: Listing all user profiles is restricted.");
-            }
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required.");
         }
-        List<Map<String, Object>> users = userRepository.listUsers(limit, skip);
+        boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (!isAdmin) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: Listing all user profiles is restricted.");
+        }
+        int safeLimit = Math.min(Math.max(1, limit), 200);
+        int safeSkip = Math.max(0, skip);
+        List<Map<String, Object>> users = userRepository.listUsers(safeLimit, safeSkip);
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("users", users);
         response.put("count", users.size());

@@ -59,6 +59,8 @@ public class LifecycleService {
             jobId = "cleanup_offline_" + System.currentTimeMillis();
         }
 
+        boolean lockReleased = false;
+        try {
         long t0 = System.currentTimeMillis();
         int cutoffDays = (olderThanDays != null && olderThanDays > 0) ? olderThanDays : properties.getOlderWindowDays();
 
@@ -89,8 +91,8 @@ public class LifecycleService {
 
         long markedCount = 0;
         if (!staleIds.isEmpty()) {
-            markedCount = issueRepository.markIssuesStale(staleIds);
-            logger.info("Marked {} candidate issues as stale (> {} days old).", markedCount, cutoffDays);
+            markedCount = issueRepository.deleteIssuesByIds(staleIds);
+            logger.info("Purged {} stale candidate issues (> {} days old) from Atlas.", markedCount, cutoffDays);
         }
 
         long elapsedSec = (System.currentTimeMillis() - t0) / 1000;
@@ -104,6 +106,14 @@ public class LifecycleService {
         summary.put("duration_seconds", elapsedSec);
 
         jobRepository.releaseJobLock(jobId, "completed", summary);
+        lockReleased = true;
         return summary;
+        } finally {
+            if (!lockReleased && mongoConfig.isConnected() && jobId != null) {
+                try {
+                    jobRepository.releaseJobLock(jobId, "failed", Map.of("job_id", jobId, "status", "failed"));
+                } catch (Exception ignored) {}
+            }
+        }
     }
 }

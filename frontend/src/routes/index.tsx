@@ -80,31 +80,22 @@ const STEPS = [
   },
 ];
 
-const TELEMETRY_FEED = [
+const PIPELINE_GUARANTEES = [
   {
-    action: "142 unclaimed issues verified",
-    time: "2m ago",
-    active: true,
+    action: "Live API check confirms open state & zero active assignees",
+    stage: "STEP 01",
   },
   {
-    action: "rust-lang/cargo #14092 matched at 96%",
-    time: "1m ago",
-    active: true,
+    action: "Deterministic C++ engine evaluates 6 independent repository & fit signals",
+    stage: "STEP 02",
   },
   {
-    action: "neovim/neovim maintainer ping: 1.4h avg",
-    time: "Just now",
-    active: true,
+    action: "Personal thumbs-up & thumbs-down history refines future rankings",
+    stage: "STEP 03",
   },
   {
-    action: "GitLab v4 candidate parsed: 0 assignees",
-    time: "3m ago",
-    active: false,
-  },
-  {
-    action: "Codeberg gitea webhook: 18 new candidates",
-    time: "4m ago",
-    active: false,
+    action: "Scheduled discovery & refresh jobs prune closed or claimed issues",
+    stage: "STEP 04",
   },
 ];
 
@@ -384,47 +375,47 @@ function LandingPage() {
               </div>
             </div>
 
-            {/* Right Column: Floating Pill Cards on White */}
+            {/* Right Column: Factual Pipeline Stages */}
             <div className="space-y-3">
-              {TELEMETRY_FEED.map((item) => (
+              {PIPELINE_GUARANTEES.map((item) => (
                 <div
-                  key={item.action}
+                  key={item.stage}
                   className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm flex items-center justify-between gap-4 transition-transform hover:-translate-y-0.5"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <CheckCircle2 className="size-5 text-blue-600 shrink-0" />
-                    <span className="text-xs sm:text-sm font-medium text-slate-800 truncate">
+                    <span className="text-xs sm:text-sm font-medium text-slate-800">
                       {item.action}
                     </span>
                   </div>
-                  <span className="text-xs font-mono text-slate-400 shrink-0">{item.time}</span>
+                  <span className="text-xs font-mono text-slate-400 shrink-0">{item.stage}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Large Black Stat Figures (MindCloud Annual Numbers Grid) */}
+          {/* Architecture Highlights */}
           <div className="mt-20 border-t border-slate-100 pt-14">
             <div className="text-xs font-mono uppercase tracking-wider text-slate-400 mb-8 text-center sm:text-left">
-              Live Engine Metrics
+              Architecture Highlights
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               <div className="space-y-1">
                 <div className="text-3xl sm:text-5xl font-extrabold text-slate-900 font-mono tracking-tight">
-                  &lt; 2ms
+                  C++20
                 </div>
                 <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-                  Ranking Latency
+                  Deterministic Scoring Core
                 </div>
               </div>
 
               <div className="space-y-1">
                 <div className="text-3xl sm:text-5xl font-extrabold text-slate-900 font-mono tracking-tight">
-                  100%
+                  Live API
                 </div>
                 <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-                  Unclaimed Guarantee
+                  Pre-Delivery Verification
                 </div>
               </div>
 
@@ -439,10 +430,10 @@ function LandingPage() {
 
               <div className="space-y-1">
                 <div className="text-3xl sm:text-5xl font-extrabold text-slate-900 font-mono tracking-tight">
-                  0%
+                  6 Signals
                 </div>
                 <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-                  Hallucinated or Stale Tickets
+                  Multi-Factor Compatibility
                 </div>
               </div>
             </div>
