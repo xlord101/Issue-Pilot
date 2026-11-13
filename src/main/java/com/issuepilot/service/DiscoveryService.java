@@ -4,6 +4,7 @@ import com.issuepilot.adapter.AdapterRegistry;
 import com.issuepilot.adapter.BaseIssueSourceAdapter;
 import com.issuepilot.adapter.CodebergAdapter;
 import com.issuepilot.adapter.GitLabAdapter;
+import com.issuepilot.adapter.RateLimitExceededException;
 import com.issuepilot.adapter.TechnologyDetectionHelper;
 import com.issuepilot.config.AppProperties;
 import com.issuepilot.config.MongoConfig;
@@ -221,13 +222,17 @@ public class DiscoveryService {
             String globalSearchStatus = null;
             String globalSearchError = null;
 
-            // Spread GitHub Search API quota evenly across all stacks (avoid burning all 10-30 req/min on the first 2 stacks)
-            int effectivePagesForSource = ("github".equals(src) && maxIssuesToDiscover == null)
+            // Spread GitHub Search API quota evenly across all stacks (GitHub Search API rate limit is 10-30 req/min)
+            int effectivePagesForSource = "github".equals(src)
                     ? Math.min(pagesPerQuery, 1)
                     : pagesPerQuery;
 
+            boolean sourceRateLimited = false;
             for (String stack : targetStacks) {
                 if (maxIssuesToDiscover != null && totalDiscovered >= maxIssuesToDiscover) {
+                    break;
+                }
+                if (sourceRateLimited) {
                     break;
                 }
 
@@ -355,6 +360,12 @@ public class DiscoveryService {
                             }
                         }
 
+                    } catch (RateLimitExceededException rle) {
+                        String errMsg = src + " rate limit reached: " + rle.getMessage();
+                        srcErrors.add(errMsg);
+                        errors.add(errMsg);
+                        sourceRateLimited = true;
+                        break;
                     } catch (Exception e) {
                         String errMsg = src + " stack '" + stack + "' page " + page + " failed: " + e.getMessage();
                         srcErrors.add(errMsg);
@@ -363,9 +374,14 @@ public class DiscoveryService {
                     }
                 }
 
+                if (sourceRateLimited) {
+                    logger.warn("Source '{}' reached search rate limit; halting further queries for this source in current run.", src);
+                    break;
+                }
+
                 // Small pacing to avoid overloading remote platform search rate limits
                 try {
-                    Thread.sleep("github".equals(src) ? 400L : 20L);
+                    Thread.sleep("github".equals(src) ? 800L : 20L);
                 } catch (InterruptedException ignored) {}
             }
 
