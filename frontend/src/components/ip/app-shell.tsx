@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { api, type Session } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
+import { ThemeToggle } from "./theme-toggle";
 
 type NavItem = {
   to: NonNullable<LinkProps["to"]>;
@@ -63,32 +64,33 @@ function Nav({ collapsed, onNavigate }: { collapsed?: boolean; onNavigate?: () =
               title={collapsed ? item.label : undefined}
               activeOptions={{ exact: item.exact ?? false }}
               className={cn(
-                "group flex rounded-lg border border-transparent transition-all duration-140 hover:border-slate-200 hover:bg-slate-100/70 active:scale-[0.98]",
+                "group flex rounded-lg border border-transparent transition-all duration-140 hover:border-slate-200 dark:hover:border-slate-800 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 active:scale-[0.98]",
                 collapsed
                   ? "size-10 items-center justify-center mx-auto"
-                  : "flex-col gap-0.5 px-3 py-2.5 text-slate-600",
+                  : "flex-col gap-0.5 px-3 py-2.5 text-slate-600 dark:text-slate-400",
               )}
               activeProps={{
-                className: "!border-blue-200 !bg-blue-50/80 !text-blue-700 font-semibold shadow-xs",
+                className:
+                  "!border-blue-200 dark:!border-blue-500/40 !bg-blue-50/80 dark:!bg-blue-950/40 !text-blue-700 dark:!text-blue-400 font-semibold shadow-xs",
               }}
             >
               {collapsed ? (
                 <item.icon
-                  className="size-5 shrink-0 text-slate-600 group-hover:text-slate-900 group-data-[status=active]:text-blue-700 transition-colors"
+                  className="size-5 shrink-0 text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white group-data-[status=active]:text-blue-700 dark:group-data-[status=active]:text-blue-400 transition-colors"
                   aria-hidden
                 />
               ) : (
                 <>
                   <div className="flex items-center gap-2.5">
                     <item.icon
-                      className="size-4 shrink-0 text-slate-500 group-hover:text-slate-900 group-data-[status=active]:text-blue-700 transition-colors"
+                      className="size-4 shrink-0 text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white group-data-[status=active]:text-blue-700 dark:group-data-[status=active]:text-blue-400 transition-colors"
                       aria-hidden
                     />
-                    <span className="text-sm font-medium tracking-tight text-slate-900">
+                    <span className="text-sm font-medium tracking-tight text-slate-900 dark:text-slate-100">
                       {item.label}
                     </span>
                   </div>
-                  <span className="pl-6.5 text-[11px] text-slate-500 line-clamp-1">
+                  <span className="pl-6.5 text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
                     {item.description}
                   </span>
                 </>
@@ -169,7 +171,7 @@ export function AppShell({ session, children }: { session: Session; children: Re
 
     if (collapsed) {
       return (
-        <div className="border-t border-slate-200/80 p-2 bg-slate-50/70 flex flex-col items-center gap-2">
+        <div className="border-t border-slate-200/80 dark:border-slate-800 p-2 bg-slate-50/70 dark:bg-slate-900/60 flex flex-col items-center gap-2">
           <Link
             to="/app/profile"
             className="flex size-9 items-center justify-center rounded-full hover:ring-2 hover:ring-blue-500/30 transition-all active:scale-[0.98]"
@@ -182,7 +184,7 @@ export function AppShell({ session, children }: { session: Session; children: Re
             size="icon"
             onClick={signOut}
             title="Sign out"
-            className="size-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50 active:scale-[0.98]"
+            className="size-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 active:scale-[0.98]"
           >
             <LogOut className="size-3.5" />
           </Button>
@@ -191,19 +193,19 @@ export function AppShell({ session, children }: { session: Session; children: Re
     }
 
     return (
-      <div className="border-t border-slate-200/80 p-3 bg-slate-50/70">
+      <div className="border-t border-slate-200/80 dark:border-slate-800 p-3 bg-slate-50/70 dark:bg-slate-900/60">
         <div className="flex items-center justify-between gap-2">
           <Link
             to="/app/profile"
-            className="flex items-center gap-2.5 min-w-0 flex-1 rounded-lg p-1.5 hover:bg-white hover:border-slate-200 border border-transparent transition-all group active:scale-[0.98]"
+            className="flex items-center gap-2.5 min-w-0 flex-1 rounded-lg p-1.5 hover:bg-white dark:hover:bg-slate-800/80 hover:border-slate-200 dark:hover:border-slate-700 border border-transparent transition-all group active:scale-[0.98]"
             title="Open Tech Profile"
           >
             {avatar}
             <div className="min-w-0 flex-1 text-left">
-              <div className="text-xs font-semibold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
+              <div className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                 {session.user.name || session.user.login}
               </div>
-              <div className="text-[11px] text-slate-500 font-mono truncate">
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate">
                 @{session.user.login}
               </div>
             </div>
@@ -213,7 +215,7 @@ export function AppShell({ session, children }: { session: Session; children: Re
             size="icon"
             onClick={signOut}
             title="Sign out"
-            className="size-8 text-slate-400 hover:text-rose-600 hover:bg-rose-50 shrink-0 active:scale-[0.98]"
+            className="size-8 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 shrink-0 active:scale-[0.98]"
           >
             <LogOut className="size-4" />
           </Button>
@@ -223,10 +225,10 @@ export function AppShell({ session, children }: { session: Session; children: Re
   };
 
   const desktopSidebar = (
-    <div className="flex h-full flex-col bg-white border-r border-slate-200/90 shadow-xs">
+    <div className="flex h-full flex-col bg-white dark:bg-[#0c1220] border-r border-slate-200/90 dark:border-slate-800 shadow-xs transition-colors">
       <div
         className={cn(
-          "flex h-16 items-center border-b border-slate-200/80",
+          "flex h-16 items-center border-b border-slate-200/80 dark:border-slate-800",
           isCollapsed ? "justify-center px-2 flex-col py-2" : "justify-between px-4",
         )}
       >
@@ -237,7 +239,7 @@ export function AppShell({ session, children }: { session: Session; children: Re
             size="icon"
             onClick={toggleCollapsed}
             title="Collapse sidebar"
-            className="size-8 text-slate-400 hover:text-slate-900 hover:bg-slate-100 active:scale-[0.98]"
+            className="size-8 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-[0.98]"
           >
             <PanelLeftClose className="size-4" />
           </Button>
@@ -251,7 +253,7 @@ export function AppShell({ session, children }: { session: Session; children: Re
             size="icon"
             onClick={toggleCollapsed}
             title="Expand sidebar"
-            className="size-8 text-slate-400 hover:text-slate-900 hover:bg-slate-100 active:scale-[0.98]"
+            className="size-8 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-[0.98]"
           >
             <PanelLeftOpen className="size-4" />
           </Button>
@@ -267,8 +269,8 @@ export function AppShell({ session, children }: { session: Session; children: Re
   );
 
   const mobileSidebar = (
-    <div className="flex h-full flex-col bg-white">
-      <div className="flex h-16 items-center justify-between border-b border-slate-200/80 px-5">
+    <div className="flex h-full flex-col bg-white dark:bg-[#0c1220]">
+      <div className="flex h-16 items-center justify-between border-b border-slate-200/80 dark:border-slate-800 px-5">
         <Logo />
       </div>
       <div className="flex-1 overflow-y-auto px-3 py-4">
@@ -279,7 +281,7 @@ export function AppShell({ session, children }: { session: Session; children: Re
   );
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#f8fafc] text-slate-900 antialiased selection:bg-blue-600 selection:text-white font-sans">
+    <div className="min-h-screen overflow-x-hidden bg-[#f8fafc] dark:bg-[#080c14] text-slate-900 dark:text-slate-100 antialiased selection:bg-blue-600 selection:text-white font-sans transition-colors duration-200">
       {/* Desktop Collapsible Sidebar */}
       <aside
         className={cn(
@@ -292,7 +294,10 @@ export function AppShell({ session, children }: { session: Session; children: Re
 
       {/* Mobile Drawer */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="w-72 bg-white p-0 border-r border-slate-200">
+        <SheetContent
+          side="left"
+          className="w-72 bg-white dark:bg-[#0c1220] p-0 border-r border-slate-200 dark:border-slate-800"
+        >
           <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
           {mobileSidebar}
         </SheetContent>
@@ -305,12 +310,12 @@ export function AppShell({ session, children }: { session: Session; children: Re
           isCollapsed ? "lg:pl-[72px]" : "lg:pl-64",
         )}
       >
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200/90 bg-white/80 backdrop-blur-md px-4 sm:px-6">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200/90 dark:border-slate-800 bg-white/80 dark:bg-[#080c14]/80 backdrop-blur-md px-4 sm:px-6 transition-colors">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden text-slate-600 hover:text-slate-900"
+              className="lg:hidden text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
               aria-label="Open navigation"
               onClick={() => setMobileOpen(true)}
             >
@@ -323,12 +328,14 @@ export function AppShell({ session, children }: { session: Session; children: Re
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100/80 px-3 py-1 text-xs text-slate-700">
-              <span className="font-medium text-slate-500">Capability:</span>
-              <span className="font-mono font-bold text-blue-700">{capabilityDisplay}/100</span>
+            <div className="flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-100/80 dark:bg-slate-900/80 px-3 py-1 text-xs text-slate-700 dark:text-slate-300">
+              <span className="font-medium text-slate-500 dark:text-slate-400">Capability:</span>
+              <span className="font-mono font-bold text-blue-700 dark:text-blue-400">
+                {capabilityDisplay}/100
+              </span>
               <Link
                 to="/onboarding"
-                className="ml-1 text-[11px] text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-0.5"
+                className="ml-1 text-[11px] text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline flex items-center gap-0.5"
                 title="Recalibrate behavioral model"
               >
                 <RefreshCw className="size-2.5" />
@@ -338,14 +345,14 @@ export function AppShell({ session, children }: { session: Session; children: Re
 
             <Link
               to="/app/profile"
-              className="flex items-center gap-2 rounded-full border border-slate-200 bg-white hover:bg-slate-50 px-2.5 py-1 text-xs text-slate-700 transition-colors shadow-2xs active:scale-[0.98]"
+              className="flex items-center gap-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-2.5 py-1 text-xs text-slate-700 dark:text-slate-300 transition-colors shadow-2xs active:scale-[0.98]"
               title="Open Tech Profile"
             >
               {session.user.avatar_url ? (
                 <img
                   src={session.user.avatar_url}
                   alt={session.user.login}
-                  className="size-5 rounded-full object-cover border border-slate-200"
+                  className="size-5 rounded-full object-cover border border-slate-200 dark:border-slate-700"
                 />
               ) : (
                 <div className="size-5 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center">
@@ -354,6 +361,8 @@ export function AppShell({ session, children }: { session: Session; children: Re
               )}
               <span className="font-mono font-medium">{session.user.login}</span>
             </Link>
+
+            <ThemeToggle />
           </div>
         </header>
 

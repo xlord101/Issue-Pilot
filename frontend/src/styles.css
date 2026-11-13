@@ -241,47 +241,68 @@
 @keyframes aura-float-1 {
   0%,
   100% {
-    transform: translate(0px, 0px) scale(1);
+    transform: translate(0px, 0px) rotate(0deg) scale(1);
   }
   33% {
-    transform: translate(60px, -40px) scale(1.15);
+    transform: translate(85px, -50px) rotate(8deg) scale(1.22);
   }
   66% {
-    transform: translate(-40px, 30px) scale(0.92);
+    transform: translate(-55px, 40px) rotate(-6deg) scale(0.92);
   }
 }
 
 @keyframes aura-float-2 {
   0%,
   100% {
-    transform: translate(0px, 0px) scale(1);
+    transform: translate(0px, 0px) rotate(0deg) scale(1);
   }
   33% {
-    transform: translate(-50px, 35px) scale(1.1);
+    transform: translate(-70px, 45px) rotate(-8deg) scale(1.18);
   }
   66% {
-    transform: translate(45px, -25px) scale(0.95);
+    transform: translate(60px, -30px) rotate(7deg) scale(0.94);
   }
 }
 
 @keyframes aura-float-3 {
   0%,
   100% {
-    transform: translate(0px, 0px) scale(1);
+    transform: translate(0px, 0px) rotate(0deg) scale(1);
   }
   50% {
-    transform: translate(30px, 40px) scale(1.2);
+    transform: translate(45px, 55px) rotate(10deg) scale(1.26);
   }
 }
 
 .animate-aura-1 {
-  animation: aura-float-1 20s ease-in-out infinite;
+  animation: aura-float-1 8s ease-in-out infinite;
 }
 .animate-aura-2 {
-  animation: aura-float-2 24s ease-in-out infinite;
+  animation: aura-float-2 10s ease-in-out infinite;
 }
 .animate-aura-3 {
-  animation: aura-float-3 28s ease-in-out infinite;
+  animation: aura-float-3 12s ease-in-out infinite;
+}
+
+/* Smooth theme conversion transitions */
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition:
+    background-color 280ms cubic-bezier(0.23, 1, 0.32, 1),
+    border-color 280ms cubic-bezier(0.23, 1, 0.32, 1),
+    color 280ms cubic-bezier(0.23, 1, 0.32, 1),
+    fill 280ms cubic-bezier(0.23, 1, 0.32, 1),
+    stroke 280ms cubic-bezier(0.23, 1, 0.32, 1),
+    box-shadow 280ms cubic-bezier(0.23, 1, 0.32, 1) !important;
+  transition-delay: 0s !important;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 280ms;
+  animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 @utility page-enter {

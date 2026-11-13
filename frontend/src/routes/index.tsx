@@ -3,6 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { GitHubMark, GitLabMark, CodebergMark, BugzillaMark } from "@/components/ip/badges";
 import { AuroraBackground } from "@/components/ip/aurora-background";
+import { ThemeToggle } from "@/components/ip/theme-toggle";
 import { useSession } from "@/hooks/use-session";
 import { pageMeta } from "@/lib/format";
 import { ArrowRight, CheckCircle2, Compass, Search } from "lucide-react";
@@ -129,46 +130,49 @@ function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 antialiased selection:bg-blue-600 selection:text-white font-sans">
+    <div className="min-h-screen bg-white dark:bg-[#080c14] text-slate-900 dark:text-slate-100 antialiased selection:bg-blue-600 selection:text-white font-sans transition-colors duration-200">
       {/* 1. HERO SECTION (Animated 3-Color Pastel Aura Mesh Background) */}
-      <AuroraBackground intensity="vibrant" className="text-slate-900">
+      <AuroraBackground intensity="vibrant" className="text-slate-900 dark:text-slate-100">
         {/* Navigation Bar inside Hero Header */}
-        <header className="border-b border-slate-200/70 relative z-30">
+        <header className="border-b border-slate-200/70 dark:border-slate-800/80 relative z-30">
           <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
             <div className="flex items-center gap-8">
-              <Link to="/" className="flex items-center gap-2.5 text-slate-900">
+              <Link to="/" className="flex items-center gap-2.5 text-slate-900 dark:text-white">
                 <img
                   src="/brand-logo.png"
                   alt=""
                   aria-hidden
                   className="size-8 shrink-0 object-contain"
                 />
-                <span className="font-bold text-lg tracking-tight text-slate-900">Issue Pilot</span>
+                <span className="font-bold text-lg tracking-tight text-slate-900 dark:text-white">
+                  Issue Pilot
+                </span>
               </Link>
 
-              <nav className="hidden md:flex items-center gap-6 text-sm text-slate-600 font-medium">
-                <Link to="/app/feed" className="hover:text-slate-900 transition-colors">
+              <nav className="hidden md:flex items-center gap-6 text-sm text-slate-600 dark:text-slate-300 font-medium">
+                <Link to="/app/feed" className="hover:text-slate-900 dark:hover:text-white transition-colors">
                   Recommendations
                 </Link>
-                <Link to="/app/explore" className="hover:text-slate-900 transition-colors">
+                <Link to="/app/explore" className="hover:text-slate-900 dark:hover:text-white transition-colors">
                   Issue Explorer
                 </Link>
-                <a href="#pipeline" className="hover:text-slate-900 transition-colors">
+                <a href="#pipeline" className="hover:text-slate-900 dark:hover:text-white transition-colors">
                   How It Works
                 </a>
-                <a href="#numbers" className="hover:text-slate-900 transition-colors">
+                <a href="#numbers" className="hover:text-slate-900 dark:hover:text-white transition-colors">
                   Coverage
                 </a>
               </nav>
             </div>
 
             <div className="flex items-center gap-3">
+              <ThemeToggle />
               {!session && (
                 <Button
                   asChild
                   variant="ghost"
                   size="sm"
-                  className="text-slate-700 hover:text-slate-900 hover:bg-slate-200/50 active:scale-[0.98]"
+                  className="text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/60 active:scale-[0.98]"
                 >
                   <Link to="/login">Sign in</Link>
                 </Button>
@@ -186,37 +190,24 @@ function LandingPage() {
 
         {/* Hero Content */}
         <div className="mx-auto max-w-4xl px-4 pt-16 pb-28 sm:pt-24 sm:pb-36 text-center relative z-20 space-y-6">
-          {/* Top tag pill */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200/90 bg-white/80 px-3.5 py-1 text-xs text-slate-700 backdrop-blur-md shadow-xs">
-            <span className="font-semibold text-slate-900">Continuous Match Engine</span>
-            <span className="text-slate-400">•</span>
-            <span className="text-slate-500">Live unclaimed verification</span>
-            <Link
-              to="/app/explore"
-              className="ml-1 text-blue-600 underline hover:text-blue-700 font-medium"
-            >
-              Explore issues &rarr;
-            </Link>
-          </div>
-
           {/* Huge Main Headline */}
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.08]">
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.08]">
             Find open-source issues.
             <br />
-            <span className="text-slate-900">Ship code that matters.</span>
+            <span className="text-slate-900 dark:text-slate-100">Ship code that matters.</span>
           </h1>
 
           {/* Clean Subtitle */}
-          <p className="mx-auto max-w-2xl text-base sm:text-lg text-slate-600 leading-relaxed font-normal">
+          <p className="mx-auto max-w-2xl text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
             Issue Pilot continuously indexes unclaimed issues across GitHub, GitLab, Codeberg, and
             Bugzilla, matching them to your verified stack proficiency and capability target.
           </p>
 
-          {/* MindCloud Exact White Floating CTA Prompt Bar */}
+          {/* MindCloud Exact Floating CTA Prompt Bar */}
           <div className="mx-auto max-w-2xl pt-4">
             <form
               onSubmit={handleSearchSubmit}
-              className="relative flex items-center rounded-2xl bg-white p-2 shadow-xl shadow-slate-200/60 transition-all focus-within:ring-4 focus-within:ring-blue-500/20 border border-slate-200/80"
+              className="relative flex items-center rounded-2xl bg-white dark:bg-slate-900/90 p-2 shadow-xl shadow-slate-200/60 dark:shadow-none transition-all focus-within:ring-4 focus-within:ring-blue-500/20 border border-slate-200/80 dark:border-slate-800"
             >
               <Search className="size-5 ml-3 text-slate-400 shrink-0" />
               <input
@@ -224,7 +215,7 @@ function LandingPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Start right now. What should we match? (e.g., Rust, beginner, Kubernetes)"
-                className="w-full bg-transparent px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none"
+                className="w-full bg-transparent px-3 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none"
               />
               <Button
                 type="submit"
@@ -237,12 +228,12 @@ function LandingPage() {
 
             {/* Quick chips below prompt */}
             <div className="flex flex-wrap items-center justify-center gap-2 pt-3">
-              <span className="text-xs text-slate-500 font-medium">Popular:</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Popular:</span>
               {QUICK_TAGS.map((t) => (
                 <button
                   key={t.label}
                   onClick={() => handleTagClick(t.query)}
-                  className="rounded-full bg-white/80 hover:bg-white border border-slate-200/80 hover:border-slate-300 px-2.5 py-0.5 text-xs text-slate-700 hover:text-slate-900 shadow-2xs transition-all active:scale-[0.98]"
+                  className="rounded-full bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 px-2.5 py-0.5 text-xs text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white shadow-2xs transition-all active:scale-[0.98]"
                 >
                   {t.label}
                 </button>
