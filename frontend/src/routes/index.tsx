@@ -150,16 +150,28 @@ function LandingPage() {
               </Link>
 
               <nav className="hidden md:flex items-center gap-6 text-sm text-slate-600 dark:text-slate-300 font-medium">
-                <Link to="/app/feed" className="hover:text-slate-900 dark:hover:text-white transition-colors">
+                <Link
+                  to="/app/feed"
+                  className="hover:text-slate-900 dark:hover:text-white transition-colors"
+                >
                   Recommendations
                 </Link>
-                <Link to="/app/explore" className="hover:text-slate-900 dark:hover:text-white transition-colors">
+                <Link
+                  to="/app/explore"
+                  className="hover:text-slate-900 dark:hover:text-white transition-colors"
+                >
                   Issue Explorer
                 </Link>
-                <a href="#pipeline" className="hover:text-slate-900 dark:hover:text-white transition-colors">
+                <a
+                  href="#pipeline"
+                  className="hover:text-slate-900 dark:hover:text-white transition-colors"
+                >
                   How It Works
                 </a>
-                <a href="#numbers" className="hover:text-slate-900 dark:hover:text-white transition-colors">
+                <a
+                  href="#numbers"
+                  className="hover:text-slate-900 dark:hover:text-white transition-colors"
+                >
                   Coverage
                 </a>
               </nav>
@@ -228,7 +240,9 @@ function LandingPage() {
 
             {/* Quick chips below prompt */}
             <div className="flex flex-wrap items-center justify-center gap-2 pt-3">
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Popular:</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                Popular:
+              </span>
               {QUICK_TAGS.map((t) => (
                 <button
                   key={t.label}

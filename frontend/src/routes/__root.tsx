@@ -112,7 +112,8 @@ function RootShell({ children }: { children: ReactNode }) {
               (function() {
                 try {
                   var stored = localStorage.getItem('issue_pilot_theme');
-                  var isDark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  // Primary & default is strictly light mode; only activate dark if explicitly selected by the user
+                  var isDark = stored === 'dark';
                   if (isDark) {
                     document.documentElement.classList.add('dark');
                   } else {
