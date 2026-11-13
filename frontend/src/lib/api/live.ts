@@ -89,9 +89,15 @@ interface BackendRecommendationItem {
   title?: string;
   body?: string | null;
   issue_url?: string | null;
+  canonical_url?: string | null;
   url?: string | null;
   repository_full_name?: string | null;
   repo_key?: string | null;
+  canonical_repository_key?: string | null;
+  product?: string | null;
+  component?: string | null;
+  repository_owner?: string | null;
+  repository_name?: string | null;
   state?: string | null;
   is_open?: boolean;
   is_assigned?: boolean;
@@ -733,8 +739,39 @@ function mapRecommendationItem(
 ): T.Recommendation {
   const sc = item?.scores ?? {};
   const src = ((item?.source as T.Source) || "github") as T.Source;
-  const issueUrl = (item?.issue_url ?? item?.url ?? null) as string | null;
   const rawLabels = Array.isArray(item?.labels) ? item.labels : src === "bugzilla" ? null : [];
+
+  const canonicalId = String(item?.id || item?.issue_id || `rec-${idx + 1}`);
+  const nativeId = String(item?.issue_number ?? item?.native_id ?? canonicalId);
+
+  const repoKey =
+    item?.repository_full_name ??
+    item?.repo_key ??
+    item?.canonical_repository_key ??
+    (item?.product
+      ? `${item.product}${item.component ? ` / ${item.component}` : ""}`
+      : item?.repository_owner
+        ? `${item.repository_owner}/${item.repository_name ?? ""}`
+        : src === "bugzilla"
+          ? "Mozilla"
+          : "open-source/project");
+
+  const rawIssueUrl = (item?.issue_url ?? item?.canonical_url ?? item?.url ?? null) as
+    string | null;
+  let issueUrl = (rawIssueUrl ?? "").trim();
+  if (!issueUrl || issueUrl === "#" || issueUrl.includes(" ")) {
+    const safeRepo = repoKey.replace(/\s+/g, "");
+    if (src === "bugzilla") {
+      issueUrl = `https://bugzilla.mozilla.org/show_bug.cgi?id=${nativeId}`;
+    } else if (src === "gitlab") {
+      issueUrl = `https://gitlab.com/${safeRepo}/-/issues/${nativeId}`;
+    } else if (src === "codeberg") {
+      issueUrl = `https://codeberg.org/${safeRepo}/issues/${nativeId}`;
+    } else {
+      issueUrl = `https://github.com/${safeRepo}/issues/${nativeId}`;
+    }
+  }
+  issueUrl = issueUrl.replace("/-/work_items/", "/-/issues/");
 
   const techs: string[] | null = Array.isArray(item?.detected_technologies)
     ? item.detected_technologies
@@ -767,7 +804,6 @@ function mapRecommendationItem(
     (matchReasons.length > 0 ? matchReasons.slice(0, 2).join(" • ") : null) ||
     (typeof item?.explanation === "string" && item.explanation.trim() ? item.explanation : null);
 
-  const canonicalId = String(item?.id || item?.issue_id || `rec-${idx + 1}`);
   const platformIssueId = String(
     item?.platform_issue_id ??
       item?.id ??
@@ -793,12 +829,12 @@ function mapRecommendationItem(
     previous_score: roundOrNull(item?.previous_score),
     issue: {
       source: src,
-      native_id: String(item?.issue_number ?? item?.native_id ?? canonicalId),
+      native_id: nativeId,
       platform_issue_id: platformIssueId,
       title: item?.title ?? "Untitled Issue",
       body: item?.body ?? null,
-      url: issueUrl ?? "#",
-      repo_key: item?.repository_full_name ?? item?.repo_key ?? "unknown/repository",
+      url: issueUrl,
+      repo_key: repoKey,
       is_open:
         item?.state != null
           ? item.state === "open"

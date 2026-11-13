@@ -408,6 +408,9 @@ public class GitLabAdapter implements BaseIssueSourceAdapter {
         String rawState = (String) rawItem.getOrDefault("state", "opened");
         String state = ("opened".equalsIgnoreCase(rawState) || "open".equalsIgnoreCase(rawState)) ? "open" : "closed";
         String webUrl = (String) rawItem.getOrDefault("web_url", "");
+        if (webUrl != null && !webUrl.isBlank()) {
+            webUrl = webUrl.replace("/-/work_items/", "/-/issues/");
+        }
 
         // Resolve repository path
         String projectPath = "";

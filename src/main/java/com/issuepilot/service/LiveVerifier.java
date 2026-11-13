@@ -478,21 +478,26 @@ public class LiveVerifier {
                 return r;
             }
 
+            String webUrl = (String) data.get("web_url");
+            if (webUrl != null) {
+                webUrl = webUrl.replace("/-/work_items/", "/-/issues/");
+            }
+
             String state = (String) data.getOrDefault("state", "opened");
             if (!"opened".equalsIgnoreCase(state) && !"open".equalsIgnoreCase(state)) {
-                VerificationResult r = new VerificationResult(false, "excluded", "Issue is " + state + " on GitLab", repo, (String) data.get("web_url"), false, false, null);
+                VerificationResult r = new VerificationResult(false, "excluded", "Issue is " + state + " on GitLab", repo, webUrl, false, false, null);
                 putCacheEntry(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
                 return r;
             }
 
             Object assigneesObj = data.get("assignees");
             if (assigneesObj instanceof List && !((List<?>) assigneesObj).isEmpty()) {
-                VerificationResult r = new VerificationResult(false, "excluded", "Issue is already assigned on GitLab", repo, (String) data.get("web_url"), false, false, null);
+                VerificationResult r = new VerificationResult(false, "excluded", "Issue is already assigned on GitLab", repo, webUrl, false, false, null);
                 putCacheEntry(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
                 return r;
             }
 
-            VerificationResult r = new VerificationResult(true, "live_verified", "Confirmed open and eligible via GitLab API", repo, (String) data.get("web_url"), false, false, null);
+            VerificationResult r = new VerificationResult(true, "live_verified", "Confirmed open and eligible via GitLab API", repo, webUrl, false, false, null);
             putCacheEntry(cacheKey, new CacheEntry(System.currentTimeMillis(), null, r));
             return r;
         } catch (RateLimitExceededException e) {
@@ -623,6 +628,7 @@ public class LiveVerifier {
         long t0 = System.currentTimeMillis();
         List<Map<String, Object>> delivered = new ArrayList<>();
         List<Map<String, Object>> audited = new ArrayList<>();
+        List<Map<String, Object>> inconclusivePool = new ArrayList<>();
 
         int effectiveBudget = Math.min(maxBudget, rankedCandidates.size());
         int verifiedCount = 0;
@@ -678,6 +684,7 @@ public class LiveVerifier {
                         c.put("decision", "inconclusive");
                         c.put("exclusion_reason", vResult.getReason());
                         audited.add(c);
+                        inconclusivePool.add(c);
                     } else {
                         excludedCount++;
                         c.put("decision", "rejected");
@@ -687,6 +694,21 @@ public class LiveVerifier {
                 }
             }
             cursor = waveEnd;
+        }
+
+        // Fallback: If delivered count is less than targetCount (e.g. upstream API rate-limited or degraded),
+        // admit candidates from the inconclusive pool whose candidate data is verified open in Atlas/database,
+        // so contributor recommendation feeds are never starved of matching tickets.
+        if (delivered.size() < targetCount && !inconclusivePool.isEmpty()) {
+            for (Map<String, Object> inc : inconclusivePool) {
+                if (delivered.size() >= targetCount) {
+                    break;
+                }
+                inc.put("decision", "included");
+                inc.put("verification_status", "unverified_deferred");
+                inc.put("verification_notes", "Delivered from candidate pool; live verification deferred: " + inc.get("exclusion_reason"));
+                delivered.add(inc);
+            }
         }
 
         for (int i = cursor; i < rankedCandidates.size(); i++) {

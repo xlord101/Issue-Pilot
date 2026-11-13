@@ -68,6 +68,9 @@ interface RawIssueDoc {
   source?: Source;
   repository_full_name?: string;
   repo_key?: string;
+  canonical_repository_key?: string;
+  product?: string;
+  component?: string;
   repository_owner?: string;
   repository_name?: string;
   issue_number?: string | number;
@@ -83,6 +86,7 @@ interface RawIssueDoc {
   last_seen_at?: string;
   updated_at?: string;
   issue_url?: string;
+  canonical_url?: string;
   url?: string;
 }
 
@@ -128,13 +132,37 @@ function ExplorePage() {
 
       const items: MonitoredIssue[] = rawIssues.map((item, idx) => {
         const src: Source = item.source ?? "github";
-        const repo =
+        const nativeId = String(item.issue_number ?? item.native_id ?? idx + 1);
+
+        let repo =
           item.repository_full_name ||
           item.repo_key ||
-          (item.repository_owner
-            ? `${item.repository_owner}/${item.repository_name ?? ""}`
-            : "open-source/project");
-        const nativeId = String(item.issue_number ?? item.native_id ?? idx + 1);
+          item.canonical_repository_key ||
+          (item.product ? `${item.product}${item.component ? ` / ${item.component}` : ""}` : "");
+
+        if (!repo && item.repository_owner) {
+          repo = `${item.repository_owner}/${item.repository_name ?? ""}`;
+        }
+        if (!repo) {
+          repo = src === "bugzilla" ? "Mozilla" : "open-source/project";
+        }
+
+        const rawUrl = (item.issue_url || item.canonical_url || item.url || "").trim();
+        let resolvedUrl = rawUrl;
+        if (!resolvedUrl || resolvedUrl === "#" || resolvedUrl.includes(" ")) {
+          const safeRepo = repo.replace(/\s+/g, "");
+          if (src === "bugzilla") {
+            resolvedUrl = `https://bugzilla.mozilla.org/show_bug.cgi?id=${nativeId}`;
+          } else if (src === "gitlab") {
+            resolvedUrl = `https://gitlab.com/${safeRepo}/-/issues/${nativeId}`;
+          } else if (src === "codeberg") {
+            resolvedUrl = `https://codeberg.org/${safeRepo}/issues/${nativeId}`;
+          } else {
+            resolvedUrl = `https://github.com/${safeRepo}/issues/${nativeId}`;
+          }
+        }
+        resolvedUrl = resolvedUrl.replace("/-/work_items/", "/-/issues/");
+
         const diffScore = item.difficulty_score ?? 50;
         const diffCategory: "beginner" | "intermediate" | "advanced" =
           diffScore < 45 ? "beginner" : diffScore < 70 ? "intermediate" : "advanced";
@@ -159,7 +187,7 @@ function ExplorePage() {
           isOpen: item.state === "open",
           isUnassigned: item.is_assigned !== true,
           verifiedAt: item.updated_at ? new Date(item.updated_at).toLocaleDateString() : "recently",
-          url: item.issue_url || `https://github.com/${repo}/issues/${nativeId}`,
+          url: resolvedUrl,
         };
       });
 
@@ -172,7 +200,7 @@ function ExplorePage() {
   const totalInPool = q.data?.totalInPool ?? issues.length;
 
   return (
-    <div className="min-w-0 space-y-8">
+    <div className="min-w-0 max-w-full overflow-x-hidden space-y-8">
       {/* Surface Header */}
       <div>
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -336,20 +364,22 @@ function ExplorePage() {
                       </span>
                     </div>
 
-                    <h2 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-snug break-words [overflow-wrap:anywhere]">
+                    <h2 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-snug break-words [overflow-wrap:anywhere] min-w-0">
                       <a
                         href={issue.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex items-center gap-1.5 break-words [overflow-wrap:anywhere]"
+                        className="inline-flex flex-wrap items-center gap-1.5 break-words [overflow-wrap:anywhere] min-w-0 hover:underline"
                       >
-                        {issue.title}
+                        <span className="break-words [overflow-wrap:anywhere] min-w-0">
+                          {issue.title}
+                        </span>
                         <ExternalLink className="size-3.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </a>
                     </h2>
 
                     {issue.body && (
-                      <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed break-words [overflow-wrap:anywhere]">
+                      <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed break-words [overflow-wrap:anywhere] min-w-0">
                         {issue.body}
                       </p>
                     )}
