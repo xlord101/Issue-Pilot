@@ -2,6 +2,7 @@ package com.issuepilot.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.issuepilot.adapter.IssueQualityFilter;
 import com.issuepilot.config.AppProperties;
 import com.issuepilot.config.MongoConfig;
 import com.issuepilot.model.RankingWeights;
@@ -334,6 +335,15 @@ public class RecommendationController {
             applyVoteAffinityPersonalization(voteLookupUserId, rankedCandidates, userVotes, weightsMap);
         }
 
+        // Reject non-English (CJK/Japanese/Chinese) issues, blocked tasks, homework checklists, and vague placeholders
+        rankedCandidates.removeIf(c -> {
+            String t = (String) c.get("title");
+            String b = (String) c.get("body");
+            @SuppressWarnings("unchecked")
+            List<String> l = (List<String>) c.get("labels");
+            return !IssueQualityFilter.isQualityIssue(t, b, l);
+        });
+
         // 4. Live Multi-Platform Verification & Shortlist Backfill
         int effectiveBudget = req.shortlist_size != null
                 ? req.shortlist_size
@@ -396,6 +406,25 @@ public class RecommendationController {
 
         // Sort delivered recommendations according to user sort order
         applySortOrder(deliveredRecs, req.sort);
+
+        // Enforce repository diversity: prioritize distinct repositories so no single project monopolizes the feed
+        List<Map<String, Object>> diverseRecs = new ArrayList<>();
+        List<Map<String, Object>> overflowRecs = new ArrayList<>();
+        Set<String> seenRepos = new HashSet<>();
+        for (Map<String, Object> rec : deliveredRecs) {
+            Object r = rec.get("repository_full_name");
+            String repoKey = r != null ? r.toString().trim().toLowerCase(Locale.ROOT) : "";
+            if (!repoKey.isEmpty() && seenRepos.contains(repoKey)) {
+                overflowRecs.add(rec);
+            } else {
+                if (!repoKey.isEmpty()) {
+                    seenRepos.add(repoKey);
+                }
+                diverseRecs.add(rec);
+            }
+        }
+        diverseRecs.addAll(overflowRecs);
+        deliveredRecs = diverseRecs;
 
         // Slice pagination window [offset, offset + limit)
         boolean hasMore = deliveredRecs.size() > (requestedOffset + requestedLimit);

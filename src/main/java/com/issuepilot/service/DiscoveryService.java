@@ -4,6 +4,7 @@ import com.issuepilot.adapter.AdapterRegistry;
 import com.issuepilot.adapter.BaseIssueSourceAdapter;
 import com.issuepilot.adapter.CodebergAdapter;
 import com.issuepilot.adapter.GitLabAdapter;
+import com.issuepilot.adapter.IssueQualityFilter;
 import com.issuepilot.adapter.RateLimitExceededException;
 import com.issuepilot.adapter.TechnologyDetectionHelper;
 import com.issuepilot.config.AppProperties;
@@ -120,7 +121,7 @@ public class DiscoveryService {
                 } catch (Exception ignored) {}
             }
 
-            if (currentActivePool >= targetPoolSize) {
+            if (currentActivePool >= targetPoolSize && !force) {
                 Map<String, Object> summary = new LinkedHashMap<>();
                 summary.put("status", "completed");
                 summary.put("job_id", jobId);
@@ -244,7 +245,8 @@ public class DiscoveryService {
                     }
 
                     try {
-                        Map<String, Object> searchResult = adapter.searchIssues(query, page, itemsPerPage, "updated", "desc");
+                        String sortField = "github".equals(src) ? "created" : "updated";
+                        Map<String, Object> searchResult = adapter.searchIssues(query, page, itemsPerPage, sortField, "desc");
                         if (searchResult.containsKey("source_error")) {
                             String se = (String) searchResult.get("source_error");
                             if (se != null && !srcErrors.contains(se)) {
@@ -314,7 +316,20 @@ public class DiscoveryService {
                                 continue;
                             }
 
-                            // 4. Post-Retrieval Validation: Technology relevance check
+                            // 4. Post-Retrieval Validation: English readability & issue quality check
+                            String title = (String) normalized.get("title");
+                            String body = (String) normalized.get("body");
+                            @SuppressWarnings("unchecked")
+                            List<String> labels = (List<String>) normalized.get("labels");
+                            if (!IssueQualityFilter.isQualityIssue(title, body, labels)) {
+                                srcFilteredTech++;
+                                totalFilteredTech++;
+                                srcSkipped++;
+                                totalSkipped++;
+                                continue;
+                            }
+
+                            // 5. Post-Retrieval Validation: Technology relevance check
                             if (!isRelevanceMatch(normalized, stack)) {
                                 srcFilteredTech++;
                                 totalFilteredTech++;
@@ -514,11 +529,11 @@ public class DiscoveryService {
         String s = source.toLowerCase();
         if ("github".equals(s)) {
             if ("react".equalsIgnoreCase(stack)) {
-                return "react in:title,body created:>=" + cutoffDate + " is:open is:issue";
+                return "react in:title,body stars:>=5 created:>=" + cutoffDate + " is:open is:issue";
             } else if ("c++".equalsIgnoreCase(stack)) {
-                return "language:C++ created:>=" + cutoffDate + " is:open is:issue";
+                return "language:C++ stars:>=5 created:>=" + cutoffDate + " is:open is:issue";
             } else {
-                return "language:" + stack + " created:>=" + cutoffDate + " is:open is:issue";
+                return "language:" + stack + " stars:>=5 created:>=" + cutoffDate + " is:open is:issue";
             }
         } else if ("gitlab".equals(s)) {
             return stack.toLowerCase() + " created_after:" + cutoffIso;
