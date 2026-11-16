@@ -426,6 +426,34 @@ public class RecommendationController {
         diverseRecs.addAll(overflowRecs);
         deliveredRecs = diverseRecs;
 
+        // Impression rotation: prioritize unseen/new issues so returning users see fresh recommendations everyday
+        if (actingUserId != null && !actingUserId.isBlank() && recommendationRepository != null && mongoConfig.isConnected()) {
+            try {
+                List<Map<String, Object>> pastRecs = recommendationRepository.getUserRecommendations(actingUserId, 100);
+                Set<String> previouslySeenIds = new HashSet<>();
+                for (Map<String, Object> pr : pastRecs) {
+                    Object iid = pr.get("issue_id");
+                    if (iid != null) previouslySeenIds.add(iid.toString());
+                }
+                if (!previouslySeenIds.isEmpty()) {
+                    List<Map<String, Object>> unseenRecs = new ArrayList<>();
+                    List<Map<String, Object>> seenRecs = new ArrayList<>();
+                    for (Map<String, Object> rec : deliveredRecs) {
+                        Object iid = rec.get("id");
+                        if (iid != null && previouslySeenIds.contains(iid.toString())) {
+                            seenRecs.add(rec);
+                        } else {
+                            unseenRecs.add(rec);
+                        }
+                    }
+                    unseenRecs.addAll(seenRecs);
+                    deliveredRecs = unseenRecs;
+                }
+            } catch (Exception e) {
+                logger.warn("Could not retrieve user recommendation history for impression rotation: {}", e.getMessage());
+            }
+        }
+
         // Slice pagination window [offset, offset + limit)
         boolean hasMore = deliveredRecs.size() > (requestedOffset + requestedLimit);
         int totalVerifiedAvailable = deliveredRecs.size();

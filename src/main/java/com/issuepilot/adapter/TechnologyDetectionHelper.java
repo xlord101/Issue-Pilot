@@ -10,26 +10,26 @@ public final class TechnologyDetectionHelper {
     private static final Map<String, List<String>> TECH_PATTERNS = new LinkedHashMap<>();
 
     static {
-        TECH_PATTERNS.put("python", Arrays.asList("python", "py", "pytest", "pypi", "pip", "asyncio", "pydantic"));
+        TECH_PATTERNS.put("python", Arrays.asList("python", "\\bpy\\b", "\\bpytest\\b", "\\bpypi\\b", "\\bpip\\b", "asyncio", "pydantic"));
         TECH_PATTERNS.put("fastapi", Arrays.asList("fastapi", "uvicorn", "starlette"));
         TECH_PATTERNS.put("flask", Arrays.asList("flask", "werkzeug", "jinja", "jinja2"));
         TECH_PATTERNS.put("django", Arrays.asList("django", "django-rest", "drf"));
-        TECH_PATTERNS.put("react", Arrays.asList("react", "jsx", "tsx", "redux", "nextjs", "vite", "frontend"));
-        TECH_PATTERNS.put("typescript", Arrays.asList("typescript", "ts", "tsc", "typing", "types"));
-        TECH_PATTERNS.put("javascript", Arrays.asList("javascript", "js", "node", "nodejs", "npm", "ecmascript"));
-        TECH_PATTERNS.put("c++", Arrays.asList("c++", "cpp", "cxx", "clang", "gcc", "stl", "boost", "cmake"));
-        TECH_PATTERNS.put("c", Arrays.asList("\\bc\\b", "glibc", "posix", "kernel"));
+        TECH_PATTERNS.put("react", Arrays.asList("react", "\\bjsx\\b", "\\btsx\\b", "redux", "nextjs", "next.js", "vite"));
+        TECH_PATTERNS.put("typescript", Arrays.asList("typescript", "\\bts\\b", "\\btsc\\b", "\\btyping\\b"));
+        TECH_PATTERNS.put("javascript", Arrays.asList("javascript", "\\bjs\\b", "\\bnode\\b", "nodejs", "node.js", "\\bnpm\\b", "ecmascript"));
+        TECH_PATTERNS.put("c++", Arrays.asList("c++", "\\bcpp\\b", "\\bcxx\\b", "clang", "\\bgcc\\b", "\\bstl\\b", "boost"));
+        TECH_PATTERNS.put("c", Arrays.asList("\\bc\\b", "glibc", "posix"));
         TECH_PATTERNS.put("rust", Arrays.asList("rust", "cargo", "crates", "rustc"));
-        TECH_PATTERNS.put("go", Arrays.asList("golang", "\\bgo\\b", "goroutine"));
-        TECH_PATTERNS.put("java", Arrays.asList("java", "jvm", "jdk", "gradle", "maven", "spring"));
-        TECH_PATTERNS.put("spring", Arrays.asList("spring", "spring-boot", "springboot", "spring-data"));
-        TECH_PATTERNS.put("mongodb", Arrays.asList("mongodb", "mongo", "pymongo", "mongoclient", "nosql"));
-        TECH_PATTERNS.put("postgresql", Arrays.asList("postgres", "postgresql", "psycopg", "sql"));
-        TECH_PATTERNS.put("docker", Arrays.asList("docker", "container", "dockerfile", "containerd"));
-        TECH_PATTERNS.put("kubernetes", Arrays.asList("kubernetes", "k8s", "helm", "kubectl"));
-        TECH_PATTERNS.put("cmake", Arrays.asList("cmake", "cmakelists", "build-system"));
-        TECH_PATTERNS.put("linux", Arrays.asList("linux", "ubuntu", "debian", "fedora", "arch"));
-        TECH_PATTERNS.put("documentation", Arrays.asList("docs", "documentation", "docstring", "tutorial", "readme", "guide"));
+        TECH_PATTERNS.put("go", Arrays.asList("golang", "goroutine", "\\bgo\\.mod\\b", "\\bgo\\.sum\\b"));
+        TECH_PATTERNS.put("java", Arrays.asList("\\bjava\\b", "\\bjvm\\b", "\\bjdk\\b", "gradle", "maven"));
+        TECH_PATTERNS.put("spring", Arrays.asList("spring-boot", "springboot", "spring-data", "\\bspring\\b"));
+        TECH_PATTERNS.put("mongodb", Arrays.asList("mongodb", "pymongo", "mongoclient", "\\bmongo\\b"));
+        TECH_PATTERNS.put("postgresql", Arrays.asList("postgres", "postgresql", "psycopg"));
+        TECH_PATTERNS.put("docker", Arrays.asList("docker", "dockerfile", "containerd"));
+        TECH_PATTERNS.put("kubernetes", Arrays.asList("kubernetes", "\\bk8s\\b", "\\bhelm\\b", "kubectl"));
+        TECH_PATTERNS.put("cmake", Arrays.asList("cmakelists", "\\bcmake\\b"));
+        TECH_PATTERNS.put("linux", Arrays.asList("\\blinux\\b", "ubuntu", "debian", "fedora", "arch"));
+        TECH_PATTERNS.put("documentation", Arrays.asList("documentation", "docstring", "tutorial", "readme"));
     }
 
     private TechnologyDetectionHelper() {}
@@ -41,12 +41,12 @@ public final class TechnologyDetectionHelper {
         for (Map.Entry<String, List<String>> entry : TECH_PATTERNS.entrySet()) {
             String tech = entry.getKey();
             for (String kw : entry.getValue()) {
-                if (kw.startsWith("\\b")) {
+                if (kw.startsWith("\\b") || kw.endsWith("\\b") || kw.contains("\\.")) {
                     if (Pattern.compile(kw, Pattern.CASE_INSENSITIVE).matcher(combined).find()) {
                         detected.put(capitalize(tech), detected.getOrDefault(capitalize(tech), 0.0) + 2.0);
                         break;
                     }
-                } else if (combined.contains(kw.toLowerCase())) {
+                } else if (Pattern.compile("\\b" + Pattern.quote(kw) + "\\b", Pattern.CASE_INSENSITIVE).matcher(combined).find()) {
                     detected.put(capitalize(tech), detected.getOrDefault(capitalize(tech), 0.0) + 2.0);
                     break;
                 }
