@@ -123,6 +123,12 @@ public class AppProperties {
     @Value("${BUGZILLA_REQUEST_TIMEOUT_SECONDS:10}")
     private int bugzillaRequestTimeoutSeconds = 10;
 
+    @Value("${GEMINI_API_KEY:}")
+    private String geminiApiKey = "";
+
+    @Value("${GEMINI_MODEL:gemini-1.5-flash}")
+    private String geminiModel = "gemini-1.5-flash";
+
     @Value("${BUGZILLA_MAX_RETRIES:2}")
     private int bugzillaMaxRetries = 2;
 
@@ -612,5 +618,13 @@ public class AppProperties {
 
     public int getOtpMaxAttempts() {
         return otpMaxAttempts;
+    }
+
+    public String getGeminiApiKey() {
+        return geminiApiKey;
+    }
+
+    public String getGeminiModel() {
+        return geminiModel;
     }
 }

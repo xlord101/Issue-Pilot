@@ -1,0 +1,1020 @@
+{
+  "version": "1.0.0",
+  "description": "Curated Competency & Rubric Corpus for RAG-grounded Adaptive Diagnostic Calibration",
+  "scoring_model": {
+    "beginner_baseline": 35.0,
+    "intermediate_baseline": 65.0,
+    "advanced_baseline": 85.0
+  },
+  "domains": {
+    "Python": {
+      "BEGINNER": [
+        {
+          "scenario_id": "py-beg-env-01",
+          "archetype": "environment_dependency_isolation",
+          "scenario": "You clone an open-source Python repository, create a virtual environment, and run `pytest`. The test run immediately crashes with `ModuleNotFoundError: No module named 'pydantic'`. What is the correct next action?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Open an issue on GitHub asking the maintainers why their code does not run.",
+              "score_weight": 15.0,
+              "is_optimal": false,
+              "rubric_explanation": "Fails to recognize missing local dependency installation inside the environment."
+            },
+            {
+              "id": "B",
+              "text": "Run 'pip install -e .' or 'pip install -r requirements-dev.txt' inside your active virtualenv.",
+              "score_weight": 40.0,
+              "is_optimal": true,
+              "rubric_explanation": "Correctly installs the development dependencies specified by the project."
+            },
+            {
+              "id": "C",
+              "text": "Edit the test files to remove all pydantic imports so the tests can pass.",
+              "score_weight": 10.0,
+              "is_optimal": false,
+              "rubric_explanation": "Modifying existing codebase tests to bypass dependencies violates PR integrity."
+            },
+            {
+              "id": "D",
+              "text": "Copy the system Python packages into the repository root directory.",
+              "score_weight": 15.0,
+              "is_optimal": false,
+              "rubric_explanation": "Pollutes the repository and breaks environment isolation."
+            }
+          ]
+        },
+        {
+          "scenario_id": "py-beg-syntax-02",
+          "archetype": "exception_traceback_interpretation",
+          "scenario": "A function in a CLI tool throws `TypeError: can only concatenate str (not 'int') to str` when formatting user output. You see: `message = 'User ID: ' + user.id`. How should this be fixed?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Use an f-string: message = f'User ID: {user.id}' or message = 'User ID: ' + str(user.id)",
+              "score_weight": 40.0,
+              "is_optimal": true,
+              "rubric_explanation": "Correctly formats the integer into the string using modern Python idioms."
+            },
+            {
+              "id": "B",
+              "text": "Wrap the line in a bare try/except block that ignores the error.",
+              "score_weight": 15.0,
+              "is_optimal": false,
+              "rubric_explanation": "Silently suppressing exceptions causes downstream bugs."
+            },
+            {
+              "id": "C",
+              "text": "Cast the string to int: int('User ID: ') + user.id",
+              "score_weight": 10.0,
+              "is_optimal": false,
+              "rubric_explanation": "Fails with ValueError since alphabetic characters cannot be parsed as integer."
+            },
+            {
+              "id": "D",
+              "text": "Change user.id in the database to be a string instead.",
+              "score_weight": 20.0,
+              "is_optimal": false,
+              "rubric_explanation": "Unnecessary schema migration for a simple display formatting issue."
+            }
+          ]
+        }
+      ],
+      "INTERMEDIATE": [
+        {
+          "scenario_id": "py-int-async-01",
+          "archetype": "event_loop_blocking_io",
+          "scenario": "In a FastAPI service, an endpoint processes incoming files by calling `requests.get('https://remote.api/data')`. Under high concurrent traffic, the entire API server becomes unresponsive for all users. What is the root cause?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Synchronous blocking HTTP library (requests) inside an async def endpoint halts the single asyncio event loop thread.",
+              "score_weight": 70.0,
+              "is_optimal": true,
+              "rubric_explanation": "Accurately diagnoses event-loop starvation caused by blocking synchronous I/O in async routines."
+            },
+            {
+              "id": "B",
+              "text": "Python garbage collection pauses the entire process when requests are fired.",
+              "score_weight": 35.0,
+              "is_optimal": false,
+              "rubric_explanation": "Incorrect attribution of network latency to GC pauses."
+            },
+            {
+              "id": "C",
+              "text": "FastAPI does not support HTTP GET endpoints concurrently.",
+              "score_weight": 20.0,
+              "is_optimal": false,
+              "rubric_explanation": "FastAPI natively handles concurrent requests when properly configured."
+            },
+            {
+              "id": "D",
+              "text": "Need to replace Python with C++ because Python cannot handle more than 5 requests.",
+              "score_weight": 10.0,
+              "is_optimal": false,
+              "rubric_explanation": "Naive dismissal of language concurrency capabilities."
+            }
+          ]
+        },
+        {
+          "scenario_id": "py-int-mock-02",
+          "archetype": "unit_test_mocking_isolation",
+          "scenario": "You are writing a unit test for a service function `send_welcome_email(user_id)`. The function queries the database and calls Stripe and Sendgrid. How do you isolate the unit test without hitting external third-party APIs?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Create real accounts on Stripe and Sendgrid with test credit cards and call them during test suite runs.",
+              "score_weight": 30.0,
+              "is_optimal": false,
+              "rubric_explanation": "Makes tests slow, fragile to network outages, and dependent on credentials."
+            },
+            {
+              "id": "B",
+              "text": "Use `unittest.mock.patch` or dependency injection to mock the email and payment client adapters.",
+              "score_weight": 70.0,
+              "is_optimal": true,
+              "rubric_explanation": "Correctly isolates external side-effects with mocked adapters."
+            },
+            {
+              "id": "C",
+              "text": "Comment out the email sending code before committing the test.",
+              "score_weight": 10.0,
+              "is_optimal": false,
+              "rubric_explanation": "Breaks test validity and introduces untested production branches."
+            },
+            {
+              "id": "D",
+              "text": "Run tests with an empty string as API key so the requests fail fast.",
+              "score_weight": 25.0,
+              "is_optimal": false,
+              "rubric_explanation": "Causes tests to expect exceptions rather than asserting proper payload dispatch."
+            }
+          ]
+        }
+      ],
+      "ADVANCED": [
+        {
+          "scenario_id": "py-adv-concurrency-01",
+          "archetype": "gil_cpu_bound_multiprocessing",
+          "scenario": "You need to parallelize a CPU-intensive data hashing algorithm across 8 CPU cores in a Python service. Testing with `threading.Thread` resulted in zero performance speedup. How should this be designed in standard CPython?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Increase thread priority using `os.nice(-20)`.",
+              "score_weight": 30.0,
+              "is_optimal": false,
+              "rubric_explanation": "Does not address the Global Interpreter Lock (GIL) preventing simultaneous bytecode execution."
+            },
+            {
+              "id": "B",
+              "text": "Use `concurrent.futures.ProcessPoolExecutor` or `multiprocessing` to run independent processes with their own GIL.",
+              "score_weight": 90.0,
+              "is_optimal": true,
+              "rubric_explanation": "Recognizes GIL constraints in CPython and utilizes multi-process parallelism for CPU-bound tasks."
+            },
+            {
+              "id": "C",
+              "text": "Replace the threads with `asyncio.gather()`.",
+              "score_weight": 40.0,
+              "is_optimal": false,
+              "rubric_explanation": "Asyncio is cooperative single-threaded concurrency, ineffective for CPU-bound computation."
+            },
+            {
+              "id": "D",
+              "text": "Disable the Python garbage collector with `gc.disable()`.",
+              "score_weight": 25.0,
+              "is_optimal": false,
+              "rubric_explanation": "Unrelated to CPU thread serialization."
+            }
+          ]
+        },
+        {
+          "scenario_id": "py-adv-memory-02",
+          "archetype": "circular_reference_memory_leak",
+          "scenario": "A long-running Python background worker gradually consumes all available RAM over 48 hours. A memory snapshot reveals millions of custom Node objects that have `__del__` methods and circular parent-child references. Why did `gc.collect()` fail to reclaim them?",
+          "options": [
+            {
+              "id": "A",
+              "text": "In older CPython versions or uncollected cycle graphs, objects in circular cycles with `__del__` methods are considered uncollectible and placed into `gc.garbage`.",
+              "score_weight": 90.0,
+              "is_optimal": true,
+              "rubric_explanation": "Demonstrates deep knowledge of CPython cycle detector caveats and destructor ordering."
+            },
+            {
+              "id": "B",
+              "text": "Python does not have garbage collection for objects with more than 3 fields.",
+              "score_weight": 15.0,
+              "is_optimal": false,
+              "rubric_explanation": "Completely incorrect understanding of Python memory model."
+            },
+            {
+              "id": "C",
+              "text": "The operating system prevents Python from returning RAM unless the server restarts.",
+              "score_weight": 40.0,
+              "is_optimal": false,
+              "rubric_explanation": "While memory fragmentation exists, cycle uncollectibility is the root cause here."
+            },
+            {
+              "id": "D",
+              "text": "Python classes cannot reference their parents.",
+              "score_weight": 20.0,
+              "is_optimal": false,
+              "rubric_explanation": "Parent-child references are standard; weakref should be utilized to break cycles."
+            }
+          ]
+        }
+      ]
+    },
+    "TypeScript": {
+      "BEGINNER": [
+        {
+          "scenario_id": "ts-beg-types-01",
+          "archetype": "strict_null_checks_handling",
+          "scenario": "With `strictNullChecks: true` enabled in `tsconfig.json`, TypeScript shows `Object is possibly 'undefined'` on `user.profile.name`. What is the safest idiomatic TypeScript solution?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Use optional chaining: `user?.profile?.name` with an optional fallback `?? 'Anonymous'`.",
+              "score_weight": 40.0,
+              "is_optimal": true,
+              "rubric_explanation": "Safely navigates potentially undefined properties with optional chaining and nullish coalescing."
+            },
+            {
+              "id": "B",
+              "text": "Use non-null assertion: `user!.profile!.name` everywhere.",
+              "score_weight": 25.0,
+              "is_optimal": false,
+              "rubric_explanation": "Bypasses compiler safety and risks runtime TypeError if data is missing."
+            },
+            {
+              "id": "C",
+              "text": "Turn off `strictNullChecks` in `tsconfig.json`.",
+              "score_weight": 15.0,
+              "is_optimal": false,
+              "rubric_explanation": "Weakens project-wide type safety."
+            },
+            {
+              "id": "D",
+              "text": "Cast user to `(user as any).profile.name`.",
+              "score_weight": 20.0,
+              "is_optimal": false,
+              "rubric_explanation": "Defeats TypeScript's type system."
+            }
+          ]
+        }
+      ],
+      "INTERMEDIATE": [
+        {
+          "scenario_id": "ts-int-unions-01",
+          "archetype": "discriminated_unions_exhaustiveness",
+          "scenario": "You are managing state transitions for API responses in TypeScript (`{ status: 'loading' } | { status: 'success', data: Issue[] } | { status: 'error', error: Error }`). In a switch statement, how do you ensure compile-time errors if a developer adds a new status without handling it?",
+          "options": [
+            {
+              "id": "A",
+              "text": "In the `default:` case, assign the state to a variable typed as `never`: `const _exhaustiveCheck: never = state;`.",
+              "score_weight": 70.0,
+              "is_optimal": true,
+              "rubric_explanation": "Standard TypeScript pattern for exhaustive type narrowing and compile-time protection."
+            },
+            {
+              "id": "B",
+              "text": "Add a `console.log('Unknown state')` in default.",
+              "score_weight": 35.0,
+              "is_optimal": false,
+              "rubric_explanation": "Only logs at runtime, providing no compile-time enforcement."
+            },
+            {
+              "id": "C",
+              "text": "Cast all states to `Record<string, unknown>`.",
+              "score_weight": 20.0,
+              "is_optimal": false,
+              "rubric_explanation": "Destroys discriminated union narrowing."
+            },
+            {
+              "id": "D",
+              "text": "Wrap the switch in a try/catch block.",
+              "score_weight": 25.0,
+              "is_optimal": false,
+              "rubric_explanation": "Try/catch does not trigger compile-time missing branch checks."
+            }
+          ]
+        }
+      ],
+      "ADVANCED": [
+        {
+          "scenario_id": "ts-adv-generics-01",
+          "archetype": "conditional_types_infer_narrowing",
+          "scenario": "You are writing a generic library function that extracts the resolved return type of an asynchronous function `type AsyncReturnType<T> = ...`. How do you construct this using conditional types?",
+          "options": [
+            {
+              "id": "A",
+              "text": "type AsyncReturnType<T> = T extends (...args: any[]) => Promise<infer R> ? R : any;",
+              "score_weight": 90.0,
+              "is_optimal": true,
+              "rubric_explanation": "Demonstrates mastery of TypeScript conditional types and the `infer` keyword."
+            },
+            {
+              "id": "B",
+              "text": "type AsyncReturnType<T> = typeof T.return;",
+              "score_weight": 20.0,
+              "is_optimal": false,
+              "rubric_explanation": "Invalid TypeScript syntax for extracting return types."
+            },
+            {
+              "id": "C",
+              "text": "type AsyncReturnType<T> = Promise<T>;",
+              "score_weight": 30.0,
+              "is_optimal": false,
+              "rubric_explanation": "Wraps the type instead of unwrapping the inner promise resolution."
+            },
+            {
+              "id": "D",
+              "text": "type AsyncReturnType<T> = T extends Promise ? T : never;",
+              "score_weight": 40.0,
+              "is_optimal": false,
+              "rubric_explanation": "Lacks generic parameterization and does not infer the resolved payload."
+            }
+          ]
+        }
+      ]
+    },
+    "React": {
+      "BEGINNER": [
+        {
+          "scenario_id": "react-beg-keys-01",
+          "archetype": "list_rendering_keys",
+          "scenario": "In a React component rendering a list of issues, you see console warnings: `Warning: Each child in a list should have a unique 'key' prop`. What is the best practice for assigning keys?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Use the array index `key={index}` for all lists.",
+              "score_weight": 25.0,
+              "is_optimal": false,
+              "rubric_explanation": "Index keys cause state corruption when items are sorted, added, or removed."
+            },
+            {
+              "id": "B",
+              "text": "Use a stable, unique identifier from the data, such as `key={issue.id}`.",
+              "score_weight": 40.0,
+              "is_optimal": true,
+              "rubric_explanation": "Provides a stable identity across renders, allowing React to diff elements correctly."
+            },
+            {
+              "id": "C",
+              "text": "Generate a random number on every render: `key={Math.random()}`.",
+              "score_weight": 10.0,
+              "is_optimal": false,
+              "rubric_explanation": "Forces complete unmounting and remounting on every render, ruining performance."
+            },
+            {
+              "id": "D",
+              "text": "Pass `key={true}`.",
+              "score_weight": 15.0,
+              "is_optimal": false,
+              "rubric_explanation": "Fails to distinguish individual items in the list."
+            }
+          ]
+        }
+      ],
+      "INTERMEDIATE": [
+        {
+          "scenario_id": "react-int-effects-01",
+          "archetype": "infinite_rerender_cycle",
+          "scenario": "A component enters an infinite re-render loop upon mounting. The code shows: `useEffect(() => { fetchFeed(userId).then(data => setFeed(data)); }, [userId, feed]);`. How should this effect be corrected?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Remove `feed` from the dependency array, keeping only `[userId]` (and fetchFeed if not memoized).",
+              "score_weight": 70.0,
+              "is_optimal": true,
+              "rubric_explanation": "Accurately identifies that updating `feed` triggers the effect, creating an infinite loop."
+            },
+            {
+              "id": "B",
+              "text": "Change `useEffect` to `useLayoutEffect`.",
+              "score_weight": 25.0,
+              "is_optimal": false,
+              "rubric_explanation": "Still triggers an infinite loop synchronously before paint."
+            },
+            {
+              "id": "C",
+              "text": "Wrap `setFeed` in a `setTimeout(..., 1000)`.",
+              "score_weight": 20.0,
+              "is_optimal": false,
+              "rubric_explanation": "Only slows down the infinite loop instead of fixing the root dependency bug."
+            },
+            {
+              "id": "D",
+              "text": "Remove the dependency array entirely.",
+              "score_weight": 15.0,
+              "is_optimal": false,
+              "rubric_explanation": "Runs on every single render, exacerbating the loop."
+            }
+          ]
+        }
+      ],
+      "ADVANCED": [
+        {
+          "scenario_id": "react-adv-concurrency-01",
+          "archetype": "concurrent_state_transitions",
+          "scenario": "In a dashboard with high-frequency live search filtering 5,000 issue cards, typing in the input feels laggy and drops keystroke frames. How should this be addressed in modern React 18+?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Keep input state urgent, and wrap the expensive filtered results state update in `startTransition` or use `useDeferredValue`.",
+              "score_weight": 90.0,
+              "is_optimal": true,
+              "rubric_explanation": "Utilizes React 18 concurrent transitions to prioritize user typing over heavy UI diffing."
+            },
+            {
+              "id": "B",
+              "text": "Wrap every JSX element in `React.memo` with empty props.",
+              "score_weight": 35.0,
+              "is_optimal": false,
+              "rubric_explanation": "Indiscriminate memoization adds overhead without yielding input responsiveness."
+            },
+            {
+              "id": "C",
+              "text": "Switch from React to direct jQuery DOM manipulation for the input.",
+              "score_weight": 15.0,
+              "is_optimal": false,
+              "rubric_explanation": "Bypasses declarative state and introduces synchronization bugs."
+            },
+            {
+              "id": "D",
+              "text": "Disable React synthetic events.",
+              "score_weight": 20.0,
+              "is_optimal": false,
+              "rubric_explanation": "Does not address render blocking or keystroke priority."
+            }
+          ]
+        }
+      ]
+    },
+    "Go": {
+      "BEGINNER": [
+        {
+          "scenario_id": "go-beg-errors-01",
+          "archetype": "explicit_error_handling",
+          "scenario": "In Go, you call `file, err := os.Open(filename)`. What is the canonical, idiomatic Go way to handle this?",
+          "options": [
+            {
+              "id": "A",
+              "text": "if err != nil { return fmt.Errorf(\"failed to open file %s: %w\", filename, err) } defer file.Close()",
+              "score_weight": 40.0,
+              "is_optimal": true,
+              "rubric_explanation": "Idiomatic Go error checking with wrapped error context and deferred cleanup."
+            },
+            {
+              "id": "B",
+              "text": "Use `try { file = os.Open(filename) } catch (err) { ... }`",
+              "score_weight": 10.0,
+              "is_optimal": false,
+              "rubric_explanation": "Go does not have try/catch exceptions."
+            },
+            {
+              "id": "C",
+              "text": "_ = err; defer file.Close()",
+              "score_weight": 15.0,
+              "is_optimal": false,
+              "rubric_explanation": "Ignoring error causes runtime panic when file is nil."
+            },
+            {
+              "id": "D",
+              "text": "panic(err) unconditionally.",
+              "score_weight": 20.0,
+              "is_optimal": false,
+              "rubric_explanation": "Panics should not be used for expected I/O failures in production Go code."
+            }
+          ]
+        }
+      ],
+      "INTERMEDIATE": [
+        {
+          "scenario_id": "go-int-concurrency-01",
+          "archetype": "channel_context_cancellation",
+          "scenario": "A background worker goroutine processes incoming jobs from a channel `jobs <-chan Job`. How do you ensure it gracefully shuts down when the HTTP server cancels its context?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Use a `select` loop listening on both `case job := <-jobs:` and `case <-ctx.Done(): return`.",
+              "score_weight": 70.0,
+              "is_optimal": true,
+              "rubric_explanation": "Idiomatic Go graceful worker termination using context cancellation."
+            },
+            {
+              "id": "B",
+              "text": "Call `goroutine.Kill()` from the main thread.",
+              "score_weight": 15.0,
+              "is_optimal": false,
+              "rubric_explanation": "Go has no thread kill primitive; cancellation must be cooperative."
+            },
+            {
+              "id": "C",
+              "text": "Check a global boolean variable `isShutdown` inside a sleep loop.",
+              "score_weight": 35.0,
+              "is_optimal": false,
+              "rubric_explanation": "Prone to data races unless protected by sync/atomic, and less idiomatic than channels."
+            },
+            {
+              "id": "D",
+              "text": "Close the operating system process immediately.",
+              "score_weight": 10.0,
+              "is_optimal": false,
+              "rubric_explanation": "Abrupt termination drops in-flight tasks and corrupts state."
+            }
+          ]
+        }
+      ],
+      "ADVANCED": [
+        {
+          "scenario_id": "go-adv-memory-01",
+          "archetype": "slice_memory_leak_pinning",
+          "scenario": "A Go service reads 100MB binary files, extracts a 16-byte header `header := data[:16]`, and stores thousands of headers in an in-memory map. The process memory balloons to 20GB. Why?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Slicing `data[:16]` retains a pointer to the entire 100MB backing array in memory; copy() must be used: `h := make([]byte, 16); copy(h, data[:16])`.",
+              "score_weight": 90.0,
+              "is_optimal": true,
+              "rubric_explanation": "Deep understanding of Go slice header structures and GC retention behavior."
+            },
+            {
+              "id": "B",
+              "text": "Go maps cannot hold more than 100 items without memory leaks.",
+              "score_weight": 20.0,
+              "is_optimal": false,
+              "rubric_explanation": "Go maps scale efficiently to millions of keys."
+            },
+            {
+              "id": "C",
+              "text": "The Go runtime forgot to run the mark-and-sweep collector.",
+              "score_weight": 15.0,
+              "is_optimal": false,
+              "rubric_explanation": "The GC is working correctly; the backing arrays are genuinely referenced by live slices."
+            },
+            {
+              "id": "D",
+              "text": "Need to run with `GODEBUG=gctrace=1` to force GC deletion.",
+              "score_weight": 30.0,
+              "is_optimal": false,
+              "rubric_explanation": "gctrace is for diagnostic logging, not memory reclamation."
+            }
+          ]
+        }
+      ]
+    },
+    "OSS_Workflow": {
+      "BEGINNER": [
+        {
+          "scenario_id": "oss-beg-pr-01",
+          "archetype": "github_pr_conventions",
+          "scenario": "You have fixed a bug that was reported in Issue #42. How should you format your PR title and description so GitHub automatically closes the issue when your PR is merged?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Include 'Fixes #42' or 'Closes #42' in the PR description.",
+              "score_weight": 40.0,
+              "is_optimal": true,
+              "rubric_explanation": "Recognizes GitHub's automated closing keywords."
+            },
+            {
+              "id": "B",
+              "text": "Post a comment on issue #42 saying 'I made a PR' and manually close the issue yourself.",
+              "score_weight": 20.0,
+              "is_optimal": false,
+              "rubric_explanation": "Non-maintainers usually do not have permissions to close issues, and it lacks automated linking."
+            },
+            {
+              "id": "C",
+              "text": "Tag the maintainer @here in every commit message.",
+              "score_weight": 10.0,
+              "is_optimal": false,
+              "rubric_explanation": "Violates open-source notification etiquette."
+            },
+            {
+              "id": "D",
+              "text": "Delete issue #42.",
+              "score_weight": 10.0,
+              "is_optimal": false,
+              "rubric_explanation": "Destroys historical context."
+            }
+          ]
+        }
+      ],
+      "INTERMEDIATE": [
+        {
+          "scenario_id": "oss-int-rebase-01",
+          "archetype": "git_rebase_conflict_resolution",
+          "scenario": "While your PR was awaiting review, upstream main advanced by 10 commits, causing a merge conflict on GitHub. What is the clean, maintainer-preferred way to update your PR branch?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Fetch upstream (`git fetch upstream`), rebase your branch on upstream main (`git rebase upstream/main`), resolve conflicts cleanly, and force-push with lease (`git push --force-with-lease`).",
+              "score_weight": 70.0,
+              "is_optimal": true,
+              "rubric_explanation": "Industry-standard clean Git rebase workflow that preserves a linear history."
+            },
+            {
+              "id": "B",
+              "text": "Close the PR, delete your fork, and re-code the entire feature from scratch.",
+              "score_weight": 15.0,
+              "is_optimal": false,
+              "rubric_explanation": "Massive waste of effort and loses previous review comments."
+            },
+            {
+              "id": "C",
+              "text": "Ask the maintainer to manually copy your files into their local machine.",
+              "score_weight": 15.0,
+              "is_optimal": false,
+              "rubric_explanation": "Places unnecessary burden on unpaid open-source maintainers."
+            },
+            {
+              "id": "D",
+              "text": "Merge upstream main with a dirty merge commit without testing locally.",
+              "score_weight": 35.0,
+              "is_optimal": false,
+              "rubric_explanation": "Leaves broken builds and messy git histories on PR branches."
+            }
+          ]
+        }
+      ],
+      "ADVANCED": [
+        {
+          "scenario_id": "oss-adv-bisect-01",
+          "archetype": "git_bisect_regression_isolation",
+          "scenario": "A regression was introduced in a repository between v2.1.0 (good) and v2.2.0 (broken), spanning 350 merged PRs. What Git tool allows you to find the exact offending commit in O(log N) steps?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Use `git bisect start`, marking v2.2.0 as bad and v2.1.0 as good, and automate the search with `git bisect run pytest`.",
+              "score_weight": 90.0,
+              "is_optimal": true,
+              "rubric_explanation": "Expert Git diagnostic technique utilizing binary search over commit history."
+            },
+            {
+              "id": "B",
+              "text": "Manually git checkout each of the 350 commits one by one.",
+              "score_weight": 30.0,
+              "is_optimal": false,
+              "rubric_explanation": "Extremely slow O(N) linear inspection."
+            },
+            {
+              "id": "C",
+              "text": "Read the entire 350-commit diff file in a text editor.",
+              "score_weight": 25.0,
+              "is_optimal": false,
+              "rubric_explanation": "Inefficient for large cross-cutting refactors."
+            },
+            {
+              "id": "D",
+              "text": "Revert the last commit and hope the regression disappears.",
+              "score_weight": 15.0,
+              "is_optimal": false,
+              "rubric_explanation": "Does not identify the source commit."
+            }
+          ]
+        }
+      ]
+    },
+    "Java": {
+      "BEGINNER": [
+        {
+          "scenario_id": "java-beg-npe-01",
+          "archetype": "null_pointer_prevention",
+          "scenario": "A Java method throws `NullPointerException` at `user.getAddress().getCity()`. How should this be safely handled in modern Java (Java 8+)?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Use `Optional.ofNullable(user).map(User::getAddress).map(Address::getCity).orElse(\"Unknown\")` or explicit null checks.",
+              "score_weight": 40.0,
+              "is_optimal": true,
+              "rubric_explanation": "Safely unwraps nested references without throwing NullPointerException."
+            },
+            {
+              "id": "B",
+              "text": "Catch `Throwable` and restart the JVM.",
+              "score_weight": 10.0,
+              "is_optimal": false,
+              "rubric_explanation": "Extreme antipattern that causes process thrashing."
+            },
+            {
+              "id": "C",
+              "text": "Disable NPE exceptions using `-XX:-OmitStackTraceInFastThrow`.",
+              "score_weight": 20.0,
+              "is_optimal": false,
+              "rubric_explanation": "Flag affects stack trace printing, does not stop the exception."
+            },
+            {
+              "id": "D",
+              "text": "Set user to `null` before calling getAddress.",
+              "score_weight": 10.0,
+              "is_optimal": false,
+              "rubric_explanation": "Guarantees another immediate NPE."
+            }
+          ]
+        }
+      ],
+      "INTERMEDIATE": [
+        {
+          "scenario_id": "java-int-spring-01",
+          "archetype": "spring_dependency_injection",
+          "scenario": "In a Spring Boot service, field injection `@Autowired private OrderService orderService;` is flagged in code review. What is the recommended Spring architectural pattern?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Use constructor-based injection with `final` fields, enabling immutability and easy test instantiation without Spring container overhead.",
+              "score_weight": 70.0,
+              "is_optimal": true,
+              "rubric_explanation": "Industry-standard Spring Boot best practice for DI and testability."
+            },
+            {
+              "id": "B",
+              "text": "Instantiate the service manually inside every method using `new OrderServiceImpl()`.",
+              "score_weight": 25.0,
+              "is_optimal": false,
+              "rubric_explanation": "Defeats IoC container benefits and breaks Spring-managed transactions."
+            },
+            {
+              "id": "C",
+              "text": "Make the field `public static` so any class can access it globally.",
+              "score_weight": 15.0,
+              "is_optimal": false,
+              "rubric_explanation": "Static mutable state destroys thread safety and test isolation."
+            },
+            {
+              "id": "D",
+              "text": "Remove the service and write all SQL queries in the controller class.",
+              "score_weight": 10.0,
+              "is_optimal": false,
+              "rubric_explanation": "Violates separation of concerns and MVC architecture."
+            }
+          ]
+        }
+      ],
+      "ADVANCED": [
+        {
+          "scenario_id": "java-adv-gc-01",
+          "archetype": "jvm_metaspace_memory_leak",
+          "scenario": "A Java microservice under dynamic classloading repeatedly throws `java.lang.OutOfMemoryError: Metaspace`. Heap utilization is only 30%. What is causing the leak?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Classes and custom ClassLoaders are being created dynamically without being unloaded due to strong references held in static fields or ThreadLocals.",
+              "score_weight": 90.0,
+              "is_optimal": true,
+              "rubric_explanation": "Accurately identifies ClassLoader pinning in Metaspace / non-heap memory."
+            },
+            {
+              "id": "B",
+              "text": "Too many String objects were created in the Young Generation.",
+              "score_weight": 30.0,
+              "is_optimal": false,
+              "rubric_explanation": "Strings reside in heap space, not Metaspace."
+            },
+            {
+              "id": "C",
+              "text": "Java garbage collection cannot run on Linux servers.",
+              "score_weight": 10.0,
+              "is_optimal": false,
+              "rubric_explanation": "Completely false."
+            },
+            {
+              "id": "D",
+              "text": "Increase -Xmx to 64GB.",
+              "score_weight": 35.0,
+              "is_optimal": false,
+              "rubric_explanation": "-Xmx only tunes the heap, not Metaspace (which is controlled by -XX:MaxMetaspaceSize)."
+            }
+          ]
+        }
+      ]
+    },
+    "C++": {
+      "BEGINNER": [
+        {
+          "scenario_id": "cpp-beg-vector-01",
+          "archetype": "std_vector_bounds",
+          "scenario": "A C++ program experiences unpredictable segmentation faults when accessing elements of `std::vector<int> nums`. Which access method provides bounds checking with exceptions?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Use `nums.at(index)` instead of `nums[index]`.",
+              "score_weight": 40.0,
+              "is_optimal": true,
+              "rubric_explanation": "std::vector::at performs bounds checking and throws std::out_of_range."
+            },
+            {
+              "id": "B",
+              "text": "Cast the vector to a raw pointer `(int*)nums`.",
+              "score_weight": 15.0,
+              "is_optimal": false,
+              "rubric_explanation": "Unsafe pointer conversion worsens memory corruption."
+            },
+            {
+              "id": "C",
+              "text": "Turn off compiler optimizations with `-O0`.",
+              "score_weight": 20.0,
+              "is_optimal": false,
+              "rubric_explanation": "Does not prevent out-of-bounds reads/writes."
+            },
+            {
+              "id": "D",
+              "text": "Use `malloc` instead of `std::vector`.",
+              "score_weight": 15.0,
+              "is_optimal": false,
+              "rubric_explanation": "Raw malloc has no bounds checking and lacks RAII safety."
+            }
+          ]
+        }
+      ],
+      "INTERMEDIATE": [
+        {
+          "scenario_id": "cpp-int-raii-01",
+          "archetype": "raii_smart_pointers",
+          "scenario": "In modern C++ (C++11/17/20), you are designing a resource manager class that uniquely owns a database connection pointer. How should ownership be expressed?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Use `std::unique_ptr<Connection>` created via `std::make_unique<Connection>()`, preventing duplicate ownership and automatically closing on scope exit.",
+              "score_weight": 70.0,
+              "is_optimal": true,
+              "rubric_explanation": "Demonstrates modern RAII idiom and single-ownership semantics."
+            },
+            {
+              "id": "B",
+              "text": "Store a raw `Connection*` and remember to call `delete` in the class destructor.",
+              "score_weight": 40.0,
+              "is_optimal": false,
+              "rubric_explanation": "Risks double-free or leaks if copy constructors are not manually managed (Rule of 5)."
+            },
+            {
+              "id": "C",
+              "text": "Use `void*` so any connection type can be passed.",
+              "score_weight": 15.0,
+              "is_optimal": false,
+              "rubric_explanation": "Destroys type safety and prevents destructor execution."
+            },
+            {
+              "id": "D",
+              "text": "Never free the pointer and let the OS clean up at process exit.",
+              "score_weight": 10.0,
+              "is_optimal": false,
+              "rubric_explanation": "Major memory and resource leak antipattern."
+            }
+          ]
+        }
+      ],
+      "ADVANCED": [
+        {
+          "scenario_id": "cpp-adv-memory-order-01",
+          "archetype": "atomic_memory_order_concurrency",
+          "scenario": "In a lock-free multi-threaded C++ queue, a producer publishes data and sets an atomic flag: `ready.store(true, ...)` while a consumer reads `if (ready.load(...)) { consume(data); }`. What memory order pair guarantees the consumer sees the written `data` without full sequential consistency overhead?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Producer uses `std::memory_order_release` and consumer uses `std::memory_order_acquire`.",
+              "score_weight": 90.0,
+              "is_optimal": true,
+              "rubric_explanation": "Mastery of acquire-release semantics establishing a synchronizes-with relationship without seq_cst barrier cost."
+            },
+            {
+              "id": "B",
+              "text": "Both use `std::memory_order_relaxed`.",
+              "score_weight": 35.0,
+              "is_optimal": false,
+              "rubric_explanation": "Relaxed allows CPU instruction reordering, leading to consumer reading uninitialized data."
+            },
+            {
+              "id": "C",
+              "text": "Atomics cannot be used between threads in C++.",
+              "score_weight": 10.0,
+              "is_optimal": false,
+              "rubric_explanation": "Completely incorrect; std::atomic is the foundation of C++ concurrency."
+            },
+            {
+              "id": "D",
+              "text": "Wrap the load in `asm volatile (\"\" ::: \"memory\")` only.",
+              "score_weight": 40.0,
+              "is_optimal": false,
+              "rubric_explanation": "Only acts as a compiler barrier, not a hardware CPU cache coherence synchronization."
+            }
+          ]
+        }
+      ]
+    },
+    "Docker": {
+      "BEGINNER": [
+        {
+          "scenario_id": "docker-beg-port-01",
+          "archetype": "container_port_publishing",
+          "scenario": "Your web server container is listening on port 8000 inside the container. You run `docker run -d my-app`. When navigating to `http://localhost:8000` on your host machine, connection is refused. What flag was missing?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Port forwarding flag: `-p 8000:8000` to map host port 8000 to container port 8000.",
+              "score_weight": 40.0,
+              "is_optimal": true,
+              "rubric_explanation": "Standard Docker port publishing requirement."
+            },
+            {
+              "id": "B",
+              "text": "The `--privileged` flag.",
+              "score_weight": 20.0,
+              "is_optimal": false,
+              "rubric_explanation": "Gives dangerous root host capabilities, unrelated to port forwarding."
+            },
+            {
+              "id": "C",
+              "text": "Need to restart the computer router.",
+              "score_weight": 10.0,
+              "is_optimal": false,
+              "rubric_explanation": "Local container networking is unrelated to home internet router."
+            },
+            {
+              "id": "D",
+              "text": "Add `EXPOSE 8000` in the shell command.",
+              "score_weight": 25.0,
+              "is_optimal": false,
+              "rubric_explanation": "EXPOSE is a Dockerfile documentation metadata directive, not a runtime publish flag."
+            }
+          ]
+        }
+      ],
+      "INTERMEDIATE": [
+        {
+          "scenario_id": "docker-int-multistage-01",
+          "archetype": "multistage_build_optimization",
+          "scenario": "A Go application Docker image is 1.2 GB in size because it contains the entire Go compiler toolchain, git, and build caches. How do you reduce the production image size to < 25 MB?",
+          "options": [
+            {
+              "id": "A",
+              "text": "Use a multi-stage Dockerfile (`FROM golang:1.22 AS builder` to compile the binary, then `FROM alpine:latest` or `scratch` copying only the compiled binary).",
+              "score_weight": 70.0,
+              "is_optimal": true,
+              "rubric_explanation": "Standard production containerization pattern for minimal attack surface and image size."
+            },
+            {
+              "id": "B",
+              "text": "Compress the image with zip inside the container.",
+              "score_weight": 15.0,
+              "is_optimal": false,
+              "rubric_explanation": "Does not strip build tools from image layers."
+            },
+            {
+              "id": "C",
+              "text": "Delete files in a separate `RUN rm -rf /go` line at the bottom of the Dockerfile.",
+              "score_weight": 35.0,
+              "is_optimal": false,
+              "rubric_explanation": "In Docker layer caching, deleted files in upper layers remain stored in lower layers."
+            },
+            {
+              "id": "D",
+              "text": "Run the application outside of Docker.",
+              "score_weight": 10.0,
+              "is_optimal": false,
+              "rubric_explanation": "Abandons containerization entirely."
+            }
+          ]
+        }
+      ],
+      "ADVANCED": [
+        {
+          "scenario_id": "docker-adv-pid1-01",
+          "archetype": "pid1_zombie_process_reaping",
+          "scenario": "A Node.js/Python container in production creates child worker processes that finish, but remain as `<defunct>` zombie processes, eventually exhausting the kernel PID table. Why does this happen inside Docker containers?",
+          "options": [
+            {
+              "id": "A",
+              "text": "When running as PID 1 without an init system (like tini or dumb-init), standard runtimes do not reap orphaned child processes when they terminate.",
+              "score_weight": 90.0,
+              "is_optimal": true,
+              "rubric_explanation": "Mastery of Linux container PID namespaces and init process reaping responsibilities."
+            },
+            {
+              "id": "B",
+              "text": "Docker has a bug where it deletes child processes randomly.",
+              "score_weight": 15.0,
+              "is_optimal": false,
+              "rubric_explanation": "Unsubstantiated and incorrect."
+            },
+            {
+              "id": "C",
+              "text": "Linux kernels cannot run more than 10 processes.",
+              "score_weight": 10.0,
+              "is_optimal": false,
+              "rubric_explanation": "False."
+            },
+            {
+              "id": "D",
+              "text": "The host machine needs more swap space.",
+              "score_weight": 20.0,
+              "is_optimal": false,
+              "rubric_explanation": "Zombies consume PID table slots, not swap memory."
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -258,6 +258,7 @@ public class SecurityConfig {
                     "/api/auth/logout",
                     "/api/auth/github/disconnect",
                     "/api/profile/**",
+                    "/api/onboarding/**",
                     "/api/votes/**",
                     "/api/feedback/**",
                     "/api/users/**",
