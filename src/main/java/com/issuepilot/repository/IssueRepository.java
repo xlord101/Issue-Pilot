@@ -50,7 +50,51 @@ public class IssueRepository {
         }
         Document copy = new Document(doc);
         copy.remove("_id");
+        if (!copy.containsKey("difficulty_score") || copy.get("difficulty_score") == null) {
+            copy.put("difficulty_score", extractDifficultyScore(copy));
+        }
         return copy;
+    }
+
+    public static double extractDifficultyScore(Map<String, Object> doc) {
+        if (doc == null) return 50.0;
+        Object diffScore = doc.get("difficulty_score");
+        if (diffScore instanceof Number n) return n.doubleValue();
+
+        Object diffEv = doc.get("difficulty_evidence");
+        if (diffEv instanceof Map<?, ?> m) {
+            Object tc = m.get("technical_complexity");
+            if (tc instanceof Number n) return n.doubleValue();
+            Object sc = m.get("scope_change_size");
+            if (sc instanceof Number n) return n.doubleValue();
+        }
+
+        Object directDiff = doc.get("difficulty");
+        if (directDiff instanceof Number n) {
+            double val = n.doubleValue();
+            return val <= 1.0 ? val * 100.0 : val;
+        }
+
+        Object labelsObj = doc.get("labels");
+        List<?> labels = labelsObj instanceof List<?> list ? list : Collections.emptyList();
+        String title = String.valueOf(doc.getOrDefault("title", "")).toLowerCase();
+        for (Object l : labels) {
+            String ls = String.valueOf(l).toLowerCase();
+            if (ls.contains("good first") || ls.contains("beginner") || ls.contains("easy") || ls.contains("starter")) {
+                return 35.0;
+            }
+            if (ls.contains("epic") || ls.contains("hard") || ls.contains("complex") || ls.contains("architecture")) {
+                return 85.0;
+            }
+        }
+        if (title.contains("good first") || title.contains("beginner") || title.contains("easy") || title.contains("starter")) {
+            return 35.0;
+        }
+        if (title.contains("epic") || title.contains("architecture") || title.contains("refactor") || title.contains("breaking")) {
+            return 85.0;
+        }
+
+        return 50.0;
     }
 
     public Map<String, Object> getIssueById(String id) {
@@ -290,7 +334,27 @@ public class IssueRepository {
             if (state != null && !state.isBlank() && !state.equalsIgnoreCase("all")) {
                 if (!state.equalsIgnoreCase(String.valueOf(m.get("state")))) continue;
             }
-            filtered.add(m);
+            if (isAssigned != null) {
+                if (!Boolean.valueOf(isAssigned).equals(m.get("is_assigned"))) continue;
+            }
+            if (technology != null && !technology.isBlank()) {
+                Object techObj = m.get("detected_technologies");
+                boolean matched = false;
+                if (techObj instanceof List<?> tl) {
+                    for (Object t : tl) {
+                        if (String.valueOf(t).equalsIgnoreCase(technology.trim())) {
+                            matched = true;
+                            break;
+                        }
+                    }
+                }
+                if (!matched) continue;
+            }
+            double diff = extractDifficultyScore(m);
+            if (minDifficulty != null && diff < minDifficulty) continue;
+            if (maxDifficulty != null && diff > maxDifficulty) continue;
+
+            filtered.add(cleanDoc(new Document(m)));
         }
         int start = Math.min(skip, filtered.size());
         int end = Math.min(start + limit, filtered.size());

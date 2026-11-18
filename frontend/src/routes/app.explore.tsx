@@ -81,6 +81,14 @@ interface RawIssueDoc {
   detected_technologies?: string[];
   technologies?: Array<string | { technology?: string }>;
   difficulty_score?: number;
+  difficulty?: number | string;
+  difficulty_evidence?: {
+    technical_complexity?: number;
+    scope_change_size?: number;
+    historical_effort?: number;
+    dependency_arch_impact?: number;
+    coordination_complexity?: number;
+  };
   state?: string;
   is_assigned?: boolean;
   last_seen_at?: string;
@@ -114,12 +122,12 @@ function ExplorePage() {
       if (search.trim()) queryParams["search"] = search.trim();
       if (difficulty !== "all") {
         if (difficulty === "beginner") {
-          queryParams["max_difficulty"] = 45;
+          queryParams["max_difficulty"] = 44.9;
         } else if (difficulty === "intermediate") {
-          queryParams["min_difficulty"] = 40;
-          queryParams["max_difficulty"] = 70;
+          queryParams["min_difficulty"] = 45;
+          queryParams["max_difficulty"] = 69.9;
         } else if (difficulty === "advanced") {
-          queryParams["min_difficulty"] = 65;
+          queryParams["min_difficulty"] = 70;
         }
       }
 
@@ -163,7 +171,41 @@ function ExplorePage() {
         }
         resolvedUrl = resolvedUrl.replace("/-/work_items/", "/-/issues/");
 
-        const diffScore = item.difficulty_score ?? 50;
+        const rawScore =
+          typeof item.difficulty_score === "number"
+            ? item.difficulty_score
+            : item.difficulty_evidence?.technical_complexity != null
+              ? Number(item.difficulty_evidence.technical_complexity)
+              : typeof item.difficulty === "number"
+                ? (item.difficulty <= 1 ? item.difficulty * 100 : item.difficulty)
+                : undefined;
+
+        let diffScore: number;
+        if (rawScore != null && !isNaN(rawScore)) {
+          diffScore = rawScore;
+        } else {
+          const rawLabels = Array.isArray(item.labels) ? item.labels : [];
+          const textToCheck = `${item.title ?? ""} ${rawLabels.join(" ")}`.toLowerCase();
+          if (
+            textToCheck.includes("good first") ||
+            textToCheck.includes("beginner") ||
+            textToCheck.includes("easy") ||
+            textToCheck.includes("starter")
+          ) {
+            diffScore = 35;
+          } else if (
+            textToCheck.includes("epic") ||
+            textToCheck.includes("hard") ||
+            textToCheck.includes("complex") ||
+            textToCheck.includes("architecture") ||
+            textToCheck.includes("refactor")
+          ) {
+            diffScore = 85;
+          } else {
+            diffScore = 50;
+          }
+        }
+
         const diffCategory: "beginner" | "intermediate" | "advanced" =
           diffScore < 45 ? "beginner" : diffScore < 70 ? "intermediate" : "advanced";
 
@@ -191,7 +233,10 @@ function ExplorePage() {
         };
       });
 
-      return { items, totalInPool };
+      const filteredItems =
+        difficulty === "all" ? items : items.filter((item) => item.difficulty === difficulty);
+
+      return { items: filteredItems, totalInPool };
     },
     staleTime: 30000,
   });
@@ -414,7 +459,7 @@ function ExplorePage() {
                           ? "border-emerald-300 bg-emerald-50 text-emerald-800"
                           : issue.difficulty === "intermediate"
                             ? "border-blue-300 bg-blue-50 text-blue-800"
-                            : "border-slate-300 bg-slate-100 text-slate-800",
+                            : "border-purple-300 bg-purple-50 text-purple-800",
                       )}
                     >
                       {issue.difficulty}
