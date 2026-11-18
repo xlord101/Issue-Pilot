@@ -47,6 +47,15 @@ export interface IssuePilotApi {
       codebase_navigation_comfort: string;
       target_challenge_goal: string;
     }): Promise<unknown>;
+    startDiagnostic(input: {
+      technology: string;
+      experience_anchor?: string;
+      github_sync?: boolean;
+    }): Promise<DiagnosticQuestion>;
+    stepDiagnostic(input: {
+      session_id: string;
+      selected_option_id: string;
+    }): Promise<DiagnosticQuestion | DiagnosticResult>;
   };
   recommendations: {
     list(q: T.RecommendationQuery): Promise<T.Page<T.Recommendation>>;

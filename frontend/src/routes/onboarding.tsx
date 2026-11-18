@@ -10,8 +10,9 @@ import {
   BehavioralCalibrationDeck,
   type CalibrationData,
 } from "@/components/ip/starter-questionnaire";
+import { AdaptiveFlightCheck } from "@/components/ip/adaptive-flight-check";
 import { pageMeta } from "@/lib/format";
-import { Sparkles, ArrowRight, ShieldCheck, GitBranch, RefreshCw } from "lucide-react";
+import { Sparkles, ArrowRight, ShieldCheck, GitBranch, RefreshCw, Zap, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/onboarding")({
@@ -28,6 +29,7 @@ function OnboardingPage() {
   const navigate = useNavigate();
   const sessionQuery = useSession();
   const [calibrated, setCalibrated] = useState<CalibrationData | null>(null);
+  const [mode, setMode] = useState<"flight_check" | "deck">("flight_check");
 
   useEffect(() => {
     if (sessionQuery.isSuccess && !sessionQuery.data) {
@@ -280,11 +282,43 @@ function OnboardingPage() {
               </div>
             )}
 
-            <BehavioralCalibrationDeck
-              initialProfile={profileQuery.data}
-              onComplete={(data) => saveMutation.mutate(data)}
-              pending={saveMutation.isPending}
-            />
+            {/* Calibration Mode Toggle */}
+            <div className="flex items-center gap-1.5 rounded-xl border border-slate-200/90 bg-slate-100/80 p-1 w-fit">
+              <button
+                type="button"
+                onClick={() => setMode("flight_check")}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs rounded-lg transition-all active:scale-[0.98] ${
+                  mode === "flight_check"
+                    ? "bg-white text-blue-700 shadow-2xs font-bold"
+                    : "text-slate-600 hover:text-slate-900 font-medium"
+                }`}
+              >
+                <Zap className="size-3.5 text-amber-500" />
+                30s Adaptive Flight Check (Recommended)
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("deck")}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs rounded-lg transition-all active:scale-[0.98] ${
+                  mode === "deck"
+                    ? "bg-white text-blue-700 shadow-2xs font-bold"
+                    : "text-slate-600 hover:text-slate-900 font-medium"
+                }`}
+              >
+                <SlidersHorizontal className="size-3.5 text-slate-500" />
+                3-Question Behavioral Deck
+              </button>
+            </div>
+
+            {mode === "flight_check" ? (
+              <AdaptiveFlightCheck initialProfile={profileQuery.data} />
+            ) : (
+              <BehavioralCalibrationDeck
+                initialProfile={profileQuery.data}
+                onComplete={(data) => saveMutation.mutate(data)}
+                pending={saveMutation.isPending}
+              />
+            )}
           </div>
         )}
       </main>

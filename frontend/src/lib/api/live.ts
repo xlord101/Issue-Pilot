@@ -444,6 +444,24 @@ export const liveApi: IssuePilotApi = {
       );
       return res;
     },
+
+    async startDiagnostic(input) {
+      return request<T.DiagnosticQuestion>("onboarding.diagnosticStart", e.onboarding.diagnosticStart, {
+        method: "POST",
+        body: input,
+      });
+    },
+
+    async stepDiagnostic(input) {
+      return request<T.DiagnosticQuestion | T.DiagnosticResult>(
+        "onboarding.diagnosticStep",
+        e.onboarding.diagnosticStep,
+        {
+          method: "POST",
+          body: input,
+        },
+      );
+    },
   },
 
   recommendations: {

@@ -226,3 +226,37 @@ export interface FeedbackEntry {
   decision: FeedbackDecision;
   decided_at: string;
 }
+
+export interface DiagnosticQuestionOption {
+  id: string;
+  text: string;
+}
+
+export interface DiagnosticQuestion {
+  session_id: string;
+  question_number: number;
+  total_questions: number;
+  technology: string;
+  tier: string;
+  scenario: string;
+  options: DiagnosticQuestionOption[];
+}
+
+export interface DiagnosticResult {
+  status: string;
+  technology: string;
+  calibrated_capability: number;
+  confidence: number;
+  performance_tier: string;
+  github_reconciliation: {
+    test_score: number;
+    github_repositories_analyzed: number;
+    has_github_signal: boolean;
+    reconciled_capability: number;
+    confidence: number;
+    mode: string;
+    explanation: string;
+  };
+  verified_competencies: string[];
+  explanation: string;
+}

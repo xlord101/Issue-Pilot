@@ -36,6 +36,12 @@ export const endpoints = {
     retry: "/api/profile/analyze" as Endpoint,
     /** POST → OnboardingStatusResponse */
     starterProfile: "/api/profile/onboarding/confirm" as Endpoint,
+    /** POST → Start Adaptive Diagnostic Quiz */
+    diagnosticStart: "/api/onboarding/diagnostic/start" as Endpoint,
+    /** POST → Step Adaptive Diagnostic Quiz */
+    diagnosticStep: "/api/onboarding/diagnostic/step" as Endpoint,
+    /** GET → Supported Diagnostic Domains */
+    diagnosticDomains: "/api/onboarding/diagnostic/domains" as Endpoint,
   },
   recommendations: {
     /** POST /api/recommendations/personalized → 6-factor deterministic ranked recommendations */
