@@ -131,6 +131,25 @@ public class EmailDeliveryService {
         }
 
         String detail = lastError != null ? lastError.getMessage() : "Unknown mail transport error";
+
+        // Graceful handling for Resend testing domain (onboarding@resend.dev) recipient restriction
+        if (detail.contains("You can only send testing emails to your own email address")) {
+            if (properties.isMailSandboxBypass()) {
+                logger.warn("=================================================================");
+                logger.warn("⚠️  [RESEND TESTING SANDBOX LIMITATION TRIGGERED]");
+                logger.warn("Recipient '{}' is blocked by Resend because no custom domain is verified.", maskEmail(safeRecipient));
+                logger.warn("Resend test domain (onboarding@resend.dev) only delivers to the account owner.");
+                logger.warn(">> ACTIVE OTP CODE FOR VERIFICATION: [{}] <<", otpCode);
+                logger.warn("To deliver real emails to all users, set up Gmail SMTP or verify a domain at resend.com/domains.");
+                logger.warn("=================================================================");
+                return;
+            }
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Email delivery restricted: Resend is in testing sandbox mode and can only deliver to the account owner. To test, sign up using the owner's email or configure SMTP."
+            );
+        }
+
         throw new ResponseStatusException(
                 HttpStatus.BAD_GATEWAY,
                 "Failed to deliver verification email (" + detail + "). Check mail provider credentials."

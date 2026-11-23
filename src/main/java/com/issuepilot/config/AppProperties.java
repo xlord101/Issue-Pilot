@@ -228,6 +228,9 @@ public class AppProperties {
     @Value("${MAIL_FROM:}")
     private String mailFrom = "";
 
+    @Value("${MAIL_SANDBOX_BYPASS:true}")
+    private boolean mailSandboxBypass = true;
+
     @Value("${SMTP_HOST:}")
     private String smtpHost = "";
 
@@ -582,6 +585,10 @@ public class AppProperties {
 
     public String getMailFrom() {
         return mailFrom;
+    }
+
+    public boolean isMailSandboxBypass() {
+        return mailSandboxBypass;
     }
 
     public String getSmtpHost() {
