@@ -317,6 +317,11 @@ public class AdaptiveDiagnosticService {
             profile.setOnboardingCompleted(true);
             profile.setUpdatedAt(DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
 
+            if (tech != null && !tech.isBlank()) {
+                String level = capability >= 85 ? "expert" : capability >= 70 ? "advanced" : capability >= 50 ? "intermediate" : "beginner";
+                profile.confirmSkill(tech, capability, confidence, level);
+            }
+
             Map<String, Object> prefs = profile.getPreferences();
             if (prefs == null) {
                 prefs = new LinkedHashMap<>();
