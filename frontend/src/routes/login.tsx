@@ -72,9 +72,16 @@ function AuthPage() {
     try {
       const challenge = await api.auth.resendOtp({ email });
       setResendCooldown(challenge.resend_cooldown_seconds || 60);
-      toast.success("Verification code resent", {
-        description: `Check ${challenge.email} for your 6-digit verification code.`,
-      });
+      if (challenge.sandbox_otp) {
+        setOtp(challenge.sandbox_otp);
+        toast.info("Sandbox verification active", {
+          description: `Code: ${challenge.sandbox_otp} (Auto-filled for sandbox/test mode)`,
+        });
+      } else {
+        toast.success("Verification code resent", {
+          description: `Check ${challenge.email} for your 6-digit verification code.`,
+        });
+      }
     } catch (error) {
       setErr(error);
       toast.error(error instanceof Error ? error.message : "Could not resend verification code.");
@@ -111,11 +118,18 @@ function AuthPage() {
         });
         setEmail(challenge.email || email.trim().toLowerCase());
         setResendCooldown(challenge.resend_cooldown_seconds || 60);
-        setOtp("");
+        if (challenge.sandbox_otp) {
+          setOtp(challenge.sandbox_otp);
+          toast.info("Sandbox verification active", {
+            description: `Verification code: ${challenge.sandbox_otp} (Auto-filled for sandbox/test mode)`,
+          });
+        } else {
+          setOtp("");
+          toast.success("Verification code sent", {
+            description: `Enter the 6-digit code sent to ${challenge.email || email}.`,
+          });
+        }
         setMode("verify-otp");
-        toast.success("Verification code sent", {
-          description: `Enter the 6-digit code sent to ${challenge.email || email}.`,
-        });
       } catch (error) {
         setErr(error);
         toast.error(error instanceof Error ? error.message : "Registration failed.");
@@ -203,12 +217,19 @@ function AuthPage() {
       try {
         const res = await api.auth.forgotPassword({ email });
         setResendCooldown(res.resend_cooldown_seconds || 60);
-        setOtp("");
+        if (res.sandbox_otp) {
+          setOtp(res.sandbox_otp);
+          toast.info("Sandbox verification active", {
+            description: `Reset code: ${res.sandbox_otp} (Auto-filled for sandbox/test mode)`,
+          });
+        } else {
+          setOtp("");
+          toast.success("Reset code sent", {
+            description: res.message,
+          });
+        }
         setNewPassword("");
         setMode("reset-password");
-        toast.success("Reset code sent", {
-          description: res.message,
-        });
       } catch (error) {
         setErr(error);
         toast.error(error instanceof Error ? error.message : "Could not send password reset code.");

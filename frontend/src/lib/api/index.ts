@@ -25,7 +25,13 @@ export interface IssuePilotApi {
     signInWithPassword(payload: { email: string; password: string }): Promise<T.Session>;
     forgotPassword(payload: {
       email: string;
-    }): Promise<{ message: string; expires_in_seconds?: number; resend_cooldown_seconds?: number }>;
+    }): Promise<{
+      message: string;
+      expires_in_seconds?: number;
+      resend_cooldown_seconds?: number;
+      sandbox_mode?: boolean;
+      sandbox_otp?: string;
+    }>;
     resetPassword(payload: {
       email: string;
       otp: string;

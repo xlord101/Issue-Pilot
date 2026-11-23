@@ -152,6 +152,8 @@ export interface OtpChallenge {
   expires_in_seconds: number;
   resend_cooldown_seconds: number;
   message: string;
+  sandbox_mode?: boolean;
+  sandbox_otp?: string;
 }
 
 export type ExtractionState = "queued" | "running" | "ready" | "failed";

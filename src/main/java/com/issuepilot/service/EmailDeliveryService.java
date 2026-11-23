@@ -42,6 +42,7 @@ public class EmailDeliveryService {
     private final ObjectMapper objectMapper;
     private final JavaMailSender injectedMailSender;
     private final HttpClient httpClient;
+    private final ThreadLocal<Boolean> lastDispatchSandboxed = ThreadLocal.withInitial(() -> false);
 
     @Autowired
     public EmailDeliveryService(
@@ -73,7 +74,12 @@ public class EmailDeliveryService {
         return isResendConfigured() || isSmtpConfigured() || injectedMailSender != null;
     }
 
+    public boolean wasLastDispatchSandboxed() {
+        return Boolean.TRUE.equals(lastDispatchSandboxed.get());
+    }
+
     public void sendOtpEmail(String recipientEmail, String otpCode, String purpose, int expiryMinutes) {
+        lastDispatchSandboxed.set(false);
         String safeRecipient = recipientEmail == null ? "" : recipientEmail.trim();
         if (safeRecipient.isBlank()) {
             throw new IllegalArgumentException("Recipient email is required.");
@@ -112,6 +118,7 @@ public class EmailDeliveryService {
             try {
                 sendViaResend(safeRecipient, subject, html, text);
                 logger.info("Verification email dispatched via Resend API to {}", maskEmail(safeRecipient));
+                lastDispatchSandboxed.set(false);
                 return;
             } catch (Exception e) {
                 lastError = e;
@@ -123,6 +130,7 @@ public class EmailDeliveryService {
             try {
                 sendViaSmtp(safeRecipient, subject, html, text);
                 logger.info("Verification email dispatched via SMTP to {}", maskEmail(safeRecipient));
+                lastDispatchSandboxed.set(false);
                 return;
             } catch (Exception e) {
                 lastError = e;
@@ -133,20 +141,34 @@ public class EmailDeliveryService {
         String detail = lastError != null ? lastError.getMessage() : "Unknown mail transport error";
 
         // Graceful handling for Resend testing domain (onboarding@resend.dev) recipient restriction
-        if (detail.contains("You can only send testing emails to your own email address")) {
+        // OR firewall-blocked outbound SMTP (Render and other cloud PaaS block ports 25, 465, 587)
+        boolean isResendSandboxBlocked = detail.contains("You can only send testing emails to your own email address");
+        boolean isSmtpPortBlocked = detail.contains("Connect timed out")
+                || detail.contains("SocketTimeoutException")
+                || detail.contains("MailConnectException")
+                || detail.contains("Connection timed out");
+
+        if (isResendSandboxBlocked || isSmtpPortBlocked) {
             if (properties.isMailSandboxBypass()) {
                 logger.warn("=================================================================");
-                logger.warn("⚠️  [RESEND TESTING SANDBOX LIMITATION TRIGGERED]");
-                logger.warn("Recipient '{}' is blocked by Resend because no custom domain is verified.", maskEmail(safeRecipient));
-                logger.warn("Resend test domain (onboarding@resend.dev) only delivers to the account owner.");
+                if (isSmtpPortBlocked) {
+                    logger.warn("⚠️  [RENDER CLOUD FIREWALL: SMTP PORT BLOCKED]");
+                    logger.warn("Render blocks outbound ports 25, 465, and 587. Resend HTTP API (443) recommended.");
+                } else {
+                    logger.warn("⚠️  [RESEND TESTING SANDBOX LIMITATION TRIGGERED]");
+                    logger.warn("Recipient '{}' is blocked by Resend because no custom domain is verified.", maskEmail(safeRecipient));
+                    logger.warn("Resend test domain (onboarding@resend.dev) only delivers to account owner.");
+                }
                 logger.warn(">> ACTIVE OTP CODE FOR VERIFICATION: [{}] <<", otpCode);
-                logger.warn("To deliver real emails to all users, set up Gmail SMTP or verify a domain at resend.com/domains.");
                 logger.warn("=================================================================");
+                lastDispatchSandboxed.set(true);
                 return;
             }
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Email delivery restricted: Resend is in testing sandbox mode and can only deliver to the account owner. To test, sign up using the owner's email or configure SMTP."
+                    "Email delivery restricted: " + (isSmtpPortBlocked
+                            ? "Cloud host firewall blocked outbound SMTP. Configure Resend HTTP API instead."
+                            : "Resend is in testing sandbox mode and can only deliver to the account owner.")
             );
         }
 

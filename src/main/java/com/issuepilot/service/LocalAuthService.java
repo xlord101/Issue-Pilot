@@ -116,8 +116,9 @@ public class LocalAuthService {
         );
         credentialRepository.upsertCredential(canonicalUserId, cleanEmail, passwordHash, false);
 
+        String otpCode;
         try {
-            issueAndSendOtp(cleanEmail, EmailOtpRepository.PURPOSE_VERIFICATION);
+            otpCode = issueAndSendOtp(cleanEmail, EmailOtpRepository.PURPOSE_VERIFICATION);
         } catch (RuntimeException ex) {
             otpRepository.deleteOtp(cleanEmail, EmailOtpRepository.PURPOSE_VERIFICATION);
             if (isBrandNewCredential) {
@@ -132,7 +133,13 @@ public class LocalAuthService {
         response.put("email", cleanEmail);
         response.put("expires_in_seconds", properties.getOtpExpiryMinutes() * 60);
         response.put("resend_cooldown_seconds", properties.getOtpResendCooldownSeconds());
-        response.put("message", "Verification code sent to " + cleanEmail + ".");
+        if (emailDeliveryService.wasLastDispatchSandboxed()) {
+            response.put("sandbox_mode", true);
+            response.put("sandbox_otp", otpCode);
+            response.put("message", "Sandbox mode active: Verification code is " + otpCode);
+        } else {
+            response.put("message", "Verification code sent to " + cleanEmail + ".");
+        }
         return response;
     }
 
@@ -181,7 +188,7 @@ public class LocalAuthService {
         }
 
         enforceResendCooldown(cleanEmail, EmailOtpRepository.PURPOSE_VERIFICATION);
-        issueAndSendOtp(cleanEmail, EmailOtpRepository.PURPOSE_VERIFICATION);
+        String otpCode = issueAndSendOtp(cleanEmail, EmailOtpRepository.PURPOSE_VERIFICATION);
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("status", "verification_required");
@@ -189,7 +196,13 @@ public class LocalAuthService {
         response.put("email", cleanEmail);
         response.put("expires_in_seconds", properties.getOtpExpiryMinutes() * 60);
         response.put("resend_cooldown_seconds", properties.getOtpResendCooldownSeconds());
-        response.put("message", "A new verification code has been sent to " + cleanEmail + ".");
+        if (emailDeliveryService.wasLastDispatchSandboxed()) {
+            response.put("sandbox_mode", true);
+            response.put("sandbox_otp", otpCode);
+            response.put("message", "Sandbox mode active: A new verification code is " + otpCode);
+        } else {
+            response.put("message", "A new verification code has been sent to " + cleanEmail + ".");
+        }
         return response;
     }
 
@@ -251,16 +264,22 @@ public class LocalAuthService {
         }
 
         Document cred = credentialRepository.findByEmail(cleanEmail);
-        if (cred != null) {
-            enforceResendCooldown(cleanEmail, EmailOtpRepository.PURPOSE_PASSWORD_RESET);
-            issueAndSendOtp(cleanEmail, EmailOtpRepository.PURPOSE_PASSWORD_RESET);
-        }
-
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("status", "success");
         response.put("email", cleanEmail);
         response.put("expires_in_seconds", properties.getOtpExpiryMinutes() * 60);
         response.put("resend_cooldown_seconds", properties.getOtpResendCooldownSeconds());
+        if (cred != null) {
+            enforceResendCooldown(cleanEmail, EmailOtpRepository.PURPOSE_PASSWORD_RESET);
+            String otpCode = issueAndSendOtp(cleanEmail, EmailOtpRepository.PURPOSE_PASSWORD_RESET);
+            if (emailDeliveryService.wasLastDispatchSandboxed()) {
+                response.put("sandbox_mode", true);
+                response.put("sandbox_otp", otpCode);
+                response.put("message", "Sandbox mode active: Your password reset code is " + otpCode);
+                return response;
+            }
+        }
+
         response.put("message", "If an account exists for " + cleanEmail + ", a verification code has been sent.");
         return response;
     }
@@ -289,7 +308,7 @@ public class LocalAuthService {
         return response;
     }
 
-    private void issueAndSendOtp(String cleanEmail, String purpose) {
+    private String issueAndSendOtp(String cleanEmail, String purpose) {
         int codeNum = secureRandom.nextInt(1_000_000);
         String otpCode = String.format(Locale.ROOT, "%06d", codeNum);
         String otpHash = hashOtp(cleanEmail, purpose, otpCode);
@@ -300,6 +319,7 @@ public class LocalAuthService {
 
         otpRepository.saveOtp(cleanEmail, purpose, otpHash, expiresAt, now);
         emailDeliveryService.sendOtpEmail(cleanEmail, otpCode, purpose, expiryMinutes);
+        return otpCode;
     }
 
     private void enforceResendCooldown(String cleanEmail, String purpose) {
