@@ -67,31 +67,108 @@ public final class TechnologyDetectionHelper {
         return list;
     }
 
+    private static final List<String> BEGINNER_KEYWORDS = Arrays.asList(
+            "typo", "broken link", "readme", "docstring", "formatting", "lint", "prettier", "eslint",
+            "warning", "add test", "unit test", "test coverage", "badge", "css", "padding", "alignment",
+            "rename", "spelling", "grammar", "example", "tutorial"
+    );
+
+    private static final List<String> COMPLEX_KEYWORDS = Arrays.asList(
+            "race condition", "deadlock", "mutex", "thread-safe", "concurrency", "memory leak",
+            "use-after-free", "segfault", "distributed", "consensus", "transaction", "migration",
+            "database schema", "breaking change", "backwards compatibility", "ast", "parser",
+            "bytecode", "compiler", "kernel", "allocator", "zero-copy", "profiling", "optimization",
+            "encryption", "cryptography", "vulnerability", "cve", "regression", "state machine",
+            "websocket", "streaming", "replication", "sharding", "async", "dead-lock", "lock-free"
+    );
+
     public static Map<String, Object> estimateDifficulty(String title, String body, List<String> labels, int comments) {
         List<String> labelList = labels != null ? labels : Collections.emptyList();
+        String safeTitle = title != null ? title.toLowerCase(Locale.ROOT) : "";
+        String safeBody = body != null ? body.toLowerCase(Locale.ROOT) : "";
+        String combined = safeTitle + " " + safeBody;
 
-        boolean isGoodFirst = labelList.stream().anyMatch(l -> {
-            String s = l.toLowerCase();
-            return s.contains("good first") || s.contains("beginner") || s.contains("easy") || s.contains("starter") || s.contains("help wanted");
-        });
-
-        boolean isComplex = labelList.stream().anyMatch(l -> {
-            String s = l.toLowerCase();
-            return s.contains("hard") || s.contains("epic") || s.contains("breaking") || s.contains("architecture") || s.contains("refactor") || s.contains("security");
-        });
-
-        double scope = isGoodFirst ? 30.0 : (isComplex ? 80.0 : 50.0);
-        double complexity = isGoodFirst ? 35.0 : (isComplex ? 85.0 : 50.0);
-        double effort = isGoodFirst ? 30.0 : (isComplex ? 75.0 : 50.0);
-        double arch = isGoodFirst ? 25.0 : (isComplex ? 80.0 : 50.0);
-        double coord = isGoodFirst ? 25.0 : (isComplex ? 70.0 : 40.0);
-
-        if (comments > 15) {
-            effort = Math.min(100.0, effort + 20.0);
-            coord = Math.min(100.0, coord + 20.0);
-        } else if (comments > 5) {
-            effort = Math.min(100.0, effort + 10.0);
+        double deltaLabel = 0.0;
+        for (String rawLabel : labelList) {
+            if (rawLabel == null) continue;
+            String s = rawLabel.toLowerCase(Locale.ROOT);
+            if (s.contains("good first") || s.contains("good-first") || s.contains("beginner")
+                    || s.contains("easy") || s.contains("starter") || s.contains("first-timers")
+                    || s.contains("trivial") || s.contains("quick-win") || s.contains("low-hanging")) {
+                deltaLabel -= 18.0;
+            } else if (s.contains("documentation") || s.contains("docs") || s.contains("typo")) {
+                deltaLabel -= 12.0;
+            } else if (s.contains("help wanted")) {
+                deltaLabel -= 4.0;
+            } else if (s.contains("hard") || s.contains("epic") || s.contains("breaking")
+                    || s.contains("architecture") || s.contains("refactor") || s.contains("security")
+                    || s.contains("cve") || s.contains("performance") || s.contains("concurrency")
+                    || s.contains("kernel") || s.contains("compiler") || s.contains("critical")) {
+                deltaLabel += 22.0;
+            } else if (s.contains("enhancement") || s.contains("feature") || s.contains("rfc")) {
+                deltaLabel += 7.0;
+            }
         }
+        deltaLabel = Math.max(-24.0, Math.min(30.0, deltaLabel));
+
+        int beginnerHits = 0;
+        for (String kw : BEGINNER_KEYWORDS) {
+            if (combined.contains(kw)) {
+                beginnerHits++;
+            }
+        }
+
+        int complexHits = 0;
+        for (String kw : COMPLEX_KEYWORDS) {
+            if (combined.contains(kw)) {
+                complexHits++;
+            }
+        }
+
+        double textShift = Math.min(28.0, complexHits * 8.0) - Math.min(18.0, beginnerHits * 6.0);
+
+        int bodyLen = safeBody.length();
+        double depthShift = 0.0;
+        if (bodyLen > 0 && bodyLen < 220) {
+            depthShift -= 6.0;
+        } else if (bodyLen > 2000) {
+            depthShift += 11.0;
+        } else if (bodyLen > 850) {
+            depthShift += 5.0;
+        }
+
+        boolean hasCodeOrTrace = safeBody.contains("```") || safeBody.contains("traceback")
+                || safeBody.contains("exception") || safeBody.contains("stack trace");
+        if (hasCodeOrTrace && complexHits > 0) {
+            depthShift += 5.0;
+        }
+
+        int checklistCount = 0;
+        int idx = 0;
+        while ((idx = safeBody.indexOf("- [ ]", idx)) != -1) {
+            checklistCount++;
+            idx += 5;
+        }
+        double checklistShift = checklistCount >= 3 ? Math.min(14.0, checklistCount * 2.5) : 0.0;
+
+        double commentEffortShift = 0.0;
+        double commentCoordShift = 0.0;
+        if (comments > 20) {
+            commentEffortShift = 16.0;
+            commentCoordShift = 18.0;
+        } else if (comments > 10) {
+            commentEffortShift = 10.0;
+            commentCoordShift = 12.0;
+        } else if (comments > 4) {
+            commentEffortShift = 5.0;
+            commentCoordShift = 6.0;
+        }
+
+        double scope = clampScore(50.0 + deltaLabel + depthShift + checklistShift - Math.min(14.0, beginnerHits * 5.0));
+        double complexity = clampScore(50.0 + deltaLabel + textShift + (hasCodeOrTrace ? 4.0 : 0.0));
+        double effort = clampScore(48.0 + deltaLabel + textShift * 0.6 + checklistShift + commentEffortShift);
+        double arch = clampScore(46.0 + deltaLabel * 0.9 + Math.min(28.0, complexHits * 9.0) - Math.min(14.0, beginnerHits * 5.0));
+        double coord = clampScore(42.0 + deltaLabel * 0.7 + checklistShift * 0.7 + commentCoordShift);
 
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("scope_change_size", scope);
@@ -100,6 +177,10 @@ public final class TechnologyDetectionHelper {
         m.put("dependency_arch_impact", arch);
         m.put("coordination_complexity", coord);
         return m;
+    }
+
+    private static double clampScore(double val) {
+        return Math.round(Math.max(15.0, Math.min(95.0, val)) * 10.0) / 10.0;
     }
 
     public static Map<String, Object> computeFreshness(String createdAt, String updatedAt) {

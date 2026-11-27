@@ -21,6 +21,24 @@ public class RefreshService {
     private final IssueRepository issueRepository;
     private final JobRepository jobRepository;
     private final AdapterRegistry adapterRegistry;
+    private final RepositoryTelemetryService repositoryTelemetryService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public RefreshService(
+            MongoConfig mongoConfig,
+            AppProperties properties,
+            IssueRepository issueRepository,
+            JobRepository jobRepository,
+            AdapterRegistry adapterRegistry,
+            @org.springframework.beans.factory.annotation.Autowired(required = false) RepositoryTelemetryService repositoryTelemetryService
+    ) {
+        this.mongoConfig = mongoConfig;
+        this.properties = properties;
+        this.issueRepository = issueRepository;
+        this.jobRepository = jobRepository;
+        this.adapterRegistry = adapterRegistry;
+        this.repositoryTelemetryService = repositoryTelemetryService;
+    }
 
     public RefreshService(
             MongoConfig mongoConfig,
@@ -29,11 +47,7 @@ public class RefreshService {
             JobRepository jobRepository,
             AdapterRegistry adapterRegistry
     ) {
-        this.mongoConfig = mongoConfig;
-        this.properties = properties;
-        this.issueRepository = issueRepository;
-        this.jobRepository = jobRepository;
-        this.adapterRegistry = adapterRegistry;
+        this(mongoConfig, properties, issueRepository, jobRepository, adapterRegistry, null);
     }
 
     public Map<String, Object> runRefresh(int batchSize, Integer maxAgeDays, boolean force) {
@@ -141,6 +155,9 @@ public class RefreshService {
                         normalized.put("id", issueId);
                         normalized.put("last_seen_at", DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
                         normalized.put("stale_status", "active");
+                        if (repositoryTelemetryService != null) {
+                            repositoryTelemetryService.enrichNormalizedIssue(normalized);
+                        }
                         issueRepository.upsertIssue(normalized, true);
                         totalRefreshed++;
                     }

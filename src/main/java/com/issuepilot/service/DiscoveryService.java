@@ -46,6 +46,26 @@ public class DiscoveryService {
     private final JobRepository jobRepository;
     private final AdapterRegistry adapterRegistry;
     private final UserRepository userRepository;
+    private final RepositoryTelemetryService repositoryTelemetryService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public DiscoveryService(
+            MongoConfig mongoConfig,
+            AppProperties properties,
+            IssueRepository issueRepository,
+            JobRepository jobRepository,
+            AdapterRegistry adapterRegistry,
+            UserRepository userRepository,
+            @org.springframework.beans.factory.annotation.Autowired(required = false) RepositoryTelemetryService repositoryTelemetryService
+    ) {
+        this.mongoConfig = mongoConfig;
+        this.properties = properties;
+        this.issueRepository = issueRepository;
+        this.jobRepository = jobRepository;
+        this.adapterRegistry = adapterRegistry;
+        this.userRepository = userRepository;
+        this.repositoryTelemetryService = repositoryTelemetryService;
+    }
 
     public DiscoveryService(
             MongoConfig mongoConfig,
@@ -55,12 +75,7 @@ public class DiscoveryService {
             AdapterRegistry adapterRegistry,
             UserRepository userRepository
     ) {
-        this.mongoConfig = mongoConfig;
-        this.properties = properties;
-        this.issueRepository = issueRepository;
-        this.jobRepository = jobRepository;
-        this.adapterRegistry = adapterRegistry;
-        this.userRepository = userRepository;
+        this(mongoConfig, properties, issueRepository, jobRepository, adapterRegistry, userRepository, null);
     }
 
     public Map<String, Object> runDiscovery(
@@ -348,6 +363,11 @@ public class DiscoveryService {
                                     totalSkipped++;
                                     continue;
                                 }
+                            }
+
+                            // Enrich with cached live repository responsiveness & health telemetry
+                            if (repositoryTelemetryService != null) {
+                                repositoryTelemetryService.enrichNormalizedIssue(normalized);
                             }
 
                             // Idempotent upsert
