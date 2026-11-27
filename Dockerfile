@@ -28,12 +28,26 @@ RUN cmake -B build -DCMAKE_BUILD_TYPE=Release \
 FROM maven:3.9.9-eclipse-temurin-21 AS jar-builder
 
 WORKDIR /build
+
+# Use Google's Maven Central mirror to avoid Render shared-IP HTTP 429 rate limits
+RUN mkdir -p /root/.m2 && printf '%s\n' \
+    '<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">' \
+    '  <mirrors>' \
+    '    <mirror>' \
+    '      <id>google-maven-central</id>' \
+    '      <mirrorOf>central</mirrorOf>' \
+    '      <name>GCS Maven Central Mirror</name>' \
+    '      <url>https://maven-central.storage-download.googleapis.com/maven2</url>' \
+    '    </mirror>' \
+    '  </mirrors>' \
+    '</settings>' > /root/.m2/settings.xml
+
 COPY pom.xml ./
-# Pre-download dependencies for Docker layer caching
-RUN mvn dependency:go-offline -B
+# Pre-download both project dependencies and plugin descriptors for Docker layer caching
+RUN mvn dependency:go-offline dependency:resolve-plugins -Dmaven.artifact.threads=3 -B
 
 COPY src ./src
-RUN mvn clean package -DskipTests -B
+RUN mvn package -DskipTests -B
 
 # --- Stage 3: Minimal Production Runtime ---
 FROM eclipse-temurin:21-jre-noble AS runtime
