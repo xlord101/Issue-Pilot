@@ -1,256 +1,248 @@
 # Issue Pilot
 
-> **Deterministic, explainable open-source issue matching across GitHub, GitLab, Codeberg, and Bugzilla — powered by a Java 21 / Spring Boot orchestration layer, a native C++20 ranking core, adaptive capability diagnostics, and live zero-assignment verification.**
+> **A multi-platform open-source issue recommendation platform powered by Java 21 (Spring Boot), a native C++20 ranking engine, adaptive skill diagnostics, and live zero-assignment verification.**
 
-[![Backend Tests](https://img.shields.io/badge/Backend%20Tests-225%20passing-brightgreen.svg)](https://github.com/xlord101/Issue-Pilot)
+[![Live App](https://img.shields.io/badge/Live%20Frontend-issuepilot0.vercel.app-000000?style=flat&logo=vercel)](https://issuepilot0.vercel.app)
+[![Backend API](https://img.shields.io/badge/Live%20API-Render%20Docker-46E3B7?style=flat&logo=render)](https://issue-pilot-api.onrender.com/api/health)
+[![Backend Tests](https://img.shields.io/badge/Backend%20Tests-225%20Passing-brightgreen.svg)](src/test/java/com/issuepilot/)
 [![Java Version](https://img.shields.io/badge/Java-21%20LTS-orange.svg)](https://adoptium.net/)
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.3-green.svg)](https://spring.io/projects/spring-boot)
 [![Ranking Core](https://img.shields.io/badge/Ranking%20Core-C%2B%2B20%20Native-blue.svg)](ranking_engine/)
-[![Live Issues Pool](https://img.shields.io/badge/Live%20Candidates-3480%2B%20Verified-blueviolet.svg)](https://issuepilot0.vercel.app/app/explore)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-
-Issue Pilot solves the open-source contributor onboarding problem. Labels like `good first issue` are frequently stale, already claimed by an open PR, or wildly mismatched to a developer's actual skill level. Issue Pilot replaces guesswork with a **6-factor deterministic C++ ranking engine**, **live pre-delivery assignment checks**, a **30-second adaptive diagnostic quiz** (eliminating "Quiet GitHub" bias), and **real-time preference learning** from Like/Dislike votes.
 
 ---
 
-## Working Features Overview
+## Live Deployment
 
-| Surface / Subsystem | What Actually Runs & Works | Live Location / Implementation |
-| :--- | :--- | :--- |
-| **Authentication & OTP** | GitHub OAuth sign-in + local Email/Password registration (BCrypt), 6-digit OTP verification, and password reset with automatic sandbox OTP auto-fill when mail delivery is restricted. | `/login`, `/auth/callback` (`AuthController`, `LocalAuthService`) |
-| **Dual-Mode Onboarding** | **1) 30s Adaptive Flight Check (CAT)**: 2-question scenario diagnostic across 8 domains with optional Gemini 1.5 Flash synthesis + GitHub cross-verification.<br>**2) 3-Step Calibration Deck & GitHub Scan**: Automatic public repo tech extraction + manual proficiency selection. | `/onboarding` (`AdaptiveDiagnosticController`, `ProfileController`) |
-| **Personalized Issue Feed** | Pulls stack-matched issues from MongoDB Atlas (up to 100 candidates), ranks them in native C++, verifies open/unassigned status live before rendering, and applies impression rotation & repo diversity. | `/app/feed`, `/app/recommendations/$id` (`RecommendationController`) |
-| **Preference Learning (👍/👎)** | 1-click Like/Dislike with structured dislike reasons (`Not my tech stack`, `Too complex`, `Too simple`, `Unclear description`, `Don't show this repo`). Feeds an independent C++ Laplace-smoothed affinity model. | `/api/votes`, `/api/votes/affinity` (`VoteAffinityService`, `--affinity`) |
-| **Multi-Platform Issue Explorer** | Search & filter 3,480+ vetted issues across GitHub, GitLab, Codeberg, and Bugzilla by keyword, stack, platform, and non-overlapping difficulty tiers (`Beginner < 45`, `Intermediate 45–69.9`, `Advanced ≥ 70`). | `/app/explore` (`IssueController`) |
-| **Contributor Tech Profile** | Displays calibrated capability dial ($0-100$), confidence score, confirmed skills, and GitHub-inferred skills with one-click recalibration. | `/app/profile` (`ProfileController`) |
-| **Automated Ingestion Scheduler** | Background worker discovering new issues, refreshing active candidates, and pruning closed/assigned issues across all 4 platforms. | `SchedulerService`, `DiscoveryService`, `RefreshService` |
-| **Backend + C++ Verification** | **225 / 225** Java unit & integration tests passing (`mvn test`) + C++ CTest unit suites (`test_ranking`, `test_affinity`) + multi-stage Docker build. | `Dockerfile`, `pom.xml`, `ranking_engine/CMakeLists.txt` |
+Issue Pilot is live in production and does not require local setup to use or evaluate:
+
+* **Web Application (Vercel):** https://issuepilot0.vercel.app
+* **Backend API Health Check (Render):** https://issue-pilot-api.onrender.com/api/health
+* **Database:** MongoDB Atlas (`issue-pilot-staging`) storing **3,480+ ingested open-source issues** across 4 platforms.
 
 ---
 
 ## Table of Contents
 
-1. [System Architecture & Java ↔ C++ Communication](#1-system-architecture--java--c-communication)
-2. [Candidate Pool & Live Zero-Assignment Verification](#2-candidate-pool--live-zero-assignment-verification)
-3. [The 6-Factor Authoritative Ranking Model](#3-the-6-factor-authoritative-ranking-model)
-4. [Dynamic Preference Learning Engine](#4-dynamic-preference-learning-engine)
-5. [30-Second Adaptive Flight Check (CAT Diagnostic)](#5-30-second-adaptive-flight-check-cat-diagnostic)
-6. [Multi-Platform Issue Explorer & Difficulty Calibration](#6-multi-platform-issue-explorer--difficulty-calibration)
-7. [Resilient Email & Sandbox Auto-Fill Architecture](#7-resilient-email--sandbox-auto-fill-architecture)
-8. [MongoDB Atlas Collections & Schemas](#8-mongodb-atlas-collections--schemas)
-9. [REST API Reference](#9-rest-api-reference)
-10. [Configuration, Build, Test & Docker Deployment](#10-configuration-build-test--docker-deployment)
+1. [Problem Statement & Objectives](#1-problem-statement--objectives)
+2. [Deployed System Architecture](#2-deployed-system-architecture)
+3. [How Java and C++ Communicate (IPC)](#3-how-java-and-c-communicate-ipc)
+4. [Working Features & Core Modules](#4-working-features--core-modules)
+5. [The 6-Factor Ranking Formula](#5-the-6-factor-ranking-formula)
+6. [Preference Learning Engine (Likes & Dislikes)](#6-preference-learning-engine-likes--dislikes)
+7. [Database Design (MongoDB Atlas)](#7-database-design-mongodb-atlas)
+8. [Verification & Test Results](#8-verification--test-results)
+9. [REST API Endpoints](#9-rest-api-endpoints)
+10. [Optional: Local Build & Reproducibility](#10-optional-local-build--reproducibility)
 
 ---
 
-## 1. System Architecture & Java ↔ C++ Communication
+## 1. Problem Statement & Objectives
 
-Issue Pilot is built across three decoupled layers:
-1. **Frontend (TanStack Start + React 19 + Vite v8)**: Deployed on Vercel; handles auth flows, dual-mode onboarding, recommendation cards, explorer search, and tactile voting.
-2. **Backend (Java 21 + Spring Boot 3.4.3)**: Deployed via Docker on Render; manages MongoDB Atlas persistence, multi-platform HTTP adapters, rate-limited live verification, JWT auth, and subprocess IPC.
-3. **Native Scoring Core (C++20)**: Compiled binary (`issue_pilot_ranking_engine` / `.exe`) invoked by Java via **OS Process Pipes (`stdin` / `stdout` / `stderr`)** using `ProcessBuilder`.
+Finding a good open-source issue to work on is harder than it looks:
+1. **Stale & Claimed Issues ("Ghost Issues"):** Static issue trackers often recommend tickets that were already assigned yesterday or already have an open Pull Request (`Fixes #123`), wasting hours of setup time.
+2. **Subjective Difficulty Labels:** Tags like `good first issue` are manually added by maintainers and mean very different things across repositories.
+3. **"Quiet GitHub" Bias:** Skilled developers who work primarily in private/company repositories (or students with few public repos) appear to have 0 experience when judged purely by public GitHub commit counts.
+4. **Abandoned Repositories:** Many labeled issues belong to unmaintained repositories where PRs never get reviewed.
 
-### How Java and C++ Communicate
+**Issue Pilot solves this by:**
+* Verifying issue availability **live** against upstream APIs right before displaying recommendations.
+* Separating **Developer Capability ($0–100$)** from **Objective Issue Difficulty ($0–100$)** using a deterministic C++ scoring model.
+* Offering a **30-second Adaptive Flight Check** to measure skill directly instead of relying only on public GitHub stats.
+* Continuously learning from user **Likes (👍)** and **Dislikes (👎)** in C++.
 
-Rather than using JNI (which couples native memory crashes to the JVM), `CppRankingClient.java` spawns isolated native subprocesses:
+---
 
-1. **Java $\to$ C++ (`stdin`)**: Jackson serializes `{ profile, weights, candidates }` into UTF-8 JSON and writes it to `process.getOutputStream()` with CLI flags (`--stdin-json` or `--affinity`).
-2. **C++ Execution**: `main.cpp` reads from `std::cin`, parses JSON into typed C++ structs via `SimpleJsonParser`, computes deterministic scores/affinities in native memory, and serializes output JSON.
-3. **C++ $\to$ Java (`stdout`)**: `main.cpp` writes results to `std::cout` and exits `0`. Java captures `process.getInputStream()`, enforces a strict 15-second watchdog timeout, and deserializes results back into Java maps.
+## 2. Deployed System Architecture
+
+Issue Pilot runs as a decoupled three-tier cloud system:
+
+| Layer | Technology Stack | Cloud Host | Responsibility |
+| :--- | :--- | :--- | :--- |
+| **Frontend UI** | React 19, TypeScript, TanStack Start, Vite v8, Tailwind CSS | **Vercel** | User authentication, onboarding calibration, recommendation feed, multi-platform explorer, tech profile. |
+| **Orchestration Backend** | Java 21, Spring Boot 3.4.3, Maven | **Render** (Docker) | Multi-platform ingestion workers, live availability verification, JWT/OTP auth, REST API, C++ process management. |
+| **Scoring & Affinity Engine** | C++20 (`g++`, CMake) | **Render** (bundled inside Docker container) | Deterministic 6-factor scoring (`--stdin-json`) and Laplace-smoothed vote affinity calculation (`--affinity`). |
+| **Database** | MongoDB Atlas | **MongoDB Cloud** | Shared pool of 3,480+ issues, user profiles, encrypted OAuth tokens, OTPs, vote snapshots, recommendation logs. |
 
 ```mermaid
-flowchart LR
-    subgraph Java ["Spring Boot Backend (Java 21)"]
-        RC["RecommendationController / VoteAffinityService"] --> CRC["CppRankingClient (ProcessBuilder)"]
-    end
-    subgraph Pipes ["OS Standard I/O Pipes"]
-        IN["stdin (UTF-8 JSON)"]
-        OUT["stdout (Ranked JSON)"]
-    end
-    subgraph CPP ["C++20 Native Binary"]
-        MAIN["main.cpp (--stdin-json / --affinity)"] --> CORE["RankingEngine / VoteAffinityEngine"]
+flowchart TD
+    User["Developer Browser (React 19 / Vercel)"] <-->|HTTPS REST + JWT| API["Spring Boot 3.4.3 Backend (Render Docker)"]
+    
+    subgraph Platforms["External Code Hosting Platforms"]
+        GH["GitHub REST & GraphQL"]
+        GL["GitLab API v4"]
+        CB["Codeberg / Gitea API"]
+        BZ["Bugzilla REST API"]
     end
 
-    CRC -->|Write payload| IN -->|std::cin| MAIN
-    CORE -->|std::cout| OUT -->|Read & deserialize| CRC
+    API <-->|"1. Scheduled Ingestion & 2. Live Pre-Delivery Checks"| Platforms
+    API <-->|"MongoDB Driver (9 Collections)"| DB[("MongoDB Atlas")]
+    API <-->|"OS Pipe IPC (stdin / stdout JSON)"| CPP["Native C++20 Engine<br/>(--stdin-json & --affinity)"]
 ```
 
 ---
 
-## 2. Candidate Pool & Live Zero-Assignment Verification
+## 3. How Java and C++ Communicate (IPC)
 
-Issue Pilot avoids the two most common failure modes of static issue lists: **ghost issues** (already assigned or linked to an open PR) and **abandoned repositories**.
+Instead of JNI (Java Native Interface), Java invokes the compiled C++ binary as an isolated child process using **`java.lang.ProcessBuilder`** and **OS standard I/O pipes** ([`CppRankingClient.java`](src/main/java/com/issuepilot/service/CppRankingClient.java) $\leftrightarrow$ [`main.cpp`](ranking_engine/src/main.cpp)):
 
-### Why 3,480+ Issues $\to$ 100 Matched $\to$ Verification Budget of 30?
-* **Shared Candidate Pool (`3,480+` issues)**: Continuously populated in MongoDB Atlas across GitHub, GitLab, Codeberg, and Bugzilla.
-* **Stack Retrieval (`100` candidates)**: On each feed request, `TechnologyMatchingService` selects up to **100** open issues matching the user's confirmed and inferred technologies. All 100 are scored and sorted by the C++ engine.
-* **Live Verification Budget (`VERIFICATION_CANDIDATE_LIMIT = 30`)**: Before delivering issues to the UI, `LiveVerifier` polls the live upstream platform APIs (GitHub/GitLab/Codeberg/Bugzilla) to ensure each top-ranked issue is still strictly open, has zero assignees, and has no linked open PRs (`fixes #N`, `closes #N`). Capping live upstream checks at up to **30** candidates per run guarantees fast feed response times without exhausting API rate limits.
-* **Auto-Eviction**: Any candidate discovered to be closed or claimed during live verification is immediately deleted from MongoDB Atlas so no other contributor is served a stale ticket.
+1. **Java $\to$ C++ (`stdin`):** Jackson serializes the user profile, factor weights, and matched issues into UTF-8 JSON and writes the bytes to `process.getOutputStream()`.
+2. **C++ Processing:** `main.cpp` reads the JSON stream from `std::cin`, parses it into native C++ structs (`ContributorProfile`, `IssueRecord`, `RankingWeights`), executes the ranking or affinity math, and serializes results back to JSON.
+3. **C++ $\to$ Java (`stdout`):** C++ prints the JSON output to `std::cout` and exits with code `0`. Java reads `process.getInputStream()` and parses it back into Java maps.
+
+**Why Subprocess IPC over JNI?**
+* **Crash Isolation:** A native memory error in C++ only terminates that single subprocess—it can never crash the Spring Boot server.
+* **Timeout Guard:** Java enforces a strict 15-second timeout (`process.waitFor(15, SECONDS)`) and cleans up automatically.
+* **Zero Memory Leaks:** Native allocations are reclaimed by the OS as soon as the subprocess exits.
 
 ---
 
-## 3. The 6-Factor Authoritative Ranking Model
+## 4. Working Features & Core Modules
 
-Every candidate score is normalized to $[0, 100]$ deterministically in `ranking_engine/src/ranking_engine.cpp`:
+### A. Authentication & Resilient Email Verification (`/login`, `/auth/callback`)
+* **GitHub OAuth 2.0:** One-click login that connects the contributor's GitHub identity and triggers automated repository skill analysis.
+* **Local Email & Password Auth:** BCrypt password hashing (`local_credentials`), 6-digit HMAC-hashed OTP email verification (`email_otps`), rate-limited login protection, and OTP-backed password reset.
+* **Resend API + Sandbox Auto-Fill:** Sends real OTP emails over HTTPS (Port 443) via Resend. When testing without a verified custom domain (`MAIL_SANDBOX_BYPASS=true`), the backend surfaces `sandbox_otp` securely so the login UI auto-fills the 6-digit code and notifies the user via toast—preventing `502 Bad Gateway` errors on cloud hosts like Render (which block outbound SMTP ports 25/465/587).
+
+### B. Dual-Mode Smart Onboarding (`/onboarding`)
+Users can calibrate their profile using either or both paths:
+1. **30-Second Adaptive Flight Check (CAT Diagnostic):**
+   * A 2-question scenario-based quiz across 8 domains (`Python`, `TypeScript`, `React`, `Go`, `Java`, `C++`, `Docker`, `OSS_Workflow`).
+   * Starts at an **Intermediate ($65$)** scenario; answering optimally steps up to **Advanced ($85$)**, while missing it steps down to **Beginner ($35$)**.
+   * Solves "Quiet GitHub" bias by giving developers with 0 public repos a verified capability rating ($0.90$ confidence) immediately, or blending $60\%$ diagnostic score + $40\%$ GitHub score when public repos exist.
+   * Supports dynamic scenario generation via **Google Gemini 1.5 Flash** (`GEMINI_API_KEY`) with instant zero-latency fallback to the built-in rubric corpus.
+2. **GitHub Stack Scanner & 3-Step Calibration Deck:**
+   * Scans public GitHub repositories, languages, and commit/PR metrics (`GitHubProfileAnalyzerService`) to infer initial skill scores.
+   * Allows manual adjustment of experience level, codebase comfort, challenge goal, and confirmed tech stack.
+
+### C. Personalized Recommendations Feed (`/app/feed` & `/app/recommendations/$id`)
+1. **Stack-Matched Batching:** `TechnologyMatchingService` queries MongoDB Atlas for **up to 100** open, unassigned issues matching the user's confirmed/inferred technologies (balanced across GitHub 50%, Bugzilla 20%, GitLab 15%, Codeberg 15%).
+2. **Authoritative C++ Scoring:** All matched candidates are scored and sorted deterministically by the C++20 engine.
+3. **Live Pre-Delivery Verification (`LiveVerifier.java`):** Before showing recommendations, the backend polls live platform APIs on the top-ranked issues to confirm they are still open, unassigned, and have no open linked Pull Requests. If a top issue was recently claimed, it is deleted from Atlas and automatically replaced by the next highest-ranked issue (capped at a max check ceiling of `30` issues per request to protect API rate limits).
+4. **Diversity & Rotation:** Ensures different repositories appear near the top and rotates unseen issues ahead of previously viewed ones.
+
+### D. Multi-Platform Issue Explorer (`/app/explore`)
+* Browse, search, and filter all **3,480+ vetted issues** across **GitHub, GitLab, Codeberg, and Bugzilla**.
+* Aligned difficulty filtering synced between MongoDB queries and UI badges:
+  * **Beginner:** Technical Complexity $< 45$
+  * **Intermediate:** Technical Complexity $45 \le x < 70$
+  * **Advanced:** Technical Complexity $\ge 70$
+
+### E. Contributor Tech Profile (`/app/profile`)
+* Displays calibrated capability score ($0–100$), confidence percentage, confirmed skills, GitHub-inferred skills, and direct links to recalibrate.
+
+---
+
+## 5. The 6-Factor Ranking Formula
+
+Computed natively in `ranking_engine/src/ranking_engine.cpp` on a normalized $0–100$ scale:
 
 $$\text{FinalScore} = 0.35S + 0.25D + 0.15R + 0.10H + 0.10F + 0.05N$$
 
-| Factor | Name | Default Weight | What It Measures |
-| :---: | :--- | :---: | :--- |
-| **$S$** | **Skill Match** | **35%** | Overlap between contributor proficiencies and the issue's multi-tech stack (requires $\ge 50\%$ stack coverage gate $A_{\text{cov}}$). |
-| **$D$** | **Difficulty Match** | **25%** | Asymmetric proximity between Contributor Capability ($C$) and Objective Difficulty ($D_{\text{obj}}$). Over-difficult issues suffer a **$1.5\times$ burnout penalty** vs. $1.0\times$ for easier ones. |
-| **$R$** | **Maintainer Responsiveness** | **15%** | Median first response time, 90-day issue response rate, PR review turnaround, and recent maintainer activity. |
-| **$H$** | **Repository Health** | **10%** | 90-day commit velocity, 30-day PR merge rate, active contributor breadth, and maintainer presence. |
-| **$F$** | **Feedback / History** | **10%** | Historical acceptance rate, completion rate, and similarity to previously completed tasks. |
-| **$N$** | **Freshness** | **5%** | Exponential decay from issue creation date (60-day half-life) and last non-bot activity (14-day half-life). |
+| Factor | Weight | Description |
+| :--- | :---: | :--- |
+| **$S$ — Skill Match** | **35%** | Weighted overlap between contributor skills and the issue's detected stack (enforces a $\ge 50\%$ stack coverage gate). |
+| **$D$ — Difficulty Match** | **25%** | Asymmetric distance between Contributor Capability ($C$) and Issue Complexity ($D_{\text{obj}}$). Over-hard issues incur a **$1.5\times$ burnout penalty** vs. $1.0\times$ for easier ones. |
+| **$R$ — Maintainer Responsiveness** | **15%** | Median first response hours, 90-day issue response rate, PR review turnaround, and recent maintainer activity. |
+| **$H$ — Repository Health** | **10%** | 90-day commit velocity, 30-day PR merge rate, active contributor count, and maintainer presence. |
+| **$F$ — Feedback / History** | **10%** | Contributor acceptance rate, completion rate, and similarity to previously completed issues. |
+| **$N$ — Freshness** | **5%** | Time-decay score from issue creation (60-day half-life) and last non-bot activity (14-day half-life). |
 
-### Missing-Data Renormalization
-Missing telemetry (e.g., a new user with no feedback history, or rate-limited responsiveness metrics) is **never penalized as 0**. Unavailable components are omitted and remaining weights are scaled proportionally so effective weights always sum to `1.0`.
-
----
-
-## 4. Dynamic Preference Learning Engine
-
-Contributors can vote directly on any recommended issue:
-* **Like (👍)**: Reinforces similar stacks, tags, issue types, and difficulty ranges.
-* **Dislike (👎) + Reason Modal**: Captures explicit intent:
-  - `Not my tech stack`
-  - `Too complex` (nudges capability down)
-  - `Too simple` (nudges capability up)
-  - `Unclear description`
-  - `Don't show this repo` (blacklists repository from future runs)
-
-Votes persist immutable `feature_snapshot` documents in MongoDB (`issue_votes`). On subsequent recommendation runs, `VoteAffinityService` invokes the C++ `--affinity` engine (`ranking_engine/src/vote_affinity.cpp`), which computes 6-group similarity (technologies 30%, labels 30%, issue type 15%, difficulty 10%, domain 10%, repository 5%), damps correlated repeat votes ($\text{sim} \ge 0.85$), and applies **Laplace smoothing ($\lambda = 1.0$)** to shift scores within $[-100, +100]$ with natural-language explanations.
+**Missing-Data Renormalization:** When a metric is unavailable (for example, a brand-new user with no feedback history), it is never penalized as `0`; its weight is redistributed proportionally across the available factors so effective weights always sum to `1.0`.
 
 ---
 
-## 5. 30-Second Adaptive Flight Check (CAT Diagnostic)
+## 6. Preference Learning Engine (Likes & Dislikes)
 
-To eliminate **"Quiet GitHub" bias** (skilled developers whose work lives in private or enterprise repos), `/onboarding` offers a 2-step **Computerized Adaptive Testing (CAT)** flow alongside GitHub analysis and the 3-step Behavioral Calibration Deck:
+On any issue card, contributors can cast **Like (👍)** or **Dislike (👎)** votes with specific dislike reasons:
+* `Not my tech stack`
+* `Too complex` *(nudges capability down)*
+* `Too simple` *(nudges capability up)*
+* `Unclear description`
+* `Don't show this repo` *(blacklists repository for the user)*
 
-* **8 Supported Domains**: `Python`, `TypeScript`, `React`, `Go`, `Java`, `C++`, `Docker`, `OSS_Workflow`.
-* **Adaptive Branching**: Starts at an **Intermediate ($65.0$)** scenario; selecting the optimal architecture/debugging answer steps up to **Advanced ($85.0$)**, while a suboptimal answer steps down to **Beginner ($35.0$)**.
-* **Dual-Signal Reconciliation**:
-  - **0 Public Repos**: Diagnostic capability is adopted directly, lifting confidence from $0.15$ to **$0.90$**.
-  - **Active Public Repos**: Blends diagnostic performance with GitHub history ($0.60 \cdot S_{\text{diag}} + 0.40 \cdot S_{\text{github}}$).
-* **Dynamic Gemini 1.5 Flash + Rubric Fallback**: When `GEMINI_API_KEY` is configured, scenarios are dynamically synthesized; if unavailable or rate-limited, `QuizCorpusService` rotates seamlessly through the built-in rubric corpus with zero latency penalty.
-* **Automatic Skill Registration**: Completing the flight check automatically confirms the tested technology into the user's profile (`skills`) and marks onboarding complete so `/app/profile` and `/app/feed` work immediately.
-
----
-
-## 6. Multi-Platform Issue Explorer & Difficulty Calibration
-
-The Explorer (`/app/explore`) queries `/api/issues` across **GitHub**, **GitLab**, **Codeberg**, and **Bugzilla** with non-overlapping difficulty boundaries synchronized between backend MongoDB queries and frontend badges:
-
-* **Beginner**: Technical Complexity $< 45$ (`max_difficulty=44.9`)
-* **Intermediate**: Technical Complexity $45 \le x < 70$ (`min_difficulty=45`, `max_difficulty=69.9`)
-* **Advanced**: Technical Complexity $\ge 70$ (`min_difficulty=70`)
+Votes store an immutable `feature_snapshot` in `issue_votes`. On future recommendation runs, `VoteAffinityService` runs the C++ `--affinity` engine (`ranking_engine/src/vote_affinity.cpp`), comparing new candidates across 6 weighted dimensions (technologies 30%, labels 30%, issue type 15%, difficulty proximity 10%, domain 10%, repo 5%), damping repeated near-identical votes ($\text{sim} \ge 0.85$), and computing a Laplace-smoothed ($\lambda = 1.0$) affinity score in $[-100, +100]$ with plain-English explanations.
 
 ---
 
-## 7. Resilient Email & Sandbox Auto-Fill Architecture
+## 7. Database Design (MongoDB Atlas)
 
-Local email/password registration (`POST /api/auth/register`) and password resets (`POST /api/auth/forgot-password`) use 6-digit HMAC-hashed OTPs with two delivery paths:
+The backend manages **9 MongoDB collections** with startup index verification (and in-memory fallbacks if Atlas is unreachable):
 
-1. **Primary Cloud Transport — Resend HTTP API (Port 443)**: Works reliably on cloud PaaS hosts like Render (which block outbound SMTP ports `25`, `465`, and `587`).
-2. **Local SMTP Fallback (`SMTP_HOST`)**: Standard STARTTLS (`587`) support when running locally outside cloud SMTP firewalls.
-3. **Automatic Sandbox Auto-Fill (`MAIL_SANDBOX_BYPASS=true`)**:
-   - Without a verified custom domain, Resend's test domain (`onboarding@resend.dev`) only delivers to the account owner's email.
-   - When an unverified recipient triggers Resend's 403 restriction (or an outbound SMTP timeout occurs), the backend gracefully avoids throwing `502 Bad Gateway`, logs the OTP, and returns `sandbox_otp` in the challenge payload.
-   - `frontend/src/routes/login.tsx` detects `sandbox_otp`, notifies the user via toast, and **auto-fills the 6-digit verification input** so any user or evaluator can register and test end-to-end without domain setup.
-
----
-
-## 8. MongoDB Atlas Collections & Schemas
-
-Spring Boot verifies and maintains **9 MongoDB collections** (with automatic in-memory fallback when MongoDB Atlas is offline):
-
-| Collection | Purpose | Key Indexes |
-| :--- | :--- | :--- |
-| **`issues`** | Shared multi-platform candidate pool | `(source, repository_full_name, issue_number)` unique; `(state, is_assigned)`; `difficulty_evidence.technical_complexity`; `detected_technologies`; `updated_at` |
-| **`users`** | Contributor profiles, capability ($C$), skills | `(user_id)` unique |
-| **`issue_votes`** | Like/Dislike votes + immutable `feature_snapshot` | `(user_id, source, platform_issue_id)` unique; `(user_id)`; `(created_at)` |
-| **`recommendations`** | Audit snapshots of ranking & verification runs | `(user_id, generated_at)` |
-| **`feedback`** | Post-recommendation accept / reject / complete logs | `(user_id, event_timestamp)` |
-| **`jobs`** | Ingestion discovery & refresh job history | `(job_id)` unique |
-| **`local_credentials`** | Isolated BCrypt password hashes & verification flags | `(email)` unique |
-| **`email_otps`** | Hashed 6-digit OTPs with TTL auto-expiration | `(email, purpose)`, TTL on `expires_at` |
-| **`user_tokens`** | Encrypted GitHub OAuth tokens & exchange state | `(user_id)` unique |
+1. **`issues`**: Shared multi-platform issue pool (`source`, `repository_full_name`, `issue_number`, `detected_technologies`, `difficulty_evidence`, `responsiveness_evidence`, `health_evidence`, `freshness_evidence`).
+2. **`users`**: Contributor profiles, capability ($C$), confidence, confirmed/inferred skills, onboarding flags.
+3. **`issue_votes`**: User 👍/👎 votes, dislike reasons, and `feature_snapshot` records.
+4. **`recommendations`**: Audit snapshots of ranked runs and delivered cards.
+5. **`feedback`**: Historical accept / reject / complete outcome logs.
+6. **`jobs`**: Ingestion discovery and refresh job execution history.
+7. **`local_credentials`**: Isolated BCrypt password hashes and email verification status.
+8. **`email_otps`**: HMAC-hashed 6-digit OTPs with automatic TTL expiration on `expires_at`.
+9. **`user_tokens`**: Encrypted GitHub OAuth access tokens and short-lived auth exchange codes.
 
 ---
 
-## 9. REST API Reference
+## 8. Verification & Test Results
 
-| Group | Endpoints |
+* **Spring Boot Automated Suite (`mvn test`):** **225 / 225 tests passing** (unit & integration tests covering ranking, vote affinity, adaptive diagnostics, local OTP auth, multi-platform adapters, and MongoDB compatibility).
+* **C++20 Engine Tests (`ctest`):** Passing unit suites (`test_ranking` and `test_affinity`) compiled and verified automatically inside the production Docker build.
+* **Frontend Production Build (`npm run build`):** Zero TypeScript/Vite build errors (deployed on Vercel).
+
+---
+
+## 9. REST API Endpoints
+
+| Domain | Endpoints |
 | :--- | :--- |
-| **Health** | `GET /api/health` (DB status, C++ engine availability & version) |
-| **Auth** | `GET /api/auth/github/login`, `GET /api/auth/github/callback`, `POST /api/auth/exchange`, `POST /api/auth/register`, `POST /api/auth/verify-otp`, `POST /api/auth/resend-otp`, `POST /api/auth/login`, `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`, `GET /api/auth/me`, `POST /api/auth/logout` |
-| **Profile & Onboarding** | `GET /api/profile/me`, `GET /api/profile/onboarding`, `POST /api/profile/onboarding/confirm`, `POST /api/profile/analyze`, `PUT /api/profile/skills/{tech}`, `DELETE /api/profile/skills/{tech}`, `PUT /api/profile/preferences` |
+| **Health** | `GET /api/health` |
+| **Authentication** | `GET /api/auth/github/login`, `GET /api/auth/github/callback`, `POST /api/auth/exchange`, `POST /api/auth/register`, `POST /api/auth/verify-otp`, `POST /api/auth/resend-otp`, `POST /api/auth/login`, `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`, `GET /api/auth/me`, `POST /api/auth/logout` |
+| **Profile & Onboarding** | `GET /api/profile/me`, `GET /api/profile/onboarding`, `POST /api/profile/onboarding/confirm`, `POST /api/profile/analyze`, `PUT /api/profile/skills/{technology}`, `DELETE /api/profile/skills/{technology}`, `PUT /api/profile/preferences` |
 | **Adaptive Diagnostic** | `GET /api/onboarding/diagnostic/domains`, `POST /api/onboarding/diagnostic/start`, `POST /api/onboarding/diagnostic/step` |
 | **Recommendations** | `POST /api/recommendations/personalized`, `GET /api/recommendations/{id}`, `GET /api/recommendations/snapshots/{userId}`, `GET /api/recommendations/runs/{runId}` |
 | **Issues Explorer** | `GET /api/issues`, `GET /api/issues/{issueId}`, `POST /api/issues/batch-upsert` |
 | **Votes & Affinity** | `POST /api/votes`, `DELETE /api/votes`, `GET /api/votes/{userId}`, `GET /api/votes/summary/{userId}`, `POST /api/votes/affinity` |
-| **Ingestion & Jobs** | `POST /api/ingestion/run`, `POST /api/ingestion/discover`, `POST /api/ingestion/refresh`, `POST /api/ingestion/cleanup`, `GET /api/ingestion/status`, `GET /api/ingestion/jobs` |
-| **Validation & Backend Eval** | `POST /api/validation/run`, `GET /api/validation/evaluation-report`, `POST /api/simulator/rank`, `GET /api/simulator/sample-data` |
+| **Ingestion** | `POST /api/ingestion/run`, `POST /api/ingestion/discover`, `POST /api/ingestion/refresh`, `POST /api/ingestion/cleanup`, `GET /api/ingestion/status`, `GET /api/ingestion/jobs` |
+| **Evaluation** | `POST /api/validation/run`, `GET /api/validation/evaluation-report` |
 
 ---
 
-## 10. Configuration, Build, Test & Docker Deployment
+## 10. Optional: Local Build & Reproducibility
 
-### Environment Variables (`.env` / Render Dashboard)
+Since the system is already live on **Vercel** and **Render**, end users and reviewers do not need to install or compile anything locally. For developers or project evaluators who want to reproduce the build from source:
 
-| Variable | Default / Example | Purpose |
-| :--- | :--- | :--- |
-| `PORT` / `SERVER_PORT` | `8000` | HTTP port for Spring Boot |
-| `CPP_ENGINE_PATH` | `ranking_engine/build/issue_pilot_ranking_engine.exe` | Path to compiled C++ binary (set to Linux path in Docker) |
-| `MONGODB_URI` | `mongodb+srv://...` | MongoDB Atlas connection string |
-| `APP_JWT_SECRET` | *(32+ byte secret)* | HMAC key for signing session JWTs and hashing OTPs |
-| `GITHUB_CLIENT_ID` / `SECRET` | `""` | GitHub OAuth app credentials |
-| `GITHUB_TOKEN` | `""` | GitHub PAT for ingestion & live PR/assignee checks |
-| `GITLAB_TOKEN` | `""` | GitLab PAT for GitLab v4 ingestion |
-| `GEMINI_API_KEY` | `""` | Optional key for live Gemini 1.5 Flash flight check scenarios |
-| `RESEND_API_KEY` | `re_...` | Resend HTTP API key for transactional OTPs (Port 443) |
-| `MAIL_FROM` | `Issue Pilot <onboarding@resend.dev>` | Sender address for OTP emails |
-| `MAIL_SANDBOX_BYPASS` | `true` | Auto-surfaces sandbox OTPs in UI instead of failing with 502 |
-| `SMTP_HOST` / `PORT` / `USER` / `PASS` | `""` | Optional SMTP for local use only *(leave blank on Render)* |
+<details>
+<summary>Expand Local Build, Test & Docker Reference</summary>
 
-### 1. Build & Test the C++ Engine
+### 1. C++20 Ranking Engine
 ```bash
 cmake -B ranking_engine/build -S ranking_engine
 cmake --build ranking_engine/build
 ctest --test-dir ranking_engine/build --output-on-failure
 ```
 
-### 2. Test & Run the Spring Boot Backend (Java 21)
+### 2. Spring Boot Backend (Java 21)
 ```bash
-# Run all 225 backend unit & integration tests
-mvn test
-
-# Start the API server on http://localhost:8000
-mvn spring-boot:run
+mvn test              # Runs all 225 backend tests
+mvn spring-boot:run   # Starts API at http://localhost:8000
 ```
 
-### 3. Build & Run the Frontend
+### 3. Frontend (React + Vite)
 ```bash
 cd frontend
 npm install
-npm run dev      # Local dev server at http://localhost:5173
-npm run build    # Production Vite + Nitro build
+npm run dev           # Starts dev server at http://localhost:5173
 ```
 
-### 4. Backend Operator CLI Commands
-```bash
-mvn spring-boot:run -Dspring-boot.run.arguments="--eval"       # NDCG@5, Precision@5, Recall@5
-mvn spring-boot:run -Dspring-boot.run.arguments="--benchmark"  # C++ IPC latency & throughput
-mvn spring-boot:run -Dspring-boot.run.arguments="--audit"      # MongoDB Atlas schema & count audit
-mvn spring-boot:run -Dspring-boot.run.arguments="--discover"   # Multi-platform discovery run
-```
+### 4. Production Multi-Stage Docker Image
+The [`Dockerfile`](Dockerfile) builds the Linux C++20 binary (`ubuntu:24.04`), runs CTest, builds the Spring Boot JAR (`maven:3.9.9-eclipse-temurin-21`), and outputs a minimal JRE 21 image exposing port `8000`.
 
-### 5. Production Docker Image (Backend + C++ Engine)
-The multi-stage [`Dockerfile`](Dockerfile) compiles the C++20 binary (`ubuntu:24.04`), runs CTest, builds the Spring Boot JAR (`maven:3.9.9-eclipse-temurin-21`), and packages a minimal `eclipse-temurin:21-jre-noble` runtime container exposing port `8000`.
+### 5. Key Environment Variables
+* **Core:** `PORT`, `MONGODB_URI`, `APP_JWT_SECRET`, `APP_ENCRYPTION_KEY`, `CPP_ENGINE_PATH`
+* **Platforms:** `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_TOKEN`, `GITLAB_TOKEN`
+* **AI & Email:** `GEMINI_API_KEY`, `RESEND_API_KEY`, `MAIL_FROM`, `MAIL_SANDBOX_BYPASS=true`
+
+</details>
 
 ---
 
 ## License
 
-Issue Pilot is licensed under the [Apache License, Version 2.0](LICENSE).
+Licensed under the [Apache License, Version 2.0](LICENSE).
